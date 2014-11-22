@@ -1,0 +1,5 @@
+import "QpbTest.proto";
+
+message Msg2 {
+  repeated Msg1 msg1 = 2;
+}
