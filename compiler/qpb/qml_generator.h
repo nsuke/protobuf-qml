@@ -37,8 +37,6 @@ class FileGenerator {
   void generateJsFile(google::protobuf::io::Printer&);
   void generateMessage(google::protobuf::io::Printer&,
                        const google::protobuf::Descriptor*);
-  void generateMessagePrototype(google::protobuf::io::Printer&,
-                                const google::protobuf::Descriptor*);
 
  private:
   int serializedFileDescriptor(std::string&);

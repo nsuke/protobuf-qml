@@ -101,7 +101,6 @@ void FileGenerator::generateJsFile(io::Printer& p) {
 
   for (int i = 0; i < file_->message_type_count(); i++) {
     generateMessage(p, file_->message_type(i));
-    // generateMessagePrototype(p, file_->message_type(i));
   }
 }
 
@@ -127,57 +126,8 @@ void FileGenerator::generateMessage(io::Printer& p, const Descriptor* t) {
       "};\n",
       "message_name",
       t->name());
-  //p.Print("$message_name$.prototype.serializeTo = function(output) {\n", );
 }
 
-void FileGenerator::generateMessagePrototype(io::Printer& p,
-                                             const Descriptor* t) {
-  //  p.Print(
-  //      "$message_name$.prototype.parse = function(input) {\n"
-  //      "};\n";
-  //      "message_name", t->name());
-}
-
-// void FileGenerator::generateMessagePrototype(io::Printer& p,
-//                                              const Descriptor* t) {
-//   // TODO: handle cutoff when reading tag
-//   p.Print("$message_name$.prototype.serializeTo = function(output) {\n",
-//           "message_name",
-//           t->name());
-//   for (int i = 0; i < t->field_count(); i++) {
-//     auto fp = t->field(i);
-//     p.Print(
-//         "  Qpb.WireFormatLite.writeInt32(output, $number$, "
-//         "this.$field_name$);\n"
-//         "  if(Qpb.WireFormatLite.error) return false;\n",
-//         "field_name",
-//         fp->name(),
-//         "number",
-//         SimpleItoa(fp->number()));
-//   }
-//   p.Print(
-//       "  return true;\n"
-//       "};\n"
-//       "$message_name$.prototype.parseFrom = function(input) {\n",
-//       "message_name",
-//       t->name());
-//   for (int i = 0; i < t->field_count(); i++) {
-//     auto fp = t->field(i);
-//     p.Print(
-//         "  var tag = Qpb.WireFormatLite.readTag(input);\n"
-//         "  if(Qpb.WireFormatLite.error) return false;\n"
-//         "  this.$field_name$ = Qpb.WireFormatLite.readInt32(input);\n"
-//         "  if(Qpb.WireFormatLite.error) return false;\n",
-//         "field_name",
-//         fp->name(),
-//         "number",
-//         SimpleItoa(fp->number()));
-//   }
-//   p.Print(
-//       "  return true;\n"
-//       "};\n");
-// }
-//
 int FileGenerator::serializedFileDescriptor(std::string& out) {
   FileDescriptorProto file_pb;
   file_->CopyTo(&file_pb);
