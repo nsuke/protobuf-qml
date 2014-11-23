@@ -1,6 +1,7 @@
 #include "qpb/descriptor_database.h"
 #include <google/protobuf/descriptor.pb.h>
 
+#include <QVariantList>
 #include <sstream>
 #include <vector>
 
@@ -36,7 +37,34 @@ DescriptorWrapper::~DescriptorWrapper() {
 void setReflectionRepeatedValue(const Reflection& ref,
                                 Message& msg,
                                 const FieldDescriptor* field,
-                                const QVariant& value) {
+                                const QVariantList& list,
+                                int size) {
+#define QPB_ADD_REPEATED(TYPE_ENUM, TYPE, CPP_TYPE)                    \
+  case FieldDescriptor::CPPTYPE_##TYPE_ENUM:                           \
+    for (int i = 0; i < size; i++)                                     \
+      ref.Add##TYPE(&msg, field, CPP_TYPE(list[i].value<CPP_TYPE>())); \
+    break;
+
+  switch (field->cpp_type()) {
+    QPB_ADD_REPEATED(INT32, Int32, int32);
+    QPB_ADD_REPEATED(INT64, Int64, int64);
+    QPB_ADD_REPEATED(UINT32, UInt32, uint32);
+    QPB_ADD_REPEATED(UINT64, UInt64, uint64);
+    QPB_ADD_REPEATED(DOUBLE, Double, double);
+    QPB_ADD_REPEATED(FLOAT, Float, float);
+    QPB_ADD_REPEATED(BOOL, Bool, bool);
+    case FieldDescriptor::CPPTYPE_STRING:
+      for (int i = 0; i < size; i++)
+        ref.AddString(&msg, field, list[i].value<QString>().toStdString());
+      break;
+
+    case FieldDescriptor::CPPTYPE_ENUM:
+    // TODO: add enum support
+    case FieldDescriptor::CPPTYPE_MESSAGE:
+      // TODO: add message field support
+      break;
+  }
+#undef QPB_SET_REPEATED
 }
 
 void setReflectionValue(const Reflection& ref,
@@ -224,8 +252,16 @@ bool DescriptorWrapper::serialize(OutputDevice* output, QVariantMap value) {
         auto it = value.constFind(QString::fromStdString(field_name));
         if (it != value.constEnd()) {
           if (field_descriptor->is_repeated()) {
-            setReflectionRepeatedValue(
-                *reflection, *msg, field_descriptor, it.value());
+            if (!it.value().canConvert(QMetaType::QVariantList)) {
+              qDebug() << "Invalid type for repeated field: " << QString::fromStdString(field_name);
+            } else {
+              auto list = it.value().value<QVariantList>();
+              auto size = list.size();
+              if (size > 0) {
+                setReflectionRepeatedValue(
+                    *reflection, *msg, field_descriptor, list, size);
+              }
+            }
           } else {
             setReflectionValue(*reflection, *msg, field_descriptor, it.value());
           }

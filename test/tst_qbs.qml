@@ -60,6 +60,23 @@ Item {
       verify(typeof msg2.i2 == 'undefined');
     }
 
+    function test_repeated() {
+      verify(Gen.Msg1.serialize(buffer.output, {
+        i1: 0,
+        repeatedField: [
+          42,
+          -42,
+          43,
+        ],
+      }));
+      var msg2 = Gen.Msg1.parse(buffer.input);
+      verify(msg2);
+      verify(msg2.repeatedField);
+      compare(msg2.repeatedField.length, 3);
+      compare(msg2.repeatedField[0], 42);
+      compare(msg2.repeatedField[1], -42);
+      compare(msg2.repeatedField[2], 43);
+    }
   }
 
   TestCase {
