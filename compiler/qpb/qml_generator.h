@@ -31,6 +31,8 @@ class FileGenerator {
   FileGenerator(const google::protobuf::FileDescriptor* file);
 
   void generateJsFile(google::protobuf::io::Printer&);
+  void generateEnum(google::protobuf::io::Printer&,
+                       const google::protobuf::EnumDescriptor*);
   void generateMessage(google::protobuf::io::Printer&,
                        const google::protobuf::Descriptor*);
 

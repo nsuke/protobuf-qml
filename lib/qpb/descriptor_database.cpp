@@ -37,12 +37,12 @@ DescriptorWrapper::~DescriptorWrapper() {
   message_.setLocalData(nullptr);
 }
 
+// TODO: Handle invalid QVariant that cannot be converted
 void setReflectionRepeatedValue(const Reflection& ref,
                                 Message& msg,
                                 const FieldDescriptor* field,
                                 const QVariantList& list,
                                 int size) {
-  // TODO: Handle invalid QVariant that cannot be converted
 #define QPB_ADD_REPEATED(TYPE_ENUM, TYPE, CPP_TYPE)                    \
   case FieldDescriptor::CPPTYPE_##TYPE_ENUM:                           \
     for (int i = 0; i < size; i++)                                     \
@@ -61,9 +61,13 @@ void setReflectionRepeatedValue(const Reflection& ref,
       for (int i = 0; i < size; i++)
         ref.AddString(&msg, field, list[i].value<QString>().toStdString());
       break;
-
     case FieldDescriptor::CPPTYPE_ENUM:
-    // TODO: add enum support
+      for (int i = 0; i < size; i++)
+        ref.AddEnum(
+            &msg,
+            field,
+            field->enum_type()->FindValueByNumber(list[i].value<int>()));
+      break;
     case FieldDescriptor::CPPTYPE_MESSAGE:
       for (int i = 0; i < size; i++)
         packToMessage(list[i].value<QVariantMap>(),
@@ -114,7 +118,9 @@ void setReflectionValue(const Reflection& ref,
       ref.SetString(&msg, field, value.value<QString>().toStdString());
       break;
     case FieldDescriptor::CPPTYPE_ENUM:
-      // TODO: add enum support
+      ref.SetEnum(&msg,
+                  field,
+                  field->enum_type()->FindValueByNumber(value.value<int>()));
       break;
     case FieldDescriptor::CPPTYPE_MESSAGE:
       setMessage(ref, msg, field, value);
@@ -149,7 +155,9 @@ QVariantList getReflectionRepeatedValue(const Reflection& ref,
       break;
 
     case FieldDescriptor::CPPTYPE_ENUM:
-    // TODO: add enum support
+      for (int i = 0; i < size; i++)
+        result.append(ref.GetRepeatedEnum(msg, field, i)->number());
+      break;
     case FieldDescriptor::CPPTYPE_MESSAGE:
       for (int i = 0; i < size; i++)
         result.append(unpackFromMessage(ref.GetRepeatedMessage(msg, field, i)));
@@ -180,8 +188,7 @@ QVariant getReflectionValue(const Reflection& ref,
     case FieldDescriptor::CPPTYPE_STRING:
       return QString::fromStdString(ref.GetString(msg, field));
     case FieldDescriptor::CPPTYPE_ENUM:
-      // TODO: add enum field support
-      break;
+      return ref.GetEnum(msg, field)->number();
     case FieldDescriptor::CPPTYPE_MESSAGE:
       return unpackFromMessage(ref.GetMessage(msg, field));
   }

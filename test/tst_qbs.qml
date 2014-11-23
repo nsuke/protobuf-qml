@@ -111,6 +111,45 @@ Item {
       compare(msg2.repeatedField[2], 43);
     }
 
+    function test_enum() {
+      compare(Gen.Enum1.ENUM_VALUE_FIRST, 19);
+      compare(Gen.Enum1.ENUM_VALUE_SECOND, -38);
+      compare(Gen.Enum1.ENUM_VALUE_THIRD, 39284727);
+      compare(Gen.Enum1.toString(Gen.Enum1.ENUM_VALUE_FIRST), 'ENUM_VALUE_FIRST');
+      compare(Gen.Enum1.toString(Gen.Enum1.ENUM_VALUE_SECOND), 'ENUM_VALUE_SECOND');
+      compare(Gen.Enum1.toString(Gen.Enum1.ENUM_VALUE_THIRD), 'ENUM_VALUE_THIRD');
+    }
+
+    function test_enum_io() {
+      verify(Gen.Msg1.serialize(buffer.output, {
+        i1: 0,
+        enumField: Gen.Enum1.ENUM_VALUE_SECOND,
+      }));
+      var msg2 = Gen.Msg1.parse(buffer.input);
+      verify(msg2);
+      compare(msg2.enumField, Gen.Enum1.ENUM_VALUE_SECOND);
+    }
+
+    function test_repeated_enum_io() {
+      verify(Gen.Msg1.serialize(buffer.output, {
+        i1: 0,
+        repeatedEnumField: [
+          Gen.Enum1.ENUM_VALUE_SECOND,
+          Gen.Enum1.ENUM_VALUE_THIRD,
+          Gen.Enum1.ENUM_VALUE_SECOND,
+          Gen.Enum1.ENUM_VALUE_FIRST,
+        ],
+      }));
+      var msg2 = Gen.Msg1.parse(buffer.input);
+      verify(msg2);
+      verify(msg2.repeatedEnumField);
+      compare(msg2.repeatedEnumField.length, 4);
+      compare(Gen.Enum1.toString(msg2.repeatedEnumField[0]), 'ENUM_VALUE_SECOND');
+      compare(Gen.Enum1.toString(msg2.repeatedEnumField[1]), 'ENUM_VALUE_THIRD');
+      compare(Gen.Enum1.toString(msg2.repeatedEnumField[2]), 'ENUM_VALUE_SECOND');
+      compare(Gen.Enum1.toString(msg2.repeatedEnumField[3]), 'ENUM_VALUE_FIRST');
+    }
+
     function test_sub_message() {
       verify(Gen2.Msg2.serialize(buffer.output, {
         msg1: {

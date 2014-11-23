@@ -108,13 +108,48 @@ void FileGenerator::generateJsFile(io::Printer& p) {
       "file_name",
       file_->name());
 
+  for (int i = 0; i < file_->enum_type_count(); i++) {
+    generateEnum(p, file_->enum_type(i));
+  }
+
   for (int i = 0; i < file_->message_type_count(); i++) {
     generateMessage(p, file_->message_type(i));
   }
 }
 
+void FileGenerator::generateEnum(io::Printer& p, const EnumDescriptor* t) {
+  p.Print(
+      "\n"
+      "var $enum_name$ = {\n",
+      "enum_name",
+      t->name());
+  for (int i = 0; i < t->value_count(); i++) {
+    p.Print("  $enum_value_name$: $enum_value$,\n",
+            "enum_value_name",
+            t->value(i)->name(),
+            "enum_value",
+            SimpleItoa(t->value(i)->number()));
+  }
+  p.Print(
+      "\n"
+      "  toString: function(value) {\n"
+      "    switch(value) {\n");
+  for (int i = 0; i < t->value_count(); i++) {
+    p.Print("      case $enum_value$: return '$enum_value_name$';\n",
+            "enum_value_name",
+            t->value(i)->name(),
+            "enum_value",
+            SimpleItoa(t->value(i)->number()));
+  }
+  p.Print(
+      "    }\n"
+      "  },\n");
+  p.Print("};\n");
+}
+
 void FileGenerator::generateMessage(io::Printer& p, const Descriptor* t) {
   p.Print(
+      "\n"
       "var $message_name$ = {\n"
       "  parse: function(input, callback) {\n"
       "    if(!init.once()) return;\n"

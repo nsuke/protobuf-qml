@@ -5,4 +5,12 @@ message Msg1 {
   repeated int32 repeated_field = 4;
   optional string string_field = 5;
   repeated string repeated_string_field = 33000;
+  optional Enum1 enum_field = 6;
+  repeated Enum1 repeated_enum_field = 7;
+}
+
+enum Enum1 {
+  ENUM_VALUE_FIRST = 19;
+  ENUM_VALUE_SECOND = -38;
+  ENUM_VALUE_THIRD = 39284727;
 }
