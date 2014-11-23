@@ -13,4 +13,4 @@ before_install:
   - export CC="gcc-4.9"
   - export CXX="g++-4.9"
 
-script: "./build.py"
+script: ./build.py -I deps/travis.gypi
