@@ -66,7 +66,8 @@ void setReflectionRepeatedValue(const Reflection& ref,
     // TODO: add enum support
     case FieldDescriptor::CPPTYPE_MESSAGE:
       for (int i = 0; i < size; i++)
-        packToMessage(list[i].value<QVariantMap>(), *ref.AddMessage(&msg, field));
+        packToMessage(list[i].value<QVariantMap>(),
+                      *ref.AddMessage(&msg, field));
       break;
   }
 #undef QPB_SET_REPEATED
@@ -151,8 +152,7 @@ QVariantList getReflectionRepeatedValue(const Reflection& ref,
     // TODO: add enum support
     case FieldDescriptor::CPPTYPE_MESSAGE:
       for (int i = 0; i < size; i++)
-        result.append(
-            unpackFromMessage(ref.GetRepeatedMessage(msg, field, i)));
+        result.append(unpackFromMessage(ref.GetRepeatedMessage(msg, field, i)));
       break;
   }
   return result;
