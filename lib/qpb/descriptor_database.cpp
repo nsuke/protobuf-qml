@@ -1,6 +1,7 @@
 #include "qpb/descriptor_database.h"
 #include <google/protobuf/descriptor.pb.h>
 
+#include <sstream>
 #include <vector>
 
 namespace qpb {
@@ -145,6 +146,38 @@ QVariant getReflectionValue(const Reflection& ref,
   return QVariant();
 }
 
+constexpr auto kCapitalizeOffset = 'a' - 'A';
+
+inline bool is_small_char(char c) {
+  return c >= 'a' && c <= 'z';
+}
+
+inline char capitalize(char c) {
+  return c - kCapitalizeOffset;
+}
+
+std::string camelize(const std::string& name) {
+  std::ostringstream ss;
+  bool capitalizing = false;
+  for (auto& c : name) {
+    if (capitalizing) {
+      capitalizing = false;
+      if (is_small_char(c)) {
+        ss << capitalize(c);
+      } else {
+        ss << '_' << c;
+      }
+    } else {
+      if (c == '_') {
+        capitalizing = true;
+      } else {
+        ss << c;
+      }
+    }
+  }
+  return ss.str();
+}
+
 QVariant DescriptorWrapper::parse(InputDevice* input) {
   QVariantMap result;
   if (!input) return QVariant();
@@ -159,17 +192,18 @@ QVariant DescriptorWrapper::parse(InputDevice* input) {
     for (int i = 0; i < descriptor->field_count(); i++) {
       auto field_descriptor = descriptor->field(i);
       QVariantMap field;
+      auto field_name = camelize(field_descriptor->name());
       if (field_descriptor->is_repeated()) {
         auto size = reflection->FieldSize(*msg, field_descriptor);
         if (size > 0) {
-          result.insert(QString::fromStdString(field_descriptor->name()),
-                 getReflectionRepeatedValue(
-                     *reflection, *msg, field_descriptor, size));
+          result.insert(QString::fromStdString(field_name),
+                        getReflectionRepeatedValue(
+                            *reflection, *msg, field_descriptor, size));
         }
       } else if (reflection->HasField(*msg, field_descriptor)) {
         auto value = getReflectionValue(*reflection, *msg, field_descriptor);
         if (value.isValid())
-          result.insert(QString::fromStdString(field_descriptor->name()), std::move(value));
+          result.insert(QString::fromStdString(field_name), std::move(value));
       }
     }
   }
@@ -185,9 +219,9 @@ bool DescriptorWrapper::serialize(OutputDevice* output, QVariantMap value) {
     auto descriptor = msg->GetDescriptor();
     if (descriptor->field_count() > 0) {
       for (int i = 0; i < descriptor->field_count(); i++) {
+        auto field_name = camelize(descriptor->field(i)->name());
         auto field_descriptor = descriptor->field(i);
-        auto it =
-            value.constFind(QString::fromStdString(field_descriptor->name()));
+        auto it = value.constFind(QString::fromStdString(field_name));
         if (it != value.constEnd()) {
           if (field_descriptor->is_repeated()) {
             setReflectionRepeatedValue(

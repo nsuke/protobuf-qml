@@ -24,6 +24,16 @@ Item {
       compare(msg2.i1, -42);
     }
 
+    function test_camel_case() {
+      verify(Gen.Msg1.serialize(buffer.output, {
+        i1: 0,
+        camelTest1: 80,
+      }));
+      var msg2 = Gen.Msg1.parse(buffer.input);
+      verify(msg2);
+      compare(msg2.camelTest1, 80);
+    }
+
     function test_write_read_missing() {
       verify(Gen.Msg1.serialize(buffer.output, {i1: -42}));
       var msg2 = Gen.Msg1.parse(buffer.input);
