@@ -32,7 +32,7 @@
       ],
       'target_defaults': {
         'cflags': [
-          '-fcolor-diagnostics',
+          '-fdiagnostics-color',
         ],
       },
     }],
@@ -47,6 +47,7 @@
       '-Wno-unused-parameter',
       '-fPIC',
       '-fstack-protector-strong',
+      '--param=ssp-buffer-size=4',
       '-pipe',
     ],
     'cflags_cc': [
