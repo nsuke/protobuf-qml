@@ -35,7 +35,6 @@
         'destination': '<(PRODUCT_DIR)/qml/Protobuf',
         'files': [
           '<(qpb_root)/lib/qmldir',
-          '<(qpb_root)/lib/message.js',
         ],
       }],
     },

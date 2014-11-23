@@ -1,3 +1,2 @@
 module Protobuf
-
 plugin protobuf-qml
