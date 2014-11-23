@@ -9,6 +9,9 @@ namespace qpb {
 
 using namespace google::protobuf;
 
+bool packToMessage(const QVariantMap& value, Message& msg);
+QVariant unpackFromMessage(const Message& msg);
+
 void AsyncProcessor::doParse(int key, InputDevice* input) {
   Q_ASSERT(!has_task_);
   has_task_ = true;
@@ -39,6 +42,7 @@ void setReflectionRepeatedValue(const Reflection& ref,
                                 const FieldDescriptor* field,
                                 const QVariantList& list,
                                 int size) {
+  // TODO: Handle invalid QVariant that cannot be converted
 #define QPB_ADD_REPEATED(TYPE_ENUM, TYPE, CPP_TYPE)                    \
   case FieldDescriptor::CPPTYPE_##TYPE_ENUM:                           \
     for (int i = 0; i < size; i++)                                     \
@@ -61,10 +65,22 @@ void setReflectionRepeatedValue(const Reflection& ref,
     case FieldDescriptor::CPPTYPE_ENUM:
     // TODO: add enum support
     case FieldDescriptor::CPPTYPE_MESSAGE:
-      // TODO: add message field support
+      for (int i = 0; i < size; i++)
+        packToMessage(list[i].value<QVariantMap>(), *ref.AddMessage(&msg, field));
       break;
   }
 #undef QPB_SET_REPEATED
+}
+
+void setMessage(const Reflection& ref,
+                Message& msg,
+                const FieldDescriptor* field,
+                const QVariant& value) {
+  auto sub_msg = ref.MutableMessage(&msg, field);
+  Q_ASSERT(sub_msg);
+  if (value.canConvert(QMetaType::QVariantMap)) {
+    packToMessage(value.value<QVariantMap>(), *sub_msg);
+  }
 }
 
 void setReflectionValue(const Reflection& ref,
@@ -97,11 +113,10 @@ void setReflectionValue(const Reflection& ref,
       ref.SetString(&msg, field, value.value<QString>().toStdString());
       break;
     case FieldDescriptor::CPPTYPE_ENUM:
-    //      ref.SetEnum(&msg, field);
-    //  break;
+      // TODO: add enum support
+      break;
     case FieldDescriptor::CPPTYPE_MESSAGE:
-      // TODO: add message field support
-      // ref.SetMessage(&msg, field);
+      setMessage(ref, msg, field, value);
       break;
   }
 }
@@ -135,9 +150,9 @@ QVariantList getReflectionRepeatedValue(const Reflection& ref,
     case FieldDescriptor::CPPTYPE_ENUM:
     // TODO: add enum support
     case FieldDescriptor::CPPTYPE_MESSAGE:
-      // TODO: add message field support
-      // for (int i = 0; i < size; i++) result.append(
-      // ref.GetRepeatedMessage(msg, field));
+      for (int i = 0; i < size; i++)
+        result.append(
+            unpackFromMessage(ref.GetRepeatedMessage(msg, field, i)));
       break;
   }
   return result;
@@ -165,11 +180,10 @@ QVariant getReflectionValue(const Reflection& ref,
     case FieldDescriptor::CPPTYPE_STRING:
       return QString::fromStdString(ref.GetString(msg, field));
     case FieldDescriptor::CPPTYPE_ENUM:
-    //      return ref.GetEnum(msg, field);
-    case FieldDescriptor::CPPTYPE_MESSAGE:
-      // TODO: add message field support
-      // return ref.GetMessage(msg, field);
+      // TODO: add enum field support
       break;
+    case FieldDescriptor::CPPTYPE_MESSAGE:
+      return unpackFromMessage(ref.GetMessage(msg, field));
   }
   return QVariant();
 }
@@ -206,36 +220,69 @@ std::string camelize(const std::string& name) {
   return ss.str();
 }
 
-QVariant DescriptorWrapper::parse(InputDevice* input) {
+QVariant unpackFromMessage(const Message& msg) {
   QVariantMap result;
-  if (!input) return QVariant();
-  auto msg = sharedMessage();
-  msg->Clear();
-  auto session = input->createSession();
-  if (!session) return QVariant();
-  msg->ParseFromZeroCopyStream(session.stream());
-  auto reflection = msg->GetReflection();
-  auto descriptor = msg->GetDescriptor();
+  auto reflection = msg.GetReflection();
+  auto descriptor = msg.GetDescriptor();
   if (descriptor->field_count() > 0) {
     for (int i = 0; i < descriptor->field_count(); i++) {
       auto field_descriptor = descriptor->field(i);
       QVariantMap field;
       auto field_name = camelize(field_descriptor->name());
       if (field_descriptor->is_repeated()) {
-        auto size = reflection->FieldSize(*msg, field_descriptor);
+        auto size = reflection->FieldSize(msg, field_descriptor);
         if (size > 0) {
           result.insert(QString::fromStdString(field_name),
                         getReflectionRepeatedValue(
-                            *reflection, *msg, field_descriptor, size));
+                            *reflection, msg, field_descriptor, size));
         }
-      } else if (reflection->HasField(*msg, field_descriptor)) {
-        auto value = getReflectionValue(*reflection, *msg, field_descriptor);
+      } else if (reflection->HasField(msg, field_descriptor)) {
+        auto value = getReflectionValue(*reflection, msg, field_descriptor);
         if (value.isValid())
           result.insert(QString::fromStdString(field_name), std::move(value));
       }
     }
   }
-  return result.isEmpty() ? QVariant() : result;
+  return result.isEmpty() ? QVariant() : std::move(result);
+}
+
+QVariant DescriptorWrapper::parse(InputDevice* input) {
+  if (!input) return QVariant();
+  auto msg = sharedMessage();
+  msg->Clear();
+  auto session = input->createSession();
+  if (!session) return QVariant();
+  msg->ParseFromZeroCopyStream(session.stream());
+  return unpackFromMessage(*msg);
+}
+
+bool packToMessage(const QVariantMap& value, Message& msg) {
+  auto reflection = msg.GetReflection();
+  auto descriptor = msg.GetDescriptor();
+  if (descriptor->field_count() <= 0) return false;
+  for (int i = 0; i < descriptor->field_count(); i++) {
+    auto field_name = camelize(descriptor->field(i)->name());
+    auto field_descriptor = descriptor->field(i);
+    auto it = value.constFind(QString::fromStdString(field_name));
+    if (it != value.constEnd()) {
+      if (field_descriptor->is_repeated()) {
+        if (!it.value().canConvert(QMetaType::QVariantList)) {
+          qDebug() << "Invalid type for repeated field: "
+                   << QString::fromStdString(field_name);
+        } else {
+          auto list = it.value().value<QVariantList>();
+          auto size = list.size();
+          if (size > 0) {
+            setReflectionRepeatedValue(
+                *reflection, msg, field_descriptor, list, size);
+          }
+        }
+      } else {
+        setReflectionValue(*reflection, msg, field_descriptor, it.value());
+      }
+    }
+  }
+  return true;
 }
 
 bool DescriptorWrapper::serialize(OutputDevice* output, QVariantMap value) {
@@ -243,30 +290,7 @@ bool DescriptorWrapper::serialize(OutputDevice* output, QVariantMap value) {
     if (!output || value.isEmpty()) return false;
     auto msg = sharedMessage();
     msg->Clear();
-    auto reflection = msg->GetReflection();
-    auto descriptor = msg->GetDescriptor();
-    if (descriptor->field_count() > 0) {
-      for (int i = 0; i < descriptor->field_count(); i++) {
-        auto field_name = camelize(descriptor->field(i)->name());
-        auto field_descriptor = descriptor->field(i);
-        auto it = value.constFind(QString::fromStdString(field_name));
-        if (it != value.constEnd()) {
-          if (field_descriptor->is_repeated()) {
-            if (!it.value().canConvert(QMetaType::QVariantList)) {
-              qDebug() << "Invalid type for repeated field: " << QString::fromStdString(field_name);
-            } else {
-              auto list = it.value().value<QVariantList>();
-              auto size = list.size();
-              if (size > 0) {
-                setReflectionRepeatedValue(
-                    *reflection, *msg, field_descriptor, list, size);
-              }
-            }
-          } else {
-            setReflectionValue(*reflection, *msg, field_descriptor, it.value());
-          }
-        }
-      }
+    if (packToMessage(value, *msg)) {
       auto session = output->createSession();
       return msg->SerializeToZeroCopyStream(session.stream());
     }

@@ -101,6 +101,42 @@ Item {
       compare(msg2.repeatedField[1], -42);
       compare(msg2.repeatedField[2], 43);
     }
+
+    function test_sub_message() {
+      verify(Gen2.Msg2.serialize(buffer.output, {
+        msg1: {
+          i1: 17,
+        },
+      }));
+      var msg2 = Gen2.Msg2.parse(buffer.input);
+      verify(msg2);
+      verify(msg2.msg1);
+      compare(msg2.msg1.i1, 17);
+    }
+
+    function test_repeated_sub_message() {
+      verify(Gen2.Msg2.serialize(buffer.output, {
+        msgs1: [
+          {
+            i1: 300,
+          },
+          {
+            i1: 0,
+            repeatedStringField: [
+              'baz',
+            ],
+          },
+        ],
+      }));
+      var msg2 = Gen2.Msg2.parse(buffer.input);
+      verify(msg2);
+      verify(msg2.msgs1);
+      compare(msg2.msgs1.length, 2);
+      compare(msg2.msgs1[0].i1, 300);
+      compare(typeof msg2.msgs1[0].repeatedStringField, 'undefined');
+      verify(typeof msg2.msgs1[1].repeatedStringField);
+      verify(typeof msg2.msgs1[1].repeatedStringField[0], 'baz');
+    }
   }
 
   TestCase {

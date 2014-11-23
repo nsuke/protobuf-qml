@@ -1,5 +1,6 @@
 import "QpbTest.proto";
 
 message Msg2 {
-  repeated Msg1 msg1 = 2;
+  optional Msg1 msg1 = 1;
+  repeated Msg1 msgs1 = 2;
 }
