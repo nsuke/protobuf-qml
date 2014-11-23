@@ -27,11 +27,11 @@ Item {
     function test_camel_case() {
       verify(Gen.Msg1.serialize(buffer.output, {
         i1: 0,
-        camelTest1: 80,
+        camelFieldTest1: 80,
       }));
       var msg2 = Gen.Msg1.parse(buffer.input);
       verify(msg2);
-      compare(msg2.camelTest1, 80);
+      compare(msg2.camelFieldTest1, 80);
     }
 
     function test_minus_64bit() {
@@ -46,11 +46,11 @@ Item {
     function test_64bit() {
       verify(Gen.Msg1.serialize(buffer.output, {
         i1: 0,
-        camelTest1: 80000000000,
+        camelFieldTest1: 80000000000,
       }));
       var msg2 = Gen.Msg1.parse(buffer.input);
       verify(msg2);
-      compare(msg2.camelTest1, 80000000000);
+      compare(msg2.camelFieldTest1, 80000000000);
     }
 
     function test_write_read_missing() {

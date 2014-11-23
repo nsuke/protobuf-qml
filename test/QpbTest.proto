@@ -1,5 +1,5 @@
 message Msg1 {
   required int64 i1 = 1;
   optional int32 i2 = 2;
-  optional uint64 camel_test1 = 3;
+  optional uint64 camel_field_test1 = 3;
 }
