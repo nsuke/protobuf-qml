@@ -14,6 +14,7 @@ def main(argv):
   p.add_argument('path')
   args = p.parse_args()
 
+  ld_path = os.pathsep.join([os.path.realpath(p0) for p0 in args.ld_library_path])
   path = args.path
   with open(path, 'w') as fp:
     fp.writelines([
@@ -23,10 +24,10 @@ def main(argv):
       'import sys\n',
       '\n',
       'if __name__ == "__main__":\n',
-      '  os.environ["LD_LIBRARY_PATH"] = "%s"\n' % os.pathsep.join(args.ld_library_path),
+      '  os.environ["LD_LIBRARY_PATH"] = "%s"\n' % ld_path,
       '  cmd = ["%s", "-import", "%s", "-input", "%s"]\n' % (
         args.test_runner, args.qml_dir, args.qml_test_dir),
-      '  print(cmd)\n'
+      '  print(" ".join(cmd))\n'
       '  res = subprocess.Popen(cmd, cwd="%s", env=os.environ).wait()\n' % (
         os.path.realpath(args.root_dir)),
       '  sys.exit(res)\n',

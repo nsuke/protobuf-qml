@@ -3,6 +3,6 @@ language: cpp
 before_install:
   - sudo add-apt-repository --yes ppa:ubuntu-sdk-team/ppa
   - sudo apt-get update -qq
-  - sudo apt-get install -qq qtbase5-dev qtdeclarative5-dev qt5-default qttools5-dev-tools
+  - sudo apt-get install -qq qtbase5-dev qtdeclarative5-dev qt5-default qttools5-dev-tools ninja-build
 
 script: "./build.py"

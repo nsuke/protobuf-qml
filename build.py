@@ -12,14 +12,18 @@ ROOT_DIR = os.path.realpath(os.path.dirname(__file__))
 DEPS_DIR = os.path.join(ROOT_DIR, 'deps')
 
 
-def execute(cmd, cwd=DEPS_DIR, env=os.environ, err=None):
+def execute(cmd, cwd=DEPS_DIR, env=os.environ, err=None, err_expr=['error:', 'fatal:']):
   try:
     if not err:
       err = 'Failed to execute "%s"\n' % ' '.join(cmd)
 #  print(cmd)
 #  return True
-    res = subprocess.Popen(cmd, cwd=cwd, env=env).wait()
-    if res != 0:
+    p = subprocess.Popen(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    o, e = p.communicate()
+    sys.stderr.write(e)
+    sys.stdout.write(o)
+    failed = p.returncode != 0 or any(e.find(expr) != -1 for expr in err_expr)
+    if failed:
       sys.stderr.write(err)
       return False
     else:
@@ -39,33 +43,42 @@ class GitDependency(object):
 
   def _rev_parse(self, ref):
     p = subprocess.Popen(['git', 'rev-parse', ref], cwd=self.dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    o, _ = p.communicate()
+    o, e = p.communicate()
+    if p.returncode != 0 or e.find('fatal:') != -1:
+      raise Exception('Failed to parse git rev.')
     return string.strip(o)
 
   def get_source(self):
-    should_clone = not os.path.exists(os.path.join(self.dir, '.git'))
-    if should_clone:
+    target = None
+    if not os.path.exists(os.path.join(self.dir, '.git')):
       cmd = [
         'git',
         'clone',
         self.url,
         self.name,
       ]
-      if execute(cmd) != 0:
+      if not execute(cmd):
         sys.stderr.write('Failed to clone source repository.\n')
         return False
-    target = self._rev_parse(self.ref)
+    else:
+      try:
+        target = self._rev_parse(self.ref)
+      except Exception:
+        sys.stdout.write('Fetching git remote.\n')
+        cmd = ['git', 'fetch', '--all']
+        if not execute(cmd, cwd=self.dir):
+          sys.stderr.write('Failed to fetch source repository.\n')
+          return False
+    if not target:
+      target = self._rev_parse(self.ref)
     current = self._rev_parse('HEAD')
     if current == target:
       sys.stdout.write('Local source is up to date.\n')
       return True
     sys.stdout.write('Checking out %s\n' % target)
     self.source_updated = True
-    cmds = []
-    if not should_clone:
-      cmds.append(['git', 'fetch', 'origin'])
-    cmds.append(['git', 'checkout', '-f', target])
-    return all(execute(cmd, cwd=self.dir) for cmd in cmds)
+    cmd = ['git', 'checkout', '-f', target]
+    return execute(cmd, cwd=self.dir)
 
   def prepare(self, skip_setup=False):
     return skip_setup or self.get_source()
@@ -89,12 +102,19 @@ class CppGitDependency(GitDependency):
     return all(execute(cmd, cwd=self.dir) for cmd in cmds)
 
   def prepare(self, skip_setup=False):
-    return skip_setup or super(CppGitDependency, self).prepare(False) and not self.source_updated or self.build()
+    if skip_setup:
+      return True
+    if not super(CppGitDependency, self).prepare(False):
+      return False
+    if not self.source_updated and os.path.exists(os.path.join(DEPS_DIR, 'bin')):
+      return True
+    return self.build()
 
 
 def main(argv):
   p = argparse.ArgumentParser()
   p.add_argument('--clean', action='store_true', help='Cleanup deps directory.')
+  p.add_argument('--clean-build', action='store_true', help='Cleanup deps artifacts while retaining source checkout.')
   p.add_argument('--skip-tests', action='store_true', help='Do not trigger tests.')
   p.add_argument('--skip-setup', action='store_true', help='Do not trigger dependency setup and use files previously setup.')
   p.add_argument('--skip-deps', action='store_true', help='Do not use downloaded dependencies.')
@@ -103,16 +123,17 @@ def main(argv):
 
   deps = [
     GitDependency('gyp', 'http://git.chromium.org/external/gyp.git', 'origin/master'),
-    CppGitDependency('protobuf', 'http://github.com/google/protobuf.git', 'v2.6.1'),
+    CppGitDependency('protobuf', 'http://github.com/google/protobuf.git', '2.6.1'),
   ]
 
-  if args.clean:
+  if args.clean or args.clean_build:
     clean_dirs = [
       'bin',
       'lib',
       'include',
     ]
-    clean_dirs.extend([dep.name for dep in deps])
+    if args.clean:
+      clean_dirs.extend([dep.name for dep in deps])
     for dir in clean_dirs:
       p = os.path.join(DEPS_DIR, dir)
       if os.path.exists(p):
@@ -167,6 +188,7 @@ def main(argv):
 
   env = os.environ
   env['LD_LIBRARY_PATH'] = os.path.join(DEPS_DIR, 'lib')
+  env['GYP_GENERATORS'] = 'ninja'
   return 0 if all(execute(cmd, cwd=ROOT_DIR, env=env) for cmd in cmds) else 1
 
 
