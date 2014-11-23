@@ -188,6 +188,47 @@ Item {
   }
 
   TestCase {
+    name: 'AsyncTest'
+
+    function init() {
+      buffer.clear();
+      buffer.size = 1000;
+    }
+
+    function test_serialize_fail() {
+      var called = [false];
+      verify(Gen.Msg1.serialize(buffer.output, {}, function(err) {
+        verify(err);
+        called[0] = true;
+      }));
+      tryCompare(called, 0, true, 200);
+    }
+
+    function test_parse_fail() {
+      var called = [false];
+      verify(Gen.Msg1.parse(buffer.input, function(msg, err) {
+        verify(err);
+        called[0] = true;
+      }));
+      tryCompare(called, 0, true, 200);
+    }
+
+    function test_io() {
+      var called = [false, false];
+      verify(Gen.Msg1.serialize(buffer.output, {required1: -42}, function(err) {
+        verify(!err);
+        called[0] = true;
+      }));
+      tryCompare(called, 0, true, 200);
+      verify(Gen.Msg1.parse(buffer.input, function(msg, err) {
+        compare(msg.required1, -42);
+        called[1] = true;
+      }));
+      tryCompare(called, 1, true, 200);
+    }
+  }
+
+  TestCase {
     name: 'SerializeTest'
 
     function init() {

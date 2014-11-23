@@ -23,8 +23,9 @@ signals:
 
  public:
   AsyncProcessor(DescriptorWrapper* parent)
-      : QThread(reinterpret_cast<QObject*>(parent)), parent_(parent) {
+      : parent_(parent) {
     moveToThread(this);
+    start();
     connect(this,
             SIGNAL(startParse(int, InputDevice*)),
             this,
@@ -52,8 +53,8 @@ class DescriptorWrapper : public QObject {
                  maxThreadsChanged)
 
 signals:
-  void parseCompleted(int key, QVariant result);
-  void serializeCompleted(int key);
+  void parseCompleted(int key, QVariant result, bool error);
+  void serializeCompleted(int key, bool error);
   void maxThreadsChanged();
 
  public:
@@ -65,17 +66,20 @@ signals:
   Q_INVOKABLE QVariant parse(InputDevice* input);
   Q_INVOKABLE bool serialize(OutputDevice* output, QVariantMap value);
 
-  Q_INVOKABLE int parseAsync(InputDevice* input) {
-    auto i = async();
-    if (!i) return 0;
-    async_[i]->startParse(++key_, input);
-    return key_;
+  Q_INVOKABLE int nextKey() {
+    return ++key_;
   }
-  Q_INVOKABLE int serializeAsync(OutputDevice* output, QVariantMap value) {
-    auto i = async();
-    if (!i) return 0;
-    async_[i]->startSerialize(++key_, output, std::move(value));
-    return key_;
+  Q_INVOKABLE bool parseAsync(int key, InputDevice* input) {
+    auto index = async();
+    if (index < 0) return 0;
+    async_[index]->startParse(key, input);
+    return true;
+  }
+  Q_INVOKABLE bool serializeAsync(int key, OutputDevice* output, QVariantMap value) {
+    auto index = async();
+    if (index < 0) return false;
+    async_[index]->startSerialize(key, output, std::move(value));
+    return true;
   }
 
   int max_threads() const { return max_threads_; }
@@ -96,7 +100,7 @@ signals:
       if (i <= static_cast<size_t>(max_threads_)) {
         async_.emplace_back(new AsyncProcessor(this));
       } else {
-        return 0;
+        return -1;
       }
     }
     return i;

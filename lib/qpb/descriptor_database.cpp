@@ -15,7 +15,8 @@ QVariant unpackFromMessage(const Message& msg);
 void AsyncProcessor::doParse(int key, InputDevice* input) {
   Q_ASSERT(!has_task_);
   has_task_ = true;
-  parent_->parseCompleted(key, parent_->parse(input));
+  auto msg = parent_->parse(input);
+  parent_->parseCompleted(key, std::move(msg), !msg.isValid());
   has_task_ = false;
 }
 
@@ -24,8 +25,8 @@ void AsyncProcessor::doSerialize(int key,
                                  QVariantMap value) {
   Q_ASSERT(!has_task_);
   has_task_ = true;
-  parent_->serialize(output, value);
-  parent_->serializeCompleted(key);
+  auto res = parent_->serialize(output, value);
+  parent_->serializeCompleted(key, !res);
   has_task_ = false;
 }
 
