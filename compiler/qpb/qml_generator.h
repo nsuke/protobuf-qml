@@ -28,11 +28,7 @@ class QmlGenerator : public google::protobuf::compiler::CodeGenerator {
 
 class FileGenerator {
  public:
-  FileGenerator(const google::protobuf::FileDescriptor* file) : file_(file) {
-    if (!file) {
-      throw std::invalid_argument("File descriptor is null");
-    }
-  }
+  FileGenerator(const google::protobuf::FileDescriptor* file);
 
   void generateJsFile(google::protobuf::io::Printer&);
   void generateMessage(google::protobuf::io::Printer&,

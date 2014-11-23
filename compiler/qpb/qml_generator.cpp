@@ -7,7 +7,9 @@
 #include <google/protobuf/compiler/cpp/cpp_helpers.h>
 #include <google/protobuf/stubs/strutil.h>
 #include <QByteArray>
+
 #include <memory>
+#include <stdexcept>
 
 namespace qpb {
 
@@ -29,6 +31,13 @@ bool QmlGenerator::Generate(const FileDescriptor* file,
   } catch (std::exception& ex) {
     *error = ex.what();
     return false;
+  }
+}
+
+FileGenerator::FileGenerator(const google::protobuf::FileDescriptor* file)
+    : file_(file) {
+  if (!file) {
+    throw std::invalid_argument("File descriptor is null");
   }
 }
 
