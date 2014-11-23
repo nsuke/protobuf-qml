@@ -94,8 +94,8 @@ void setReflectionValue(const Reflection& ref,
       ref.SetBool(&msg, field, value.value<bool>());
       break;
     case FieldDescriptor::CPPTYPE_STRING:
-    // QString::fromStdString(ref.SetString(&msg, field));
-    //  break;
+      ref.SetString(&msg, field, value.value<QString>().toStdString());
+      break;
     case FieldDescriptor::CPPTYPE_ENUM:
     //      ref.SetEnum(&msg, field);
     //  break;

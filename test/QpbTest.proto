@@ -3,5 +3,6 @@ message Msg1 {
   optional uint32 i2 = 2;
   optional uint64 camel_field_test1 = 3;
   repeated int32 repeated_field = 4;
-  repeated string string_field = 33000;
+  optional string string_field = 5;
+  repeated string repeated_string_field = 33000;
 }
