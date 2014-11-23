@@ -222,6 +222,7 @@ Item {
       tryCompare(called, 0, true, 200);
       verify(Gen.Msg1.parse(buffer.input, function(msg, err) {
         compare(msg.required1, -42);
+        verify(!err);
         called[1] = true;
       }));
       tryCompare(called, 1, true, 200);

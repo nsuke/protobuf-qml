@@ -16,7 +16,8 @@ void AsyncProcessor::doParse(int key, InputDevice* input) {
   Q_ASSERT(!has_task_);
   has_task_ = true;
   auto msg = parent_->parse(input);
-  parent_->parseCompleted(key, std::move(msg), !msg.isValid());
+  auto err = !msg.isValid();
+  parent_->parseCompleted(key, std::move(msg), err);
   has_task_ = false;
 }
 
