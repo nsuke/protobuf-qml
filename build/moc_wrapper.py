@@ -29,7 +29,7 @@ def main(argv):
       pass
   cmd = [
     fix_path(args.moc) or 'moc',
-    '--o', o,
+    '-o', o,
   ]
   if args.includes:
     cmd.extend(['-I%s' % i for i in args.includes.split(' ')])
