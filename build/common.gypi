@@ -21,16 +21,6 @@
     'qt_bin_dir%': '<(qt_bin_dir)',
 
     'qpb_root%': '<(DEPTH)',
-
-    'conditions': [
-      ['protobuf_static_link == 1', {
-        'protobuf_lib%': '<(protobuf_lib_dir)/<(STATIC_LIB_PREFIX)protobuf<(STATIC_LIB_SUFFIX)',
-        'protoc_lib%': '<(protobuf_lib_dir)/<(STATIC_LIB_PREFIX)protoc<(STATIC_LIB_SUFFIX)',
-      }, {
-        'protobuf_lib%': '<(protobuf_lib_dir)/<(SHARED_LIB_PREFIX)protobuf<(SHARED_LIB_SUFFIX)',
-        'protoc_lib%': '<(protobuf_lib_dir)/<(SHARED_LIB_PREFIX)protoc<(SHARED_LIB_SUFFIX)',
-      }],
-    ],
   },
   'conditions': [
     ['clang!=0', {

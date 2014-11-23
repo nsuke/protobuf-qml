@@ -43,7 +43,6 @@
       'target_name': 'protoc-gen-qml',
       'type': 'executable',
       'dependencies': [
-#        'protobuf-qml',
         '<(qpb_root)/build/protobuf.gyp:protoc',
         '<(qpb_root)/build/protobuf.gyp:protobuf',
         '<(qpb_root)/build/qt5.gyp:qt5',
@@ -63,8 +62,6 @@
       },
       'target_name': 'qpb-qml-test',
       'type': 'none',
-      'dependencies': [
-      ],
       'sources': [
         '<(qpb_root)/test/QpbTest.proto',
         '<(qpb_root)/test/QpbTest2.proto',
@@ -87,6 +84,28 @@
         ],
         'outputs': [
           '<(qml_test_dir)/<(RULE_INPUT_ROOT).pb.js',
+        ],
+      }],
+      'actions': [{
+        'action_name': 'generate_runner',
+        'action': [
+          'python',
+          '<(DEPTH)/build/generate_test_runner.py',
+          '<(qt_bin_dir)/qmltestrunner',
+          '<(DEPTH)',
+          '<(PRODUCT_DIR)/qml',
+          '<(PRODUCT_DIR)/qml_test',
+          '<(PRODUCT_DIR)/run_tests.py',
+          '-L',
+          '<(protobuf_lib_dir)',
+          '<(qt_lib_dir)',
+        ],
+        'inputs': [
+          '<(DEPTH)/build/generate_test_runner.py',
+          '<(qt_bin_dir)/qmltestrunner',
+        ],
+        'outputs': [
+          '<(PRODUCT_DIR)/srun_tests.py',
         ],
       }],
       'copies': [{

@@ -42,6 +42,25 @@
           '<(qpb_root)/sandbox/tst_.qml',
         ],
       }],
+      'actions': [{
+        'action_name': 'generate_runner',
+        'action': [
+          'python',
+          '<(DEPTH)/build/generate_test_runner.py',
+          '<(qt_bin_dir)/qmltestrunner',
+          '<(DEPTH)',
+          '<(PRODUCT_DIR)/qml',
+          '<(PRODUCT_DIR)/qml_sandbox',
+          '<(PRODUCT_DIR)/run_sandbox.py',
+        ],
+        'inputs': [
+          '<(DEPTH)/build/generate_test_runner.py',
+          '<(qt_bin_dir)/qmltestrunner',
+        ],
+        'outputs': [
+          '<(PRODUCT_DIR)/run_sandbox.py',
+        ],
+      }],
     },
   ],
 }

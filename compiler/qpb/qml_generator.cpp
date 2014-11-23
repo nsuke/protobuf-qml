@@ -136,7 +136,12 @@ int FileGenerator::serializedFileDescriptor(std::string& out) {
   if (!file_pb.SerializeToArray(byte_array.data(), byte_array.size())) {
     throw std::runtime_error("Failed to serialize file descriptor");
   }
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
   out = byte_array.toBase64().toStdString();
+#else
+  auto tmp_ba = byte_array.toBase64();
+  out = std::string(tmp_ba.data(), tmp_ba.size());
+#endif
   return size;
 }
 }

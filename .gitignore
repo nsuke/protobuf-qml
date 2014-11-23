@@ -1,2 +1,7 @@
 out
-*/supplement.gypi
+build/supplement.gypi
+deps/bin
+deps/gyp
+deps/include
+deps/lib
+deps/protobuf
