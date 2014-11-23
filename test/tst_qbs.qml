@@ -34,6 +34,15 @@ Item {
       compare(msg2.camelFieldTest1, 80);
     }
 
+    function test_multi_message() {
+      verify(Gen2.SecondMessage.serialize(buffer.output, {
+        str: 'some text',
+      }));
+      var msg2 = Gen2.SecondMessage.parse(buffer.input);
+      verify(msg2);
+      compare(msg2.str, 'some text');
+    }
+
     function test_minus_64bit() {
       verify(Gen.Msg1.serialize(buffer.output, {
         i1: -80000000000,

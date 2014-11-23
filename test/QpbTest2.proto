@@ -4,3 +4,7 @@ message Msg2 {
   optional Msg1 msg1 = 1;
   repeated Msg1 msgs1 = 2;
 }
+
+message SecondMessage {
+  required string str = 1;
+}
