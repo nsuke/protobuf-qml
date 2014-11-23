@@ -53,6 +53,20 @@ Item {
       compare(msg2.camelFieldTest1, 80000000000);
     }
 
+    function test_string() {
+      verify(Gen.Msg1.serialize(buffer.output, {
+        i1: 0,
+        stringField: [
+          'foo Bar',
+        ],
+      }));
+      var msg2 = Gen.Msg1.parse(buffer.input);
+      verify(msg2);
+      verify(msg2.stringField);
+      compare(msg2.stringField.length, 1);
+      compare(msg2.stringField[0], 'foo Bar');
+    }
+
     function test_write_read_missing() {
       verify(Gen.Msg1.serialize(buffer.output, {i1: -42}));
       var msg2 = Gen.Msg1.parse(buffer.input);
