@@ -18,15 +18,15 @@ Item {
     }
 
     function test_write_read() {
-      verify(Gen.Msg1.serialize(buffer.output, {i1: -42}));
+      verify(Gen.Msg1.serialize(buffer.output, {required1: -42}));
       var msg2 = Gen.Msg1.parse(buffer.input);
       verify(msg2);
-      compare(msg2.i1, -42);
+      compare(msg2.required1, -42);
     }
 
     function test_camel_case() {
       verify(Gen.Msg1.serialize(buffer.output, {
-        i1: 0,
+        required1: 0,
         camelFieldTest1: 80,
       }));
       var msg2 = Gen.Msg1.parse(buffer.input);
@@ -45,16 +45,16 @@ Item {
 
     function test_minus_64bit() {
       verify(Gen.Msg1.serialize(buffer.output, {
-        i1: -80000000000,
+        required1: -80000000000,
       }));
       var msg2 = Gen.Msg1.parse(buffer.input);
       verify(msg2);
-      compare(msg2.i1, -80000000000);
+      compare(msg2.required1, -80000000000);
     }
 
     function test_64bit() {
       verify(Gen.Msg1.serialize(buffer.output, {
-        i1: 0,
+        required1: 0,
         camelFieldTest1: 80000000000,
       }));
       var msg2 = Gen.Msg1.parse(buffer.input);
@@ -64,7 +64,7 @@ Item {
 
     function test_string() {
       verify(Gen.Msg1.serialize(buffer.output, {
-        i1: 0,
+        required1: 0,
         stringField: 'foo Bar',
       }));
       var msg2 = Gen.Msg1.parse(buffer.input);
@@ -74,7 +74,7 @@ Item {
 
     function test_repeated_string() {
       verify(Gen.Msg1.serialize(buffer.output, {
-        i1: 0,
+        required1: 0,
         repeatedStringField: [
           'foo Bar',
         ],
@@ -87,15 +87,15 @@ Item {
     }
 
     function test_write_read_missing() {
-      verify(Gen.Msg1.serialize(buffer.output, {i1: -42}));
+      verify(Gen.Msg1.serialize(buffer.output, {required1: -42}));
       var msg2 = Gen.Msg1.parse(buffer.input);
       verify(msg2);
-      compare(typeof msg2.i2, 'undefined');
+      compare(typeof msg2.optionalField1, 'undefined');
     }
 
     function test_repeated() {
       verify(Gen.Msg1.serialize(buffer.output, {
-        i1: 0,
+        required1: 0,
         repeatedField: [
           42,
           -42,
@@ -122,7 +122,7 @@ Item {
 
     function test_enum_io() {
       verify(Gen.Msg1.serialize(buffer.output, {
-        i1: 0,
+        required1: 0,
         enumField: Gen.Enum1.ENUM_VALUE_SECOND,
       }));
       var msg2 = Gen.Msg1.parse(buffer.input);
@@ -132,7 +132,7 @@ Item {
 
     function test_repeated_enum_io() {
       verify(Gen.Msg1.serialize(buffer.output, {
-        i1: 0,
+        required1: 0,
         repeatedEnumField: [
           Gen.Enum1.ENUM_VALUE_SECOND,
           Gen.Enum1.ENUM_VALUE_THIRD,
@@ -153,23 +153,23 @@ Item {
     function test_sub_message() {
       verify(Gen2.Msg2.serialize(buffer.output, {
         msg1: {
-          i1: 17,
+          required1: 17,
         },
       }));
       var msg2 = Gen2.Msg2.parse(buffer.input);
       verify(msg2);
       verify(msg2.msg1);
-      compare(msg2.msg1.i1, 17);
+      compare(msg2.msg1.required1, 17);
     }
 
     function test_repeated_sub_message() {
       verify(Gen2.Msg2.serialize(buffer.output, {
         msgs1: [
           {
-            i1: 300,
+            required1: 300,
           },
           {
-            i1: 0,
+            required1: 0,
             repeatedStringField: [
               'baz',
             ],
@@ -180,7 +180,7 @@ Item {
       verify(msg2);
       verify(msg2.msgs1);
       compare(msg2.msgs1.length, 2);
-      compare(msg2.msgs1[0].i1, 300);
+      compare(msg2.msgs1[0].required1, 300);
       compare(typeof msg2.msgs1[0].repeatedStringField, 'undefined');
       verify(typeof msg2.msgs1[1].repeatedStringField);
       verify(typeof msg2.msgs1[1].repeatedStringField[0], 'baz');
@@ -196,7 +196,7 @@ Item {
     }
 
     function test_serialize_undefined() {
-      verify(!Gen.Msg1.serialize(undefined, {i1: 42}));
+      verify(!Gen.Msg1.serialize(undefined, {required1: 42}));
     }
 
     function test_serialize_empty() {
@@ -206,12 +206,12 @@ Item {
     function test_serialize_missing_required() {
       // TODO: Does not work on Qt5.0 + Ubuntu 12.04
       skip();
-      verify(!Gen.Msg1.serialize(buffer.output, {i2: 42}));
+      verify(!Gen.Msg1.serialize(buffer.output, {optionalField1: 42}));
     }
 
     function test_serialize_size0() {
       buffer.size = 0;
-      verify(!Gen.Msg1.serialize(buffer.output, {i1: 42}));
+      verify(!Gen.Msg1.serialize(buffer.output, {required1: 42}));
     }
 
     function test_serialize_undefined_value() {
@@ -240,7 +240,7 @@ Item {
     }
 
     function test_parse_size0() {
-      verify(Gen.Msg1.serialize(buffer.output, {i1: -42}));
+      verify(Gen.Msg1.serialize(buffer.output, {required1: -42}));
       buffer.size = 0;
       verify(!Gen.Msg1.parse(buffer.input));
     }
