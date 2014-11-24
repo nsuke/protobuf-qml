@@ -79,9 +79,9 @@ void FileGenerator::generateJsFile(io::Printer& p) {
   std::string file_desc_str;
   auto file_desc_size = serializedFileDescriptor(file_desc_str);
   p.Print(
-      "      var file = Qpb.DescriptorPool.addFileDescriptor("
+      "      this.file = Qpb.DescriptorPool.addFileDescriptor("
       "\"$file_descriptor$\", $file_descriptor_size$);\n"
-      "      if(file) {\n",
+      "      if(this.file) {\n",
       "file_descriptor_size",
       SimpleItoa(file_desc_size),
       "file_descriptor",
@@ -89,7 +89,7 @@ void FileGenerator::generateJsFile(io::Printer& p) {
   for (int i = 0; i < file_->message_type_count(); i++) {
     auto msg = file_->message_type(i);
     p.Print(
-        "        this.$message_name$ = file.messageType($message_index$);\n",
+        "        this.$message_name$ = this.file.messageType($message_index$);\n",
         "message_name",
         msg->name(),
         "message_index",

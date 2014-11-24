@@ -39,7 +39,7 @@ class MemoryIOImpl {
   void set_block_size(int size) { block_size_ = size; }
 
  private:
-  int block_size_;
+  int block_size_ = 0;
   bool in_use_ = false;
   std::vector<char>* buffer_;
 };

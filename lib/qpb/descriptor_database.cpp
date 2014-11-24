@@ -9,6 +9,15 @@ namespace qpb {
 
 using namespace google::protobuf;
 
+AsyncProcessor::~AsyncProcessor() {
+  thread_.quit();
+  thread_.wait();
+}
+
+void AsyncProcessor::doClearSharedMessage() {
+  parent_->clearSharedMessage();
+}
+
 bool packToMessage(const QVariantMap& value, Message& msg);
 QVariant unpackFromMessage(const Message& msg);
 
@@ -32,11 +41,10 @@ void AsyncProcessor::doSerialize(int key,
 }
 
 DescriptorWrapper::~DescriptorWrapper() {
+  clearSharedMessage();
   for (auto& a : async_) {
-    a->quit();
-    a->wait();
+    a->clearSharedMessage();
   }
-  message_.setLocalData(nullptr);
 }
 
 // TODO: Handle invalid QVariant that cannot be converted
@@ -362,7 +370,9 @@ FileDescriptorWrapper* DescriptorPoolWrapper::addFileDescriptor(
   FileDescriptorProto pb;
   if (pb.ParseFromArray(ba.data(), ba.size())) {
     if (auto desc = pool_.BuildFile(pb)) {
-      return new FileDescriptorWrapper(desc, this);
+      auto file = new FileDescriptorWrapper(desc);
+      children_.emplace_back(file);
+      return file;
     }
   }
   return nullptr;

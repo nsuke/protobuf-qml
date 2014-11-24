@@ -14,37 +14,42 @@ namespace qpb {
 
 class DescriptorWrapper;
 
-class AsyncProcessor : public QThread {
+class AsyncProcessor : public QObject {
   Q_OBJECT
 
 signals:
   void startParse(int key, InputDevice* input);
   void startSerialize(int key, OutputDevice* output, QVariantMap value);
+  void clearSharedMessage();
 
  public:
   AsyncProcessor(DescriptorWrapper* parent)
-      : parent_(parent) {
-    moveToThread(this);
-    start();
+      : QObject(reinterpret_cast<QObject*>(parent)), parent_(parent) {
+    moveToThread(&thread_);
+    connect(this, &AsyncProcessor::startParse, this, &AsyncProcessor::doParse);
     connect(this,
-            SIGNAL(startParse(int, InputDevice*)),
+            &AsyncProcessor::startSerialize,
             this,
-            SLOT(doParse(int, InputDevice*)));
+            &AsyncProcessor::doSerialize);
     connect(this,
-            SIGNAL(startSerialize(int, OutputDevice*, const QVariantMap&)),
+            &AsyncProcessor::clearSharedMessage,
             this,
-            SLOT(doSerialize(int, OutputDevice*, QVariantMap)));
+            &AsyncProcessor::doClearSharedMessage);
+    thread_.start();
   }
+  ~AsyncProcessor();
 
   bool has_task() const { return has_task_; }
 
  private slots:
   void doParse(int key, InputDevice* input);
   void doSerialize(int key, OutputDevice* input, QVariantMap value);
+  void doClearSharedMessage();
 
  private:
   bool has_task_ = false;
   DescriptorWrapper* parent_;
+  QThread thread_;
 };
 
 class DescriptorWrapper : public QObject {
@@ -66,16 +71,16 @@ signals:
   Q_INVOKABLE QVariant parse(InputDevice* input);
   Q_INVOKABLE bool serialize(OutputDevice* output, QVariantMap value);
 
-  Q_INVOKABLE int nextKey() {
-    return ++key_;
-  }
+  Q_INVOKABLE int nextKey() { return ++key_; }
   Q_INVOKABLE bool parseAsync(int key, InputDevice* input) {
     auto index = async();
     if (index < 0) return 0;
     async_[index]->startParse(key, input);
     return true;
   }
-  Q_INVOKABLE bool serializeAsync(int key, OutputDevice* output, QVariantMap value) {
+  Q_INVOKABLE bool serializeAsync(int key,
+                                  OutputDevice* output,
+                                  QVariantMap value) {
     auto index = async();
     if (index < 0) return false;
     async_[index]->startSerialize(key, output, std::move(value));
@@ -89,6 +94,8 @@ signals:
       maxThreadsChanged();
     };
   }
+
+  void clearSharedMessage() { message_.setLocalData(nullptr); }
 
  private:
   int async() {
@@ -120,8 +127,7 @@ signals:
   const google::protobuf::Descriptor* descriptor_;
   google::protobuf::DynamicMessageFactory message_factory_;
   QThreadStorage<google::protobuf::Message*> message_;
-  // Use pointer because QObject does not have move constructor as of writing.
-  std::vector<std::unique_ptr<AsyncProcessor>> async_;
+  std::vector<AsyncProcessor*> async_;
 };
 
 class FileDescriptorWrapper : public QObject {
@@ -152,7 +158,11 @@ class DescriptorPoolWrapper : public QObject {
   Q_INVOKABLE qpb::FileDescriptorWrapper* addFileDescriptor(QVariant);
 
  private:
-  std::vector<QByteArray> encoded_descriptors_;
   google::protobuf::DescriptorPool pool_;
+  // We keep track of "children" object to control object delete order.
+  // Since Qt deleteChildren occurs *after* deleting fileds, we cannot delete
+  // descriptors *before* deleting DescriptorPool using parent-child tree
+  // mechanism.
+  std::vector<std::unique_ptr<FileDescriptorWrapper>> children_;
 };
 }
