@@ -233,8 +233,9 @@ QVariant unpackFromMessage(const Message& msg) {
   QVariantMap result;
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
-  if (descriptor->field_count() > 0) {
-    for (int i = 0; i < descriptor->field_count(); i++) {
+  auto field_count = descriptor->field_count();
+  if (field_count > 0) {
+    for (int i = 0; i < field_count; i++) {
       auto field_descriptor = descriptor->field(i);
       QVariantMap field;
       auto field_name = camelize(field_descriptor->name());
@@ -249,6 +250,25 @@ QVariant unpackFromMessage(const Message& msg) {
         auto value = getReflectionValue(*reflection, msg, field_descriptor);
         if (value.isValid())
           result.insert(QString::fromStdString(field_name), std::move(value));
+      }
+    }
+  }
+  auto oneof_count = descriptor->oneof_decl_count();
+  if (oneof_count > 0) {
+    for (int i = 0; i < oneof_count; i++) {
+      auto oneof_descriptor = descriptor->oneof_decl(i);
+      if (reflection->HasOneof(msg, oneof_descriptor)) {
+        auto field_descriptor =
+            reflection->GetOneofFieldDescriptor(msg, oneof_descriptor);
+        auto value = getReflectionValue(*reflection, msg, field_descriptor);
+        if (value.isValid()) {
+          auto field_name = camelize(field_descriptor->name());
+          auto oneof_name = camelize(oneof_descriptor->name());
+          QVariantMap oneof;
+          oneof.insert(QString::fromStdString(field_name), std::move(value));
+          result.insert(QString::fromStdString(oneof_name), std::move(oneof));
+          break;
+        }
       }
     }
   }
@@ -268,10 +288,11 @@ QVariant DescriptorWrapper::parse(InputDevice* input) {
 bool packToMessage(const QVariantMap& value, Message& msg) {
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
-  if (descriptor->field_count() <= 0) return false;
-  for (int i = 0; i < descriptor->field_count(); i++) {
-    auto field_name = camelize(descriptor->field(i)->name());
+  auto field_count = descriptor->field_count();
+  if (field_count <= 0) return false;
+  for (int i = 0; i < field_count; i++) {
     auto field_descriptor = descriptor->field(i);
+    auto field_name = camelize(field_descriptor->name());
     auto it = value.constFind(QString::fromStdString(field_name));
     if (it != value.constEnd()) {
       if (field_descriptor->is_repeated()) {
@@ -288,6 +309,24 @@ bool packToMessage(const QVariantMap& value, Message& msg) {
         }
       } else {
         setReflectionValue(*reflection, msg, field_descriptor, it.value());
+      }
+    }
+  }
+  for (int i = 0; i < descriptor->oneof_decl_count(); i++) {
+    auto oneof_descriptor = descriptor->oneof_decl(i);
+    auto oneof_name = camelize(oneof_descriptor->name());
+    auto it = value.constFind(QString::fromStdString(oneof_name));
+    if (it != value.constEnd() &&
+        it.value().canConvert(QMetaType::QVariantMap)) {
+      auto oneof = it.value().value<QVariantMap>();
+      for (int j = 0; j < oneof_descriptor->field_count(); j++) {
+        auto field_descriptor = oneof_descriptor->field(j);
+        auto field_name = camelize(field_descriptor->name());
+        auto it2 = oneof.constFind(QString::fromStdString(field_name));
+        if (it2 != oneof.constEnd() && it2.value().isValid()) {
+          setReflectionValue(*reflection, msg, field_descriptor, it2.value());
+          break;
+        }
       }
     }
   }

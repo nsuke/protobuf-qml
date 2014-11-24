@@ -150,6 +150,22 @@ Item {
       compare(Gen.Enum1.toString(msg2.repeatedEnumField[3]), 'ENUM_VALUE_FIRST');
     }
 
+    function test_oneof() {
+      verify(Gen2.ThirdMessage.serialize(buffer.output, {
+        testOneof: {
+          subMessage: {
+            str: 'foobar',
+          },
+        },
+      }));
+      var msg2 = Gen2.ThirdMessage.parse(buffer.input);
+      verify(msg2);
+      verify(msg2.testOneof);
+      verify(msg2.testOneof.subMessage);
+      compare(typeof msg2.testOneof.name, 'undefined');
+      compare(msg2.testOneof.subMessage.str, 'foobar');
+    }
+
     function test_sub_message() {
       verify(Gen2.Msg2.serialize(buffer.output, {
         msg1: {

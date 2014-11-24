@@ -8,3 +8,10 @@ message Msg2 {
 message SecondMessage {
   required string str = 1;
 }
+
+message ThirdMessage {
+  oneof test_oneof {
+    string name = 4;
+    SecondMessage sub_message = 9;
+  }
+}
