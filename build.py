@@ -66,6 +66,7 @@ class GitDependency(object):
       except Exception:
         sys.stdout.write('Fetching git remote.\n')
         cmd = ['git', 'fetch', '--all']
+        # TODO: If target is branch, we should fetch unconditionally
         if not execute(cmd, cwd=self.dir):
           sys.stderr.write('Failed to fetch source repository.\n')
           return False
