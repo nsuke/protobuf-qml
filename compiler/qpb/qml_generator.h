@@ -32,11 +32,17 @@ class FileGenerator {
 
   void generateJsFile(google::protobuf::io::Printer&);
   void generateEnum(google::protobuf::io::Printer&,
-                       const google::protobuf::EnumDescriptor*);
+                    const google::protobuf::EnumDescriptor*,
+                    bool top_level = true);
   void generateMessage(google::protobuf::io::Printer&,
-                       const google::protobuf::Descriptor*);
+                       const google::protobuf::Descriptor*,
+                       bool top_level = true);
 
  private:
+  void header(google::protobuf::io::Printer&,
+              bool top_level,
+              const std::string& name);
+  void footer(google::protobuf::io::Printer&, bool top_level);
   int serializedFileDescriptor(std::string&);
 
   const google::protobuf::FileDescriptor* file_;

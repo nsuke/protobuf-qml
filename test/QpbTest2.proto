@@ -15,3 +15,33 @@ message ThirdMessage {
     SecondMessage sub_message = 9;
   }
 }
+
+message NestingMessage {
+  enum NestedEnum {
+    FIRST_VALUE = 42;
+    LAST_VALUE = -100;
+  }
+  message NestedMessage {
+    enum MoreNestedEnum {
+      VALUE1 = 99;
+      VALUE2 = 100;
+    }
+    message MoreNestedMessage {
+      message EvenMoreNestedMessage {
+        optional string deeply_nested_field = 1;
+      }
+    }
+    optional string nested_field = 1;
+  }
+
+  optional NestedMessage nested_message = 1;
+  optional NestedEnum nested_enum = 2;
+  optional NestedMessage.MoreNestedEnum more_nested_enum = 3;
+  optional NestedMessage.MoreNestedMessage.EvenMoreNestedMessage even_more_nested_message = 4;
+  oneof nested_oneof {
+    NestedMessage nested_message2 = 11;
+    NestedEnum nested_enum2 = 12;
+    NestedMessage.MoreNestedEnum more_nested_enum2 = 13;
+    NestedMessage.MoreNestedMessage.EvenMoreNestedMessage even_more_nested_message2 = 14;
+  }
+}

@@ -204,6 +204,42 @@ Item {
   }
 
   TestCase {
+    name: 'NestTest'
+
+    function init() {
+      buffer.clear();
+      buffer.size = 1000;
+    }
+
+    function test_nested() {
+      verify(Gen2.NestingMessage.serialize(buffer.output, {
+        nestedMessage: {
+          nestedField: 'nesting',
+        },
+      }));
+      var msg = Gen2.NestingMessage.parse(buffer.input);
+      verify(msg);
+      verify(msg.nestedMessage);
+      compare(msg.nestedMessage.nestedField, 'nesting');
+    }
+
+    function test_deeply_nested() {
+      verify(Gen2.NestingMessage.serialize(buffer.output, {
+        nestedOneof: {
+          evenMoreNestedMessage2: {
+            deeplyNestedField: 'nesting message',
+          },
+        },
+      }));
+      var msg = Gen2.NestingMessage.parse(buffer.input);
+      verify(msg);
+      verify(msg.nestedOneof);
+      verify(msg.nestedOneof.evenMoreNestedMessage2);
+      compare(msg.nestedOneof.evenMoreNestedMessage2.deeplyNestedField, 'nesting message');
+    }
+  }
+
+  TestCase {
     name: 'AsyncTest'
 
     function init() {

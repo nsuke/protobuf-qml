@@ -117,12 +117,36 @@ void FileGenerator::generateJsFile(io::Printer& p) {
   }
 }
 
-void FileGenerator::generateEnum(io::Printer& p, const EnumDescriptor* t) {
-  p.Print(
-      "\n"
-      "var $enum_name$ = {\n",
-      "enum_name",
-      t->name());
+void FileGenerator::header(io::Printer& p,
+                           bool top_level,
+                           const std::string& name) {
+  if (top_level) {
+    p.Print(
+        "\n"
+        "var $name$ = {\n",
+        "name",
+        name);
+  } else {
+    p.Print(
+        "\n"
+        "$name$: {\n",
+        "name",
+        name);
+  }
+}
+
+void FileGenerator::footer(io::Printer& p, bool top_level) {
+  if (top_level) {
+    p.Print("};\n");
+  } else {
+    p.Print("},\n");
+  }
+}
+
+void FileGenerator::generateEnum(io::Printer& p,
+                                 const EnumDescriptor* t,
+                                 bool top_level) {
+  header(p, top_level, t->name());
   for (int i = 0; i < t->value_count(); i++) {
     p.Print("  $enum_value_name$: $enum_value$,\n",
             "enum_value_name",
@@ -144,23 +168,26 @@ void FileGenerator::generateEnum(io::Printer& p, const EnumDescriptor* t) {
   p.Print(
       "    }\n"
       "  },\n");
-  p.Print("};\n");
+  footer(p, top_level);
 }
 
-void FileGenerator::generateMessage(io::Printer& p, const Descriptor* t) {
+void FileGenerator::generateMessage(io::Printer& p,
+                                    const Descriptor* t,
+                                    bool top_level) {
+  header(p, top_level, t->name());
   p.Print(
-      "\n"
-      "var $message_name$ = {\n"
       "  callbacks: [],\n"
       "  initialized: false,\n"
       "  initOnce: function() {\n"
       "    if(init.once() && !this.initialized) {\n"
       "      var that = this;\n"
-      "      init.$message_name$.serializeCompleted.connect(function(k, err) {\n"
+      "      init.$message_name$.serializeCompleted.connect(function(k, err) "
+      "{\n"
       "        if(!that.callbacks[k](err))\n"
       "          that.callbacks.splice(k, 1);\n"
       "      });\n"
-      "      init.$message_name$.parseCompleted.connect(function(k, msg, err) {\n"
+      "      init.$message_name$.parseCompleted.connect(function(k, msg, err) "
+      "{\n"
       "        if(!that.callbacks[k](msg, err))\n"
       "          that.callbacks.splice(k, 1);\n"
       "      });\n"
@@ -189,10 +216,16 @@ void FileGenerator::generateMessage(io::Printer& p, const Descriptor* t) {
       "      this.callbacks[k] = callback;\n"
       "      return init.$message_name$.serializeAsync(k, output, value);\n"
       "    }\n"
-      "  },\n"
-      "};\n",
+      "  },\n",
       "message_name",
       t->name());
+  for (int i = 0; i < t->nested_type_count(); i++) {
+    generateMessage(p, t->nested_type(i), false);
+  }
+  for (int i = 0; i < t->enum_type_count(); i++) {
+    generateEnum(p, t->enum_type(i), false);
+  }
+  footer(p, top_level);
 }
 
 int FileGenerator::serializedFileDescriptor(std::string& out) {
