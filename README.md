@@ -31,7 +31,6 @@ For more customization, see
 
 TODO:
 ----
-* Support "OneOf"
-* Support "Extension"
+* Support "extension" and unknown fields
 * Getting started documentation
 * Android build configuration
