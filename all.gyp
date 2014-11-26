@@ -50,6 +50,8 @@
         '<(qpb_root)/compiler',
       ],
       'sources': [
+        '<(qpb_root)/compiler/qpb/generators.cpp',
+        '<(qpb_root)/compiler/qpb/generators.h',
         '<(qpb_root)/compiler/qpb/qml_generator.cpp',
         '<(qpb_root)/compiler/qpb/qml_generator.h',
         '<(qpb_root)/compiler/qpb/main.cpp',

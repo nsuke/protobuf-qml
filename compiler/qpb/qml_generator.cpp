@@ -1,11 +1,8 @@
 #include "qpb/qml_generator.h"
 
-#include <google/protobuf/descriptor.h>
-#include <google/protobuf/descriptor.pb.h>
-#include <google/protobuf/io/printer.h>
 #include <google/protobuf/io/zero_copy_stream.h>
-#include <google/protobuf/compiler/cpp/cpp_helpers.h>
 #include <google/protobuf/stubs/strutil.h>
+#include <google/protobuf/compiler/cpp/cpp_helpers.h>
 #include <QByteArray>
 
 #include <memory>
@@ -38,6 +35,16 @@ FileGenerator::FileGenerator(const google::protobuf::FileDescriptor* file)
     : file_(file) {
   if (!file) {
     throw std::invalid_argument("File descriptor is null");
+  }
+  for (int i = 0; i < file_->message_type_count(); i++) {
+    message_generators_.emplace_back(
+        new MessageGenerator(file_->message_type(i)));
+  }
+  for (int i = 0; i < file_->enum_type_count(); i++) {
+    enum_generators_.emplace_back(new EnumGenerator(file_->enum_type(i)));
+  }
+  for (int i = 0; i < file_->extension_count(); i++) {
+    extension_generators_.emplace_back(new ExtensionGenerator);
   }
 }
 
@@ -86,14 +93,8 @@ void FileGenerator::generateJsFile(io::Printer& p) {
       SimpleItoa(file_desc_size),
       "file_descriptor",
       file_desc_str);
-  for (int i = 0; i < file_->message_type_count(); i++) {
-    auto msg = file_->message_type(i);
-    p.Print(
-        "        this.$message_name$ = this.file.messageType($message_index$);\n",
-        "message_name",
-        msg->name(),
-        "message_index",
-        SimpleItoa(i));
+  for (auto& g : message_generators_) {
+    g->generateMessageInit(p);
   }
 
   p.Print(
@@ -108,124 +109,13 @@ void FileGenerator::generateJsFile(io::Printer& p) {
       "file_name",
       file_->name());
 
-  for (int i = 0; i < file_->enum_type_count(); i++) {
-    generateEnum(p, file_->enum_type(i));
+  for (auto& g : enum_generators_) {
+    g->generateEnum(p);
   }
 
-  for (int i = 0; i < file_->message_type_count(); i++) {
-    generateMessage(p, file_->message_type(i));
+  for (auto& g : message_generators_) {
+    g->generateMessage(p);
   }
-}
-
-void FileGenerator::header(io::Printer& p,
-                           bool top_level,
-                           const std::string& name) {
-  if (top_level) {
-    p.Print(
-        "\n"
-        "var $name$ = {\n",
-        "name",
-        name);
-  } else {
-    p.Print(
-        "\n"
-        "$name$: {\n",
-        "name",
-        name);
-  }
-}
-
-void FileGenerator::footer(io::Printer& p, bool top_level) {
-  if (top_level) {
-    p.Print("};\n");
-  } else {
-    p.Print("},\n");
-  }
-}
-
-void FileGenerator::generateEnum(io::Printer& p,
-                                 const EnumDescriptor* t,
-                                 bool top_level) {
-  header(p, top_level, t->name());
-  for (int i = 0; i < t->value_count(); i++) {
-    p.Print("  $enum_value_name$: $enum_value$,\n",
-            "enum_value_name",
-            t->value(i)->name(),
-            "enum_value",
-            SimpleItoa(t->value(i)->number()));
-  }
-  p.Print(
-      "\n"
-      "  toString: function(value) {\n"
-      "    switch(value) {\n");
-  for (int i = 0; i < t->value_count(); i++) {
-    p.Print("      case $enum_value$: return '$enum_value_name$';\n",
-            "enum_value_name",
-            t->value(i)->name(),
-            "enum_value",
-            SimpleItoa(t->value(i)->number()));
-  }
-  p.Print(
-      "    }\n"
-      "  },\n");
-  footer(p, top_level);
-}
-
-void FileGenerator::generateMessage(io::Printer& p,
-                                    const Descriptor* t,
-                                    bool top_level) {
-  header(p, top_level, t->name());
-  p.Print(
-      "  callbacks: [],\n"
-      "  initialized: false,\n"
-      "  initOnce: function() {\n"
-      "    if(init.once() && !this.initialized) {\n"
-      "      var that = this;\n"
-      "      init.$message_name$.serializeCompleted.connect(function(k, err) "
-      "{\n"
-      "        if(!that.callbacks[k](err))\n"
-      "          that.callbacks.splice(k, 1);\n"
-      "      });\n"
-      "      init.$message_name$.parseCompleted.connect(function(k, msg, err) "
-      "{\n"
-      "        if(!that.callbacks[k](msg, err))\n"
-      "          that.callbacks.splice(k, 1);\n"
-      "      });\n"
-      "      this.initialized = true;\n"
-      "    }\n"
-      "    return this.initialized;\n"
-      "  },\n"
-      "  parse: function(input, callback) {\n"
-      "    if(!this.initOnce()) return;\n"
-      "    if(typeof callback == 'undefined') {\n"
-      "      return init.$message_name$.parse(input);\n"
-      "    } else {\n"
-      "      var k = init.$message_name$.nextKey();\n"
-      "      if(!k) return;\n"
-      "      this.callbacks[k] = callback;\n"
-      "      return init.$message_name$.parseAsync(k, input);\n"
-      "    }\n"
-      "  },\n"
-      "  serialize: function(output, value, callback) {\n"
-      "    if(!this.initOnce()) return;\n"
-      "    if(typeof callback == 'undefined') {\n"
-      "      return init.$message_name$.serialize(output, value);\n"
-      "    } else {\n"
-      "      var k = init.$message_name$.nextKey();\n"
-      "      if(!k) return;\n"
-      "      this.callbacks[k] = callback;\n"
-      "      return init.$message_name$.serializeAsync(k, output, value);\n"
-      "    }\n"
-      "  },\n",
-      "message_name",
-      t->name());
-  for (int i = 0; i < t->nested_type_count(); i++) {
-    generateMessage(p, t->nested_type(i), false);
-  }
-  for (int i = 0; i < t->enum_type_count(); i++) {
-    generateEnum(p, t->enum_type(i), false);
-  }
-  footer(p, top_level);
 }
 
 int FileGenerator::serializedFileDescriptor(std::string& out) {
