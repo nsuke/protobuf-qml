@@ -246,7 +246,7 @@ QVariant unpackFromMessage(const Message& msg) {
     for (int i = 0; i < field_count; i++) {
       auto field_descriptor = descriptor->field(i);
       QVariantMap field;
-      auto field_name = camelize(field_descriptor->name());
+      auto field_name = field_descriptor->camelcase_name();
       if (field_descriptor->is_repeated()) {
         auto size = reflection->FieldSize(msg, field_descriptor);
         if (size > 0) {
@@ -270,7 +270,7 @@ QVariant unpackFromMessage(const Message& msg) {
             reflection->GetOneofFieldDescriptor(msg, oneof_descriptor);
         auto value = getReflectionValue(*reflection, msg, field_descriptor);
         if (value.isValid()) {
-          auto field_name = camelize(field_descriptor->name());
+          auto field_name = field_descriptor->camelcase_name();
           auto oneof_name = camelize(oneof_descriptor->name());
           QVariantMap oneof;
           oneof.insert(QString::fromStdString(field_name), std::move(value));
@@ -300,7 +300,7 @@ bool packToMessage(QVariantMap value, Message& msg) {
   if (field_count <= 0) return false;
   for (int i = 0; i < field_count; i++) {
     auto field_descriptor = descriptor->field(i);
-    auto field_name = camelize(field_descriptor->name());
+    auto field_name = field_descriptor->camelcase_name();
     auto it = value.find(QString::fromStdString(field_name));
     if (it != value.end()) {
       if (field_descriptor->is_repeated()) {
@@ -333,7 +333,7 @@ bool packToMessage(QVariantMap value, Message& msg) {
         auto oneof = it.value().value<QVariantMap>();
         for (int j = 0; j < oneof_descriptor->field_count(); j++) {
           auto field_descriptor = oneof_descriptor->field(j);
-          auto field_name = camelize(field_descriptor->name());
+          auto field_name = field_descriptor->camelcase_name();
           auto it2 = oneof.constFind(QString::fromStdString(field_name));
           if (it2 != oneof.constEnd() && it2.value().isValid()) {
             setReflectionValue(*reflection, msg, field_descriptor, it2.value());
