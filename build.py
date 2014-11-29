@@ -124,7 +124,7 @@ def main(argv):
 
   deps = [
     GitDependency('gyp', 'http://git.chromium.org/external/gyp.git', 'origin/master'),
-    CppGitDependency('protobuf', 'http://github.com/google/protobuf.git', '2.6.1'),
+    CppGitDependency('protobuf', 'http://github.com/google/protobuf.git', 'bba83652e1be610bdb7ee1566ad18346d98b843c'),
   ]
 
   if args.clean or args.clean_build:

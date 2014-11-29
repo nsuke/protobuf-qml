@@ -1,3 +1,4 @@
+syntax = "proto3";
 import "QpbTest.proto";
 
 message Msg2 {
@@ -6,7 +7,7 @@ message Msg2 {
 }
 
 message SecondMessage {
-  required string str = 1;
+  optional string str = 1;
 }
 
 message ThirdMessage {
@@ -18,11 +19,13 @@ message ThirdMessage {
 
 message NestingMessage {
   enum NestedEnum {
+    ENUM_VALUE_DEFAULT = 0;
     FIRST_VALUE = 42;
     LAST_VALUE = -100;
   }
   message NestedMessage {
     enum MoreNestedEnum {
+      ENUM_VALUE_DEFAULT = 0;
       VALUE1 = 99;
       VALUE2 = 100;
     }
