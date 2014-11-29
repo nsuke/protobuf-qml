@@ -62,8 +62,10 @@ class GitDependency(object):
         return False
     else:
       try:
-        target = self._rev_parse(self.ref)
+        res = execute(['git', 'cat-file', '-t', self.ref])
       except Exception:
+        pass
+      if not res:
         sys.stdout.write('Fetching git remote.\n')
         cmd = ['git', 'fetch', '--all']
         # TODO: If target is branch, we should fetch unconditionally
