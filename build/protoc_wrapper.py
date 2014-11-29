@@ -15,6 +15,7 @@ def fix_path(path):
 def main(argv):
   p = argparse.ArgumentParser()
   p.add_argument('--protoc', '-c')
+  p.add_argument('--libdir', '-L')
   p.add_argument('--plugin', '-p')
   p.add_argument('--out', '-o')
   p.add_argument('input')
@@ -25,6 +26,8 @@ def main(argv):
     '--proto_path=%s' % os.path.dirname(i),
     '--qml_out=%s' % fix_path(args.out or '.'),
   ]
+  if args.libdir:
+    os.environ['LD_LIBRARY_PATH'] = args.libdir
   if args.plugin:
     cmd.append('--plugin=%s' % args.plugin)
   cmd.append(i)

@@ -75,6 +75,7 @@
           '<(qpb_root)/build/protoc_wrapper.py',
           '-p', '<(PRODUCT_DIR)/protoc-gen-qml',
           '-c', '<(protoc_path)',
+          '-L', '<(protobuf_lib_dir)',
           '-o', '<(qml_test_dir)',
           '<(RULE_INPUT_PATH)',
         ],
