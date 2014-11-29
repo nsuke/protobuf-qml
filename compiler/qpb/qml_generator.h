@@ -33,7 +33,6 @@ class FileGenerator {
   const google::protobuf::FileDescriptor* file_;
   std::vector<std::unique_ptr<MessageGenerator>> message_generators_;
   std::vector<std::unique_ptr<EnumGenerator>> enum_generators_;
-  std::vector<std::unique_ptr<ExtensionGenerator>> extension_generators_;
 };
 }
 

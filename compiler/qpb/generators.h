@@ -21,25 +21,25 @@ class StructureUtil {
 
 class EnumGenerator {
  public:
-  EnumGenerator(const google::protobuf::EnumDescriptor* t) : t_(t) {
+  EnumGenerator(const google::protobuf::EnumDescriptor* t,
+                bool top_level = true)
+      : t_(t), top_level_(top_level) {
     if (!t) {
       throw std::invalid_argument("Null descriptor");
     }
   }
-  void generateEnum(google::protobuf::io::Printer& p, bool top_level = true);
+  void generateEnum(google::protobuf::io::Printer& p);
 
  private:
   const google::protobuf::EnumDescriptor* t_;
-};
-
-class ExtensionGenerator {
- public:
+  bool top_level_;
 };
 
 class MessageGenerator {
  public:
-  MessageGenerator(const google::protobuf::Descriptor* t);
-  void generateMessage(google::protobuf::io::Printer& p, bool top_level = true);
+  MessageGenerator(const google::protobuf::Descriptor* t,
+                   bool top_level = true);
+  void generateMessage(google::protobuf::io::Printer& p);
   void generateMessageInit(google::protobuf::io::Printer& p);
 
  private:
@@ -47,10 +47,9 @@ class MessageGenerator {
   MessageGenerator& operator=(const MessageGenerator&) = delete;
 
   const google::protobuf::Descriptor* t_;
-  int index_;
+  bool top_level_;
   std::vector<std::unique_ptr<MessageGenerator>> message_generators_;
   std::vector<std::unique_ptr<EnumGenerator>> enum_generators_;
-  std::vector<std::unique_ptr<ExtensionGenerator>> extension_generators_;
 };
 }
 

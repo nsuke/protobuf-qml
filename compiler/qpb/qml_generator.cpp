@@ -43,9 +43,6 @@ FileGenerator::FileGenerator(const google::protobuf::FileDescriptor* file)
   for (int i = 0; i < file_->enum_type_count(); i++) {
     enum_generators_.emplace_back(new EnumGenerator(file_->enum_type(i)));
   }
-  for (int i = 0; i < file_->extension_count(); i++) {
-    extension_generators_.emplace_back(new ExtensionGenerator);
-  }
 }
 
 void FileGenerator::generateJsFile(io::Printer& p) {
@@ -112,7 +109,6 @@ void FileGenerator::generateJsFile(io::Printer& p) {
   for (auto& g : enum_generators_) {
     g->generateEnum(p);
   }
-
   for (auto& g : message_generators_) {
     g->generateMessage(p);
   }

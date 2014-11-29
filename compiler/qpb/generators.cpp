@@ -38,19 +38,17 @@ void StructureUtil::footer(io::Printer& p, bool top_level) {
   }
 }
 
-MessageGenerator::MessageGenerator(const Descriptor* t) : t_(t) {
+MessageGenerator::MessageGenerator(const Descriptor* t, bool top_level)
+    : t_(t), top_level_(top_level) {
   if (!t) {
     throw std::invalid_argument("Null descriptor");
   }
-  index_ = t_->index();
   for (int i = 0; i < t_->nested_type_count(); i++) {
-    message_generators_.emplace_back(new MessageGenerator(t_->nested_type(i)));
+    message_generators_.emplace_back(
+        new MessageGenerator(t_->nested_type(i), false));
   }
   for (int i = 0; i < t_->enum_type_count(); i++) {
-    enum_generators_.emplace_back(new EnumGenerator(t_->enum_type(i)));
-  }
-  for (int i = 0; i < t_->extension_count(); i++) {
-    extension_generators_.emplace_back(new ExtensionGenerator);
+    enum_generators_.emplace_back(new EnumGenerator(t_->enum_type(i), false));
   }
 }
 
@@ -61,11 +59,11 @@ void MessageGenerator::generateMessageInit(io::Printer& p) {
       "message_name",
       t_->name(),
       "message_index",
-      SimpleItoa(index_));
+      SimpleItoa(t_->index()));
 }
 
-void MessageGenerator::generateMessage(io::Printer& p, bool top_level) {
-  StructureUtil::header(p, top_level, t_->name());
+void MessageGenerator::generateMessage(io::Printer& p) {
+  StructureUtil::header(p, top_level_, t_->name());
   p.Print(
       "  callbacks: [],\n"
       "  initialized: false,\n"
@@ -110,17 +108,17 @@ void MessageGenerator::generateMessage(io::Printer& p, bool top_level) {
       "  },\n",
       "message_name",
       t_->name());
-  for (auto& g : message_generators_) {
-    g->generateMessage(p, false);
-  }
   for (auto& g : enum_generators_) {
-    g->generateEnum(p, false);
+    g->generateEnum(p);
   }
-  StructureUtil::footer(p, top_level);
+  for (auto& g : message_generators_) {
+    g->generateMessage(p);
+  }
+  StructureUtil::footer(p, top_level_);
 }
 
-void EnumGenerator::generateEnum(io::Printer& p, bool top_level) {
-  StructureUtil::header(p, top_level, t_->name());
+void EnumGenerator::generateEnum(io::Printer& p) {
+  StructureUtil::header(p, top_level_, t_->name());
   for (int i = 0; i < t_->value_count(); i++) {
     p.Print("  $enum_value_name$: $enum_value$,\n",
             "enum_value_name",
@@ -142,6 +140,6 @@ void EnumGenerator::generateEnum(io::Printer& p, bool top_level) {
   p.Print(
       "    }\n"
       "  },\n");
-  StructureUtil::footer(p, top_level);
+  StructureUtil::footer(p, top_level_);
 }
 }
