@@ -114,6 +114,57 @@ class CppGitDependency(GitDependency):
     return self.build()
 
 
+def run_gyp(gyp_includes, gyp_defines, skip_deps, skip_tests):
+  gyp_cmd = [
+    'gyp' if skip_deps else os.path.join(DEPS_DIR, 'gyp', 'gyp'),
+    '--depth=%s' % ROOT_DIR,
+  ]
+
+  if not skip_deps:
+    gyp_cmd.extend([
+      '-I',
+      os.path.join(DEPS_DIR, 'supplement.gypi'),
+    ])
+
+  if gyp_includes:
+    gyp_cmd.extend(['-I%s' % i for i in gyp_includes])
+
+  if gyp_includes:
+    gyp_cmd.extend(['-D%s' % i for i in gyp_defines])
+
+  def ninja_cmd(conf):
+    return [
+      'ninja',
+      '-C',
+      'out/%s' % conf,
+    ]
+
+  def test_cmd(conf):
+    return [
+      os.path.join(ROOT_DIR, 'out', conf, 'run_tests.py')
+    ]
+
+  if skip_tests:
+    cmds = [
+      gyp_cmd,
+      ninja_cmd('Debug'),
+      ninja_cmd('Release'),
+    ]
+  else:
+    cmds = [
+      gyp_cmd,
+      ninja_cmd('Debug'),
+      test_cmd('Debug'),
+      ninja_cmd('Release'),
+      test_cmd('Release'),
+    ]
+
+  env = os.environ
+  env['LD_LIBRARY_PATH'] = os.path.join(DEPS_DIR, 'lib')
+  env['GYP_GENERATORS'] = 'ninja'
+  return all(execute(cmd, cwd=ROOT_DIR, env=env) for cmd in cmds)
+
+
 def main(argv):
   p = argparse.ArgumentParser()
   p.add_argument('--clean', action='store_true', help='Cleanup deps directory.')
@@ -122,11 +173,12 @@ def main(argv):
   p.add_argument('--skip-setup', action='store_true', help='Do not trigger dependency setup and use files previously setup.')
   p.add_argument('--skip-deps', action='store_true', help='Do not use downloaded dependencies.')
   p.add_argument('--gyp-includes', "-I", help='Use additional gyp include.', nargs='+')
+  p.add_argument('--gyp-defines', "-D", help='Use additional gyp defines.', nargs='+')
   args = p.parse_args(argv)
 
   deps = [
     GitDependency('gyp', 'http://git.chromium.org/external/gyp.git', 'origin/master'),
-    CppGitDependency('protobuf', 'http://github.com/google/protobuf.git', '7f2a9fb1af432a9831b3e6769905601d72c29796'),
+    CppGitDependency('protobuf', 'http://github.com/google/protobuf.git', '644a6a1da71385e9d7a7a26b3476c93fdd71788c'),
   ]
 
   if args.clean or args.clean_build:
@@ -148,51 +200,8 @@ def main(argv):
     for dep in deps:
       dep.prepare(args.skip_setup)
 
-  gyp_cmd = [
-    'gyp' if args.skip_deps else os.path.join(DEPS_DIR, 'gyp', 'gyp'),
-    '--depth=%s' % ROOT_DIR,
-  ]
-
-  if not args.skip_deps:
-    gyp_cmd.extend([
-      '-I',
-      os.path.join(DEPS_DIR, 'supplement.gypi'),
-    ])
-
-  if args.gyp_includes:
-    gyp_cmd.extend(['-I%s' % i for i in args.gyp_includes])
-
-  def ninja_cmd(conf):
-    return [
-      'ninja',
-      '-C',
-      'out/%s' % conf,
-    ]
-
-  def test_cmd(conf):
-    return [
-      os.path.join(ROOT_DIR, 'out', conf, 'run_tests.py')
-    ]
-
-  if args.skip_tests:
-    cmds = [
-      gyp_cmd,
-      ninja_cmd('Debug'),
-      ninja_cmd('Release'),
-    ]
-  else:
-    cmds = [
-      gyp_cmd,
-      ninja_cmd('Debug'),
-      test_cmd('Debug'),
-      ninja_cmd('Release'),
-      test_cmd('Release'),
-    ]
-
-  env = os.environ
-  env['LD_LIBRARY_PATH'] = os.path.join(DEPS_DIR, 'lib')
-  env['GYP_GENERATORS'] = 'ninja'
-  return 0 if all(execute(cmd, cwd=ROOT_DIR, env=env) for cmd in cmds) else 1
+  res = run_gyp(args.gyp_includes, args.gyp_defines, args.skip_deps, args.skip_tests)
+  return 0 if res else 1
 
 
 if __name__ == '__main__':
