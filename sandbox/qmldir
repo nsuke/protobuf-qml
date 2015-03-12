@@ -1,2 +1,0 @@
-module Protobuf.Sandbox
-plugin qpb-sandbox
