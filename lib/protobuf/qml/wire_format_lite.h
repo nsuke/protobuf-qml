@@ -21,7 +21,7 @@ class PROTOBUF_QML_DLLEXPORT QmlWireFormatLite : public QObject {
 
   bool has_error() const { return has_error_; }
 
-  Q_INVOKABLE qint32 readTag(InputDevice*);
+//  Q_INVOKABLE qint32 readTag(InputDevice*);
   Q_INVOKABLE qint32 readInt32(InputDevice*);
   Q_INVOKABLE void writeInt32(OutputDevice*, int tag, qint32 value);
   const QString& error() const;

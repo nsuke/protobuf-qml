@@ -1,7 +1,7 @@
 #include "protobuf/qml/enum_generator.h"
+#include "protobuf/qml/compiler/util.h"
 #include <google/protobuf/stubs/strutil.h>
 #include <sstream>
-#include <stack>
 
 namespace protobuf {
 namespace qml {
@@ -38,39 +38,5 @@ void EnumGenerator::generateEnum(io::Printer& p) {
   p.Print("};\n");
 }
 
-void appendLongName(std::ostream& o, const google::protobuf::EnumDescriptor* t) {
-  if (!t) {
-    throw std::invalid_argument("EnumDescriptor is null");
-  }
-
-  std::stack<std::string> names;
-  names.push(t->name());
-  auto c = t->containing_type();
-  if (c) {
-    do {
-      names.push(c->name());
-    } while ((c = c->containing_type()));
-  }
-
-  o << names.top();
-  names.pop();
-  while (!names.empty()) {
-    o << "_" << names.top();
-    names.pop();
-  }
-}
-
-std::string EnumGenerator::generateLongName(const google::protobuf::EnumValueDescriptor* t) {
-  std::ostringstream ss;
-  appendLongName(ss, t->type());
-  ss << "." << t->name();
-  return ss.str();
-}
-
-std::string EnumGenerator::generateLongName(const google::protobuf::EnumDescriptor* t) {
-  std::ostringstream ss;
-  appendLongName(ss, t);
-  return ss.str();
-}
 }
 }

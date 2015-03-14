@@ -12,8 +12,7 @@ class EnumGenerator;
 
 class MessageGenerator {
  public:
-  MessageGenerator(const google::protobuf::Descriptor* t = nullptr,
-                   const std::string prefix = "");
+  MessageGenerator(const google::protobuf::Descriptor* t = nullptr);
 
   MessageGenerator(MessageGenerator&& other) : t_(other.t_) {
     name_ = std::move(other.name_);

@@ -1,2 +1,4 @@
 *.pyc
 out/
+*_out/
+tmp

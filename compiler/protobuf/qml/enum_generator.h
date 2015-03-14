@@ -2,6 +2,7 @@
 #define PROTOBUF_QML_ENUM_GENERATOR_H
 
 #include "protobuf/qml/message_generator.h"
+#include "protobuf/qml/compiler/util.h"
 #include <google/protobuf/io/printer.h>
 #include <google/protobuf/descriptor.h>
 
@@ -17,10 +18,6 @@ class EnumGenerator {
     }
   }
   void generateEnum(google::protobuf::io::Printer& p);
-
-  static std::string generateLongName(const google::protobuf::EnumDescriptor*);
-  static std::string generateLongName(
-      const google::protobuf::EnumValueDescriptor*);
 
  private:
   const google::protobuf::EnumDescriptor* t_;

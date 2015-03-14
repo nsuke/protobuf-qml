@@ -1,9 +1,17 @@
 import QtQuick 2.4
 import Protobuf 1.0
 
-QtObject {
+Item {
   QtObject {
     id: detail
+
+    readonly property var signalTypes: ({
+      'ERROR': 0,
+      'PARSED': 1,
+      'SERIALIZED': 2,
+      'SERIALIZED_ARRAY': 3,
+    })
+
     property var index: ({
       _i: 0,
       get next() {
@@ -19,41 +27,61 @@ QtObject {
     })
 
     property var handlers: []
-    property var processor: Protobuf.AsyncProcessor {
-      onSuccess: handle(1, id, data);
-      onError: handle(0, id, error);
+
+    property var processor: AsyncProcessor {
+      onError: detail.handle(detail.signalTypes.ERROR, id, error, true);
+      onParsed: detail.handle(detail.signalTypes.PARSED, id, fields);
+      onSerialized: detail.handle(detail.signalTypes.SERIALIZED, id);
+      onSerializedArray: detail.handle(detail.signalTypes.SERIALIZED_ARRAY, id, array);
     }
-    function handle(target, id, data) {
+
+    function handle(target, id, data, optional) {
+      if (typeof optional == 'undefined') {
+        optional = false;
+      }
       var cb = handlers[id];
-      if (!cb) {
-        console.warn('Callback not found for ID : ' + id);
-      } else {
+      if (cb) {
         cb[target](data);
         delete handlers[id];
         index.next = id;
+      } else if (!optional) {
+        console.warn('Callback not found for ID : ' + id);
       }
     }
 
-    function execute(f, io, descriptor, message, onSuccess, onError) {
-      var id = index.next;
-      handlers[id] = [
-        onError,
-        onSuccess,
-        Date.now(),
-      ];
-      if (Protobuf.QByteArrayUtil.isInstance(output) {
-        f = f + 'Array';
-      }
-      processor[f](io, desc, message, id)
+    function executeAsync(type, f, onSuccess, onError, args) {
+      console.log('Executing ' + f + ' with args ' + args);
+      var id = detail.index.next;
+      var handler = {
+        timestamp: Date.now(),
+      };
+      handler[signalTypes.ERROR] = onError;
+      handler[type] = onSuccess;
+      handlers[id] = handler;
+      args.push(id);
+      processor[f].apply(processor, args);
     }
+  }
+
+  function parse(input, descriptor, onSuccess, onError) {
+    detail.executeAsync(detail.signalTypes.PARSED, 'parse',
+        onSuccess, onError, [input, descriptor]);
+  }
+
+  function parseArray(input, descriptor, onSuccess, onError) {
+    detail.executeAsync(detail.signalTypes.PARSED, 'parseArray',
+        onSuccess, onError, [input, descriptor]);
   }
 
   function serialize(output, descriptor, message, onSuccess, onError) {
-    detail.execute(
-      'serialize', output, descriptor, message, onSuccess, onError);
+    console.assert(output);
+    console.assert(descriptor);
+    detail.executeAsync(detail.signalTypes.SERIALIZED, 'serialize',
+        onSuccess, onError, [output, descriptor, message]);
   }
 
-  function parse(input, descriptor, message, onSuccess, onError) {
-    detail.execute('parse', input, descriptor, message, onSuccess, onError);
+  function serializeArray(descriptor, message, onSuccess, onError) {
+    detail.executeAsync(detail.signalTypes.SERIALIZED_ARRAY, 'serializeArray',
+        onSuccess, onError, [descriptor, message]);
   }
 }

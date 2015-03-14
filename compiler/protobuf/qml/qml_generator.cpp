@@ -1,8 +1,8 @@
 #include "protobuf/qml/qml_generator.h"
+#include "protobuf/qml/compiler/util.h"
 
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <google/protobuf/stubs/strutil.h>
-#include <google/protobuf/compiler/cpp/cpp_helpers.h>
 #include <QByteArray>
 
 #include <memory>
@@ -18,8 +18,7 @@ bool QmlGenerator::Generate(const FileDescriptor* file,
                             compiler::GeneratorContext* generator_context,
                             std::string* error) const {
   try {
-    auto path = compiler::cpp::StripProto(file->name());
-    path.append(".pb.js");
+    auto path = generateFilePath(file);
     std::unique_ptr<io::ZeroCopyOutputStream> out(
         generator_context->Open(path));
     io::Printer p(out.get(), '$');
@@ -53,12 +52,10 @@ void FileGenerator::generateJsFile(io::Printer& p) {
       "1.0");
   std::vector<std::string> deps_;
   for (int i = 0; i < file_->dependency_count(); i++) {
-    auto d = file_->dependency(i)->name();
-    auto path = compiler::cpp::StripProto(d);
-    std::string import_name("Q__");
-    import_name.append(path).append("__");
-    path.append(".pb.js");
-    p.Print(".import \"$path$\" as $import_name$\n",
+    auto d = file_->dependency(i);
+    auto path = generateFilePath(d);
+    auto import_name = generateImportName(d);
+    p.Print(".import '$path$' as $import_name$\n",
             "path",
             path,
             "import_name",
@@ -78,12 +75,12 @@ void FileGenerator::generateJsFile(io::Printer& p) {
   p.Print(
       ") {\n"
       "      this._desc = Protobuf.DescriptorPool.addFileDescriptor("
-      "\"$file_descriptor$\", $file_descriptor_size$);\n"
+      "'$file_descriptor$', $file_descriptor_size$);\n"
       "    }\n"
       "    if (!this._desc)\n"
       "      console.warn('Failed to initialize: $file_name$');\n"
       "    return this._desc;\n"
-      "  };\n"
+      "  },\n"
       "};\n"
       "\n",
       "file_descriptor_size",
