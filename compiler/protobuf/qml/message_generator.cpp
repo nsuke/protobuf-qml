@@ -25,14 +25,18 @@ MessageGenerator::MessageGenerator(const Descriptor* t)
 void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   p.Print(
       "var $message_name$ = (function() {\n"
+      "  var FIELD = 0;\n"
+      "  var ONEOF = 1;\n"
       "  var constructor = function(values) {\n"
-      "    this._raw = new Array($field_count$);\n\n"
+      "    this._raw = [new Array($field_count$), new Array($oneof_count$)];\n\n"
       "    this._mergeFromRawArray = function(rawArray) {\n"
       "      if (rawArray && rawArray instanceof Array) {\n",
       "message_name",
       name_,
       "field_count",
-      SimpleItoa(t_->field_count()));
+      SimpleItoa(t_->field_count()),
+      "oneof_count",
+      SimpleItoa(t_->oneof_decl_count() + 1));
   for (auto& g : field_generators_) {
     g.generateMerge(p, "rawArray");
   }
@@ -77,10 +81,10 @@ void MessageGenerator::generateMessagePrototype(io::Printer& p) {
 }
 
 void MessageGenerator::generateMessageProperties(io::Printer& p) {
-  p.Print("Object.defineProperties($message_name$.prototype, {\n",
-          "message_name",
-          name_);
-  p.Print("});\n\n");
+  // p.Print("Object.defineProperties($message_name$.prototype, {\n",
+  //         "message_name",
+  //         name_);
+  // p.Print("});\n\n");
   for (auto& g : enum_generators_) {
     g.generateEnum(p);
   }

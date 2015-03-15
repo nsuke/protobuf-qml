@@ -106,7 +106,7 @@ Item {
     function test_string() {
       var called = {};
       var msg1 = new Test1.Msg1({
-        field1: 0,
+        field1: 9,
         stringField: 'foo Bar',
       });
       msg1.serializeTo(buffer.output, function() {
@@ -133,54 +133,4 @@ Item {
       tryCompare(called, 'value', true, 100);
     }
   }
-
-  /*
-  TestCase {
-    name: 'AsyncTest'
-
-    function init() {
-      var called = {};
-      buffer.clear();
-      buffer.size = 1000;
-      tryCompare(called, 'value', true, 100);
-    }
-
-    function test_serialize_fail() {
-      var called = [false];
-      var msg1 = new Test1.Msg1({}, function(err {
-        msg1.serializeTo(buffer.output, function() {
-          verify(err);
-          called[0] = true;
-        });
-      }));
-      tryCompare(called, 0, true, 200);
-    }
-
-    function test_parse_fail() {
-      var called = [false];
-      verify(Test1.Msg1.parseFrom(buffer.input, function(msg, err) {
-        verify(err);
-        called[0] = true;
-      }));
-      tryCompare(called, 0, true, 200);
-    }
-
-    function test_io() {
-      var called = [false, false];
-      var msg1 = new Test1.Msg1({field1: -42}, function(err {
-        msg1.serializeTo(buffer.output, function() {
-          verify(!err);
-          called[0] = true;
-        });
-      }));
-      tryCompare(called, 0, true, 200);
-      verify(Test1.Msg1.parseFrom(buffer.input, function(msg, err) {
-        compare(msg.field1(), -42);
-        verify(!err);
-        called[1] = true;
-      }));
-      tryCompare(called, 1, true, 200);
-    }
-  }
-  */
 }

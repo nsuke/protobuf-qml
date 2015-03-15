@@ -29,7 +29,7 @@ void FieldGenerator::generateInit(io::Printer& p) {
       p.Print("    this._$name$ = new Array();\n", "name", camel_name_);
     }
     p.Print(
-        "    this._raw[$index$] = new Array();\n"
+        "    this._raw[FIELD][$index$] = new Array();\n"
         "    if (values && values.$name$ && values.$name$ instanceof Array) {\n"
         "      this.$name$(values.$name$);\n"
         "    }\n",
@@ -89,20 +89,20 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
 
     p.Print(
         variables,
-        "        if ($arg$[$index$] && $arg$[$index$] instanceof Array) {\n"
-        "          for (var i in $arg$[$index$]) {\n"
+        "        if ($arg$[FIELD][$index$] && $arg$[FIELD][$index$] instanceof Array) {\n"
+        "          for (var i in $arg$[FIELD][$index$]) {\n"
         "            if (typeof this._$name$[i] == 'undefined') {\n"
         "              var msg = new $message_scope$$message_type$();\n"
         "              this._$name$[i] = msg;\n"
-        "              this._raw[$index$][i] = msg._raw;\n"
+        "              this._raw[FIELD][$index$][i] = msg._raw;\n"
         "            }\n"
-        "            this._$name$[i]._mergeFromRawArray($arg$[$index$][i]);\n"
+        "            this._$name$[i]._mergeFromRawArray($arg$[FIELD][$index$][i]);\n"
         "          }\n"
         "        }\n");
   } else if (t_->is_repeated()) {
     p.Print(
-        "        if ($arg$[$index$] && $arg$[$index$] instanceof Array) {\n"
-        "          this.$name$($arg$[$index$]);\n"
+        "        if ($arg$[FIELD][$index$] && $arg$[FIELD][$index$] instanceof Array) {\n"
+        "          this.$name$($arg$[FIELD][$index$]);\n"
         "        }\n",
         "name",
         camel_name_,
@@ -119,9 +119,9 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
                   ? ""
                   : generateImportName(t_->message_type()->file()) + "."},
              {"message_type", generateLongName(t_->message_type())}},
-            "        this.$name$()._mergeFromRawArray($arg$[$index$]);\n");
+            "        this.$name$()._mergeFromRawArray($arg$[FIELD][$index$]);\n");
   } else {
-    p.Print("        this.$name$($arg$[$index$]);\n",
+    p.Print("        this.$name$($arg$[FIELD][$index$]);\n",
             "name",
             camel_name_,
             "arg",
@@ -152,11 +152,11 @@ void FieldGenerator::generateRepeatedMessageProperty(
       "    }\n"
       "    if (indexOrValues instanceof Array) {\n"
       "      this._$name$.length = indexOrValues.length;\n"
-      "      this._raw[$index$].length = indexOrValues.length;\n"
+      "      this._raw[FIELD][$index$].length = indexOrValues.length;\n"
       "      for (var i in indexOrValues) {\n"
       "        var msg = new $message_scope$$message_type$(indexOrValues[i]);\n"
       "        this._$name$[i] = msg;\n"
-      "        this._raw[$index$][i] = msg._raw;\n"
+      "        this._raw[FIELD][$index$][i] = msg._raw;\n"
       "      }\n"
       "      return;\n"
       "    }\n"
@@ -168,11 +168,11 @@ void FieldGenerator::generateRepeatedMessageProperty(
       "    } else {\n"
       "      var msg = new $message_scope$$message_type$(value);\n"
       "      this._$name$[indexOrValues] = msg;\n"
-      "      this._raw[$index$][indexOrValues] = msg._raw;\n"
+      "      this._raw[FIELD][$index$][indexOrValues] = msg._raw;\n"
       "    }\n"
       "  };\n"
       "  constructor.prototype.$name$Count = function() {\n"
-      "    console.assert(this._$name$.length == this._raw[$index$].length);\n"
+      "    console.assert(this._$name$.length == this._raw[FIELD][$index$].length);\n"
       "    return this._$name$.length;\n"
       "  };\n"
       "  constructor.prototype.add$capital_name$ = function(value) {\n"
@@ -181,21 +181,21 @@ void FieldGenerator::generateRepeatedMessageProperty(
       "    }\n"
       "    var msg = new $message_scope$$message_type$(value);\n"
       "    this._$name$.push(msg);\n"
-      "    this._raw[$index$].push(msg._raw);\n"
-      "    console.assert(this._$name$.length == this._raw[$index$].length);\n"
+      "    this._raw[FIELD][$index$].push(msg._raw);\n"
+      "    console.assert(this._$name$.length == this._raw[FIELD][$index$].length);\n"
       "  };\n"
       "  constructor.prototype.remove$capital_name$ = function(index) {\n"
       "    if (typeof index != 'number') {\n"
       "      throw new TypeError('Index should be a number.');\n"
       "    }\n"
-      "    this._raw[$index$].splice(index, 1);\n"
+      "    this._raw[FIELD][$index$].splice(index, 1);\n"
       "    this._$name$.splice(index, 1);\n"
-      "    console.assert(this._$name$.length == this._raw[$index$].length);\n"
+      "    console.assert(this._$name$.length == this._raw[FIELD][$index$].length);\n"
       "  };\n"
       "  constructor.prototype.clear$capital_name$ = function() {\n"
-      "    this._raw[$index$].length = 0;\n"
+      "    this._raw[FIELD][$index$].length = 0;\n"
       "    this._$name$.length = 0;\n"
-      "    console.assert(this._$name$.length == this._raw[$index$].length);\n"
+      "    console.assert(this._$name$.length == this._raw[FIELD][$index$].length);\n"
       "  };\n");
 }
 
@@ -207,9 +207,9 @@ void FieldGenerator::generateRepeatedProperty(
       "      return;\n"
       "    }\n"
       "    if (indexOrValues instanceof Array) {\n"
-      "      this._raw[$index$].length = indexOrValues.length;\n"
+      "      this._raw[FIELD][$index$].length = indexOrValues.length;\n"
       "      for (var i in indexOrValues) {\n"
-      "        this._raw[$index$][i] = indexOrValues[i];\n"
+      "        this._raw[FIELD][$index$][i] = indexOrValues[i];\n"
       "      }\n"
       "      return;\n"
       "    }\n"
@@ -217,28 +217,28 @@ void FieldGenerator::generateRepeatedProperty(
       "      throw new TypeError('Index should be a number.');\n"
       "    }\n"
       "    if (typeof value == 'undefined') {\n"
-      "      return this._raw[$index$][indexOrValues];\n"
+      "      return this._raw[FIELD][$index$][indexOrValues];\n"
       "    } else {\n"
-      "      this._raw[$index$][indexOrValues] = value;\n"
+      "      this._raw[FIELD][$index$][indexOrValues] = value;\n"
       "    }\n"
       "  };\n"
       "  constructor.prototype.$name$Count = function() {\n"
-      "    return this._raw[$index$].length;\n"
+      "    return this._raw[FIELD][$index$].length;\n"
       "  };\n"
       "  constructor.prototype.add$capital_name$ = function(value) {\n"
       "    if (typeof value == 'undefined') {\n"
       "      throw new TypeError('Cannot add undefined.');\n"
       "    }\n"
-      "    this._raw[$index$].push(value);\n"
+      "    this._raw[FIELD][$index$].push(value);\n"
       "  };\n"
       "  constructor.prototype.remove$capital_name$ = function(index) {\n"
       "    if (typeof index != 'number') {\n"
       "      throw new TypeError('Index should be a number.');\n"
       "    }\n"
-      "    this._raw[$index$].splice(index, 1);\n"
+      "    this._raw[FIELD][$index$].splice(index, 1);\n"
       "  };\n"
       "  constructor.prototype.clear$capital_name$ = function() {\n"
-      "    this._raw[$index$].length = 0;\n"
+      "    this._raw[FIELD][$index$].length = 0;\n"
       "  };\n",
       "name",
       camel_name_,
@@ -255,8 +255,9 @@ void FieldGenerator::generateOptionalMessageProperty(
       "    if (typeof value == 'undefined') {\n"
       "      return this._$name$;\n"
       "    } else {\n"
-      "      this._$name$ = new $message_scope$$message_type$(value);\n"
-      "      this._raw[$index$] = this._$name$._raw;\n"
+      "      var msg = new $message_scope$$message_type$(value);\n"
+      "      this._$name$ = msg;\n"
+      "      this._raw[FIELD][$index$] = msg._raw;\n"
       "    }\n"
       "  };\n",
       "name",
@@ -276,9 +277,9 @@ void FieldGenerator::generateOptionalProperty(
   p.Print(
       "  constructor.prototype.$name$ = function(value) {\n"
       "    if (typeof value == 'undefined') {\n"
-      "      return this._raw[$index$];\n"
+      "      return this._raw[FIELD][$index$];\n"
       "    } else {\n"
-      "      this._raw[$index$] = value;\n"
+      "      this._raw[FIELD][$index$] = value;\n"
       "    }\n"
       "  };\n",
       "name",

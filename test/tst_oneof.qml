@@ -20,19 +20,20 @@ Item {
     function test_oneof() {
       var called = {};
       var msg1 = new Test2.ThirdMessage({
-        testOneof: {
-          subMessage: {
-            str: 'foobar',
-          },
+        subMessage: {
+          str: 'foo',
         },
       });
+
+      msg1.name('should be erased by the other');
+      msg1.subMessage().str('foobar');
+
       msg1.serializeTo(buffer.output, function() {
         Test2.ThirdMessage.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
-          verify(msg2.testOneof);
-          verify(msg2.testOneof.subMessage);
-          compare(typeof msg2.testOneof.name, 'undefined');
-          compare(msg2.testOneof.subMessage.str, 'foobar');
+          verify(msg2.subMessage());
+          compare(msg2.name(), '');
+          compare(msg2.subMessage().str(), 'foobar');
           called.value = true;
         });
       });

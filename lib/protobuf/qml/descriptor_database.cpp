@@ -15,8 +15,23 @@ DescriptorWrapper::~DescriptorWrapper() {
   clearSharedMessage();
 }
 
-bool packFieldsToMessage(const QVariantList& value, Message& msg);
-QVariant unpackFieldsFromMessage(const Message& msg);
+bool packToMessage(const QVariantList& fields,
+                   const QList<int>& oneofs,
+                   Message& msg);
+bool packToMessage(QVariant value, Message& msg) {
+  if (!value.canConvert(QMetaType::QVariantList)) {
+    return false;
+  }
+  auto vlist = value.value<QVariantList>();
+  if (vlist.size() < 2 || !vlist[0].canConvert(QMetaType::QVariantList) ||
+      !vlist[1].canConvert(QMetaType::QVariantList)) {
+    return false;
+  }
+  return packToMessage(
+      vlist[0].value<QVariantList>(), vlist[1].value<QList<int>>(), msg);
+}
+
+QVariant unpackFromMessage(const Message& msg);
 
 // TODO: Handle invalid QVariant that cannot be converted
 void setReflectionRepeatedValue(const Reflection& ref,
@@ -50,9 +65,10 @@ void setReflectionRepeatedValue(const Reflection& ref,
             field->enum_type()->FindValueByNumber(list[i].value<int>()));
       break;
     case FieldDescriptor::CPPTYPE_MESSAGE:
-      for (int i = 0; i < size; i++)
-        packFieldsToMessage(list[i].value<QVariantList>(),
-                            *ref.AddMessage(&msg, field));
+      for (int i = 0; i < size; i++) {
+        packToMessage(list[i].value<QVariantList>(),
+                      *ref.AddMessage(&msg, field));
+      }
       break;
   }
 #undef PROTOBUF_QML_SET_REPEATED
@@ -65,7 +81,7 @@ void setMessage(const Reflection& ref,
   auto sub_msg = ref.MutableMessage(&msg, field);
   Q_ASSERT(sub_msg);
   if (value.canConvert(QMetaType::QVariantList)) {
-    packFieldsToMessage(value.value<QVariantList>(), *sub_msg);
+    packToMessage(value.value<QVariantList>(), *sub_msg);
   }
 }
 
@@ -110,9 +126,9 @@ void setReflectionValue(const Reflection& ref,
 }
 
 QVariant getReflectionRepeatedValue(const Reflection& ref,
-                                        const Message& msg,
-                                        const FieldDescriptor* field,
-                                        int size) {
+                                    const Message& msg,
+                                    const FieldDescriptor* field,
+                                    int size) {
   qDebug() << "getReflectionRepeatedValue";
   QVariantList result;
   switch (field->cpp_type()) {
@@ -144,8 +160,7 @@ QVariant getReflectionRepeatedValue(const Reflection& ref,
       break;
     case FieldDescriptor::CPPTYPE_MESSAGE:
       for (int i = 0; i < size; i++)
-        result.append(
-            unpackFieldsFromMessage(ref.GetRepeatedMessage(msg, field, i)));
+        result.append(unpackFromMessage(ref.GetRepeatedMessage(msg, field, i)));
       break;
   }
   return result;
@@ -174,61 +189,60 @@ QVariant getReflectionValue(const Reflection& ref,
     case FieldDescriptor::CPPTYPE_ENUM:
       return ref.GetEnum(msg, field)->number();
     case FieldDescriptor::CPPTYPE_MESSAGE:
-      return unpackFieldsFromMessage(ref.GetMessage(msg, field));
+      return unpackFromMessage(ref.GetMessage(msg, field));
   }
   return QVariant();
 }
 
-QVariant unpackFieldsFromMessage(const Message& msg) {
+QVariant unpackFromMessage(const Message& msg) {
   QVariantList result;
   bool parsed = false;
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
-  auto field_count = descriptor->field_count();
-  if (field_count > 0) {
-    for (int i = 0; i < field_count; i++) {
-      auto field_descriptor = descriptor->field(i);
-      QVariantList field;
-      if (field_descriptor->is_repeated()) {
-        auto size = reflection->FieldSize(msg, field_descriptor);
-        if (size > 0) {
+  QVector<int> oneofs(descriptor->oneof_decl_count(), -1);
+  for (int i = 0; i < descriptor->field_count(); ++i) {
+    auto desc = descriptor->field(i);
+    auto oneof = desc->containing_oneof();
+    if (oneof) {
+      auto oneof_value = &oneofs[oneof->index()];
+      if (*oneof_value < 0) {
+        auto d = reflection->GetOneofFieldDescriptor(msg, oneof);
+        *oneof_value = d ? d->index() : 0;
+        if (*oneof_value > 0) {
           parsed = true;
-          result.append(QVariant(getReflectionRepeatedValue(
-              *reflection, msg, field_descriptor, size)));
-        } else {
-          result.append(QVariant());
         }
-      } else if (reflection->HasField(msg, field_descriptor)) {
+      }
+      if (*oneof_value != desc->index()) {
+        result.append(QVariant());
+        continue;
+      }
+    }
+    if (desc->is_repeated()) {
+      auto size = reflection->FieldSize(msg, desc);
+      if (size > 0) {
         parsed = true;
-        result.append(getReflectionValue(*reflection, msg, field_descriptor));
+        result.append(
+            QVariant(getReflectionRepeatedValue(*reflection, msg, desc, size)));
       } else {
         result.append(QVariant());
       }
-      qDebug() << "result : " << result;
-      Q_ASSERT(result.size() == i + 1);
+    } else if (reflection->HasField(msg, desc)) {
+      parsed = true;
+      result.append(getReflectionValue(*reflection, msg, desc));
+    } else {
+      result.append(QVariant());
     }
+    qDebug() << "result : " << result;
+    Q_ASSERT(result.size() == i + 1);
   }
-  // TODO: restore oneof
-  // auto oneof_count = descriptor->oneof_decl_count();
-  // if (oneof_count > 0) {
-  //  for (int i = 0; i < oneof_count; i++) {
-  //    auto oneof_descriptor = descriptor->oneof_decl(i);
-  //    if (reflection->HasOneof(msg, oneof_descriptor)) {
-  //      auto field_descriptor =
-  //          reflection->GetOneofFieldDescriptor(msg, oneof_descriptor);
-  //      auto value = getReflectionValue(*reflection, msg, field_descriptor);
-  //      if (value.isValid()) {
-  //        auto field_name = field_descriptor->camelcase_name();
-  //        auto oneof_name = camelize(oneof_descriptor->name());
-  //        QVariantMap oneof;
-  //        oneof.insert(QString::fromStdString(field_name), std::move(value));
-  //        result.insert(QString::fromStdString(oneof_name), std::move(oneof));
-  //        break;
-  //      }
-  //    }
-  //  }
-  //}
-  return parsed ? std::move(result) : QVariant();
+
+  if (parsed) {
+    QVariantList ret;
+    ret.append(QVariant::fromValue(result));
+    ret.append(QVariant::fromValue(oneofs.toList()));
+    return std::move(ret);
+  }
+  return QVariant();
 }
 
 QVariant DescriptorWrapper::parse(InputDevice* input) {
@@ -238,17 +252,21 @@ QVariant DescriptorWrapper::parse(InputDevice* input) {
   auto session = input->createSession();
   if (!session) return QVariantList();
   msg->ParseFromZeroCopyStream(session.stream());
-  return unpackFieldsFromMessage(*msg);
+  return unpackFromMessage(*msg);
 }
 
-bool packFieldsToMessage(const QVariantList& fields, Message& msg) {
+bool packToMessage(const QVariantList& fields,
+                   const QList<int>& oneofs,
+                   Message& msg) {
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
   auto field_count = descriptor->field_count();
   for (int i = 0; i < field_count && i < fields.size(); ++i) {
     auto field = fields[i];
-    if (field.isValid()) {
-      auto desc = descriptor->field(i);
+    auto desc = descriptor->field(i);
+    if ((!desc->containing_oneof() && field.isValid()) ||
+        (desc->containing_oneof() && oneofs.size() > desc->index_in_oneof() &&
+         oneofs[desc->index_in_oneof()] == i)) {
       if (desc->is_repeated()) {
         if (!field.canConvert(QMetaType::QVariantList)) {
           qWarning() << "Invalid type for repeated field: "
@@ -266,44 +284,17 @@ bool packFieldsToMessage(const QVariantList& fields, Message& msg) {
       }
     }
   }
-  // TODO: restore oneof
-  // for (int i = 0; i < descriptor->oneof_decl_count(); i++) {
-  //   auto oneof_descriptor = descriptor->oneof_decl(i);
-  //   auto oneof_name = camelize(oneof_descriptor->name());
-  //   auto it = value.find(QString::fromStdString(oneof_name));
-  //   if (it != value.end()) {
-  //     if (!it.value().canConvert(QMetaType::QVariantMap)) {
-  //       qWarning() << "Invalid type for oneof field: "
-  //                  << QString::fromStdString(oneof_name);
-  //     } else {
-  //       auto oneof = it.value().value<QVariantMap>();
-  //       for (int j = 0; j < oneof_descriptor->field_count(); j++) {
-  //         auto field_descriptor = oneof_descriptor->field(j);
-  //         auto field_name = field_descriptor->camelcase_name();
-  //         auto it2 = oneof.constFind(QString::fromStdString(field_name));
-  //         if (it2 != oneof.constEnd() && it2.value().isValid()) {
-  //           setReflectionValue(*reflection, msg, field_descriptor,
-  //           it2.value());
-  //           break;
-  //         }
-  //       }
-  //     }
-  //     value.erase(it);
-  //   }
-  // }
-  // for (auto it = value.constBegin(); it != value.constEnd(); it++) {
-  //   qWarning() << "Unexpected field: " << it.key();
-  // }
   return true;
 }
 
 bool DescriptorWrapper::serialize(OutputDevice* output,
-                                  const QVariantList& value) {
+                                  const QVariantList& fields,
+                                  const QList<int>& oneofs) {
   try {
-    if (!output || value.isEmpty()) return false;
+    if (!output || fields.isEmpty()) return false;
     auto msg = sharedMessage();
     msg->Clear();
-    if (packFieldsToMessage(value, *msg)) {
+    if (packToMessage(fields, oneofs, *msg)) {
       auto session = output->createSession();
       return msg->SerializeToZeroCopyStream(session.stream());
     }

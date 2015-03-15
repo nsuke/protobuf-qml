@@ -92,7 +92,7 @@ Item {
     console.assert(output);
     console.assert(descriptor);
     detail.executeAsync(detail.signalTypes.SERIALIZED, 'serialize',
-        onSuccess, onError, [output, descriptor, message]);
+        onSuccess, onError, [output, descriptor, message[0], message[1]]);
   }
 
   function serializeArray(descriptor, message, onSuccess, onError) {

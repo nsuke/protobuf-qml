@@ -32,7 +32,7 @@ class DescriptorWrapper : public QObject {
   ~DescriptorWrapper();
 
   QVariant parse(InputDevice* input);
-  bool serialize(OutputDevice* output, const QVariantList& value);
+  bool serialize(OutputDevice* output, const QVariantList& fields, const QList<int>& oneofs);
 
   void clearSharedMessage() { message_.setLocalData(nullptr); }
 

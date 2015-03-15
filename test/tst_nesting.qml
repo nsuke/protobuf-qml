@@ -38,18 +38,15 @@ Item {
     function test_deeply_nested() {
       var called = {};
       var msg1 = new Test2.NestingMessage({
-        nestedOneof: {
-          evenMoreNestedMessage2: {
-            deeplyNestedField: 'nesting message',
-          },
+        evenMoreNestedMessage2: {
+          deeplyNestedField: 'nesting message',
         },
       });
       msg1.serializeTo(buffer.output, function() {
         Test2.NestingMessage.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
-          verify(msg2.nestedOneof());
-          verify(msg2.nestedOneof().evenMoreNestedMessage2());
-          compare(msg2.nestedOneof().evenMoreNestedMessage2().deeplyNestedField(), 'nesting message');
+          verify(msg2.evenMoreNestedMessage2());
+          compare(msg2.evenMoreNestedMessage2().deeplyNestedField(), 'nesting message');
           called.value = true;
         });
       });

@@ -49,6 +49,7 @@ class AsyncProcessor : public QObject {
   Q_INVOKABLE void serialize(OutputDevice* output,
                              DescriptorWrapper* descriptor,
                              const QVariantList& fields,
+                             const QList<int>& oneofs,
                              int async_id) {
     qDebug() << "serialize";
     if (!output) {
@@ -59,7 +60,7 @@ class AsyncProcessor : public QObject {
       error(async_id, "descriptor is null.");
       return;
     }
-    if (!descriptor->serialize(output, fields)) {
+    if (!descriptor->serialize(output, fields, oneofs)) {
       error(async_id, "failed to serialize");
     } else {
       qDebug() << "serialized";
