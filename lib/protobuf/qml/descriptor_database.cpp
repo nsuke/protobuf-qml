@@ -181,6 +181,7 @@ QVariant getReflectionValue(const Reflection& ref,
 
 QVariantList unpackFieldsFromMessage(const Message& msg) {
   QVariantList result;
+  bool parsed = false;
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
   auto field_count = descriptor->field_count();
@@ -191,12 +192,14 @@ QVariantList unpackFieldsFromMessage(const Message& msg) {
       if (field_descriptor->is_repeated()) {
         auto size = reflection->FieldSize(msg, field_descriptor);
         if (size > 0) {
+          parsed = true;
           result.append(QVariant(getReflectionRepeatedValue(
               *reflection, msg, field_descriptor, size)));
         } else {
           result.append(QVariant());
         }
       } else if (reflection->HasField(msg, field_descriptor)) {
+        parsed = true;
         result.append(getReflectionValue(*reflection, msg, field_descriptor));
       } else {
         result.append(QVariant());
@@ -225,7 +228,7 @@ QVariantList unpackFieldsFromMessage(const Message& msg) {
   //    }
   //  }
   //}
-  return std::move(result);
+  return parsed ? std::move(result) : QVariantList();
 }
 
 QVariantList DescriptorWrapper::parse(InputDevice* input) {

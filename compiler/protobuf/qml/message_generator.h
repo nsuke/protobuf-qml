@@ -24,7 +24,7 @@ class MessageGenerator {
 
   void generateMessage(google::protobuf::io::Printer& p) {
     generateMessageConstructor(p);
-    generateMessagePrototype(p);
+    // generateMessagePrototype(p);
     generateMessageProperties(p);
   }
 

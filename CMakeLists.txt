@@ -75,6 +75,7 @@ copy(${CMAKE_CURRENT_BINARY_DIR}/plugins/Protobuf
   ${CMAKE_CURRENT_BINARY_DIR}/libprotobuf-qml.so)
 
 copy(${CMAKE_CURRENT_BINARY_DIR}/test
+  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_jsobject.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_message.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_nesting.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_oneof.qml

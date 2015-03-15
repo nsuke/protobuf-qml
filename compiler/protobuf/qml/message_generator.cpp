@@ -24,10 +24,11 @@ MessageGenerator::MessageGenerator(const Descriptor* t)
 
 void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   p.Print(
-      "var $message_name$ = function(values) {\n"
-      "  this._raw = new Array($field_count$);\n\n"
-      "  this._mergeFromRawArray = function(rawArray) {\n"
-      "    if (rawArray instanceof Array) {\n",
+      "var $message_name$ = (function() {\n"
+      "  var constructor = function(values) {\n"
+      "    this._raw = new Array($field_count$);\n"
+      "    this._mergeFromRawArray = function(rawArray) {\n"
+      "      if (rawArray && rawArray instanceof Array) {\n",
       "message_name",
       name_,
       "field_count",
@@ -35,19 +36,30 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   for (auto& g : field_generators_) {
     g.generateMerge(p, "rawArray");
   }
-  p.Print("    };\n");
-  p.Print("  };\n\n");
+  p.Print(
+      "      };\n"
+      "    };\n\n");
   for (auto& g : field_generators_) {
     g.generateInit(p);
   }
   p.Print(
-      "\n"
-      "  Object.seal(this);\n"
-      "\n"
-      "  for (var k in values) {\n"
-      "    this[k] = values[k];\n"
-      "  }\n"
-      "};\n\n");
+      "    Object.seal(this);\n"
+      "    for (var k in values) {\n"
+      "      this[k](values[k]);\n"
+      "    }\n"
+      "  };\n"
+      "  Protobuf.Message.createMessageType(constructor, "
+      "_file.descriptor.messageType($message_index$));\n",
+      "message_name",
+      name_,
+      "message_index",
+      SimpleItoa(t_->index()));
+  for (auto& g : field_generators_) {
+    g.generateProperty(p);
+  }
+  p.Print(
+      "  return constructor;\n"
+      "})();\n\n");
 }
 
 void MessageGenerator::generateMessagePrototype(io::Printer& p) {
@@ -64,9 +76,9 @@ void MessageGenerator::generateMessageProperties(io::Printer& p) {
   p.Print("Object.defineProperties($message_name$.prototype, {\n",
           "message_name",
           name_);
-  for (auto& g : field_generators_) {
-    g.generateProperty(p);
-  }
+  // for (auto& g : field_generators_) {
+  //   g.generateProperty(p);
+  // }
   p.Print("});\n\n");
   for (auto& g : enum_generators_) {
     g.generateEnum(p);

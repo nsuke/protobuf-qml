@@ -31,10 +31,10 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.repeatedField);
-          compare(msg2.repeatedField.length, 3);
-          compare(msg2.repeatedField[0], 42);
-          compare(msg2.repeatedField[1], -42);
-          compare(msg2.repeatedField[2], 43);
+          compare(msg2.repeatedFieldCount(), 3);
+          compare(msg2.repeatedField(0), 42);
+          compare(msg2.repeatedField(1), -42);
+          compare(msg2.repeatedField(2), 43);
           called.value = true;
         });
       });
@@ -54,9 +54,9 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.repeatedStringField);
-          compare(msg2.repeatedStringField.length, 2);
-          compare(msg2.repeatedStringField[0], 'foo Bar');
-          compare(msg2.repeatedStringField[1], 'FooBar 2');
+          compare(msg2.repeatedStringFieldCount(), 2);
+          compare(msg2.repeatedStringField(0), 'foo Bar');
+          compare(msg2.repeatedStringField(1), 'FooBar 2');
           called.value = true;
         });
       });
@@ -78,11 +78,11 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.repeatedEnumField);
-          compare(msg2.repeatedEnumField.length, 4);
-          compare(Test1.Enum1.toString(msg2.repeatedEnumField[0]), 'ENUM_VALUE_SECOND');
-          compare(Test1.Enum1.toString(msg2.repeatedEnumField[1]), 'ENUM_VALUE_THIRD');
-          compare(Test1.Enum1.toString(msg2.repeatedEnumField[2]), 'ENUM_VALUE_SECOND');
-          compare(Test1.Enum1.toString(msg2.repeatedEnumField[3]), 'ENUM_VALUE_FIRST');
+          compare(msg2.repeatedEnumFieldCount(), 4);
+          compare(Test1.Enum1.toString(msg2.repeatedEnumField(0)), 'ENUM_VALUE_SECOND');
+          compare(Test1.Enum1.toString(msg2.repeatedEnumField(1)), 'ENUM_VALUE_THIRD');
+          compare(Test1.Enum1.toString(msg2.repeatedEnumField(2)), 'ENUM_VALUE_SECOND');
+          compare(Test1.Enum1.toString(msg2.repeatedEnumField(3)), 'ENUM_VALUE_FIRST');
           called.value = true;
         });
       });
@@ -108,11 +108,11 @@ Item {
         Test2.Msg2.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.msgs1);
-          compare(msg2.msgs1.length, 2);
-          compare(msg2.msgs1[0].field1, 300);
-          compare(typeof msg2.msgs1[0].repeatedStringField, 'undefined');
-          verify(typeof msg2.msgs1[1].repeatedStringField);
-          verify(typeof msg2.msgs1[1].repeatedStringField[0], 'baz');
+          compare(msg2.msgs1Count(), 2);
+          compare(msg2.msgs1(0).field1, 300);
+          compare(typeof msg2.msgs1(0).repeatedStringField, 'undefined');
+          verify(typeof msg2.msgs1(1).repeatedStringField);
+          verify(typeof msg2.msgs1(1).repeatedStringField(0), 'baz');
           called.value = true;
         });
       });

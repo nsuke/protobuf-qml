@@ -20,27 +20,12 @@ Item {
     function test_serialize_undefined() {
       var called = {};
       var msg1 = new Test1.Msg1({field1: 42});
-      msg1.serializeTo(buffer.output, function() {
-        called.value = true;
-        verify(false);
+      msg1.serializeTo(undefined, function() {
+        fail();
       }, function(err) {
-        called.error = err;
+        called.value = true;
       });
       tryCompare(called, 'value', true, 100);
-      verify(called.error);
-    }
-
-    function test_serialize_empty() {
-      var called = {};
-      var msg1 = new Test1.Msg1({});
-      msg1.serializeTo(buffer.output, function() {
-        called.value = true;
-        verify(false);
-      }, function(err) {
-        called.error = err;
-      });
-      tryCompare(called, 'value', true, 100);
-      verify(called.error);
     }
 
     function test_serialize_size0() {
@@ -48,37 +33,11 @@ Item {
       buffer.size = 0;
       var msg1 = new Test1.Msg1({field1: 42});
       msg1.serializeTo(buffer.output, function() {
-        called.value = true;
-        verify(false);
+        fail();
       }, function(err) {
-        called.error = err;
+        called.value = true;
       });
       tryCompare(called, 'value', true, 100);
-      verify(called.error);
-    }
-
-    function test_serialize_undefined_value() {
-      var called = {};
-      Test1.Msg1.serializeTo(buffer.output, undefined, function() {
-        called.value = true;
-        verify(false);
-      }, function(err) {
-        called.error = err;
-      });
-      tryCompare(called, 'value', true, 100);
-      verify(called.error);
-    }
-
-    function test_serialize_invalid_value() {
-      var called = {};
-      Test1.Msg1.serializeTo(buffer.output, 'invalid', function() {
-        called.value = true;
-        verify(false);
-      }, function(err) {
-        called.error = err;
-      });
-      tryCompare(called, 'value', true, 100);
-      verify(called.error);
     }
   }
 }

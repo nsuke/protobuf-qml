@@ -28,13 +28,20 @@ class AsyncProcessor : public QObject {
                          DescriptorWrapper* descriptor,
                          int async_id) {
     qDebug() << "parse";
-    if (descriptor) {
-      auto x = descriptor->parse(input);
-      qDebug() << "parsed";
-      parsed(async_id, x);
+    if (!input) {
+      error(async_id, "input is null");
+      return;
+    }
+    if (!descriptor) {
+      error(async_id, "descriptor is null.");
+      return;
+    }
+    auto x = descriptor->parse(input);
+    qDebug() << "parsed";
+    if (x.isEmpty()) {
+      error(async_id, "Failed to parse any message");
     } else {
-      qWarning() <<  "Descriptor is null.";
-      error(async_id, "Descriptor is null.");
+      parsed(async_id, x);
     }
   }
 
@@ -43,13 +50,19 @@ class AsyncProcessor : public QObject {
                              const QVariantList& fields,
                              int async_id) {
     qDebug() << "serialize";
-    if (descriptor) {
-      descriptor->serialize(output, fields);
+    if (!output) {
+      error(async_id, "input is null");
+      return;
+    }
+    if (!descriptor) {
+      error(async_id, "descriptor is null.");
+      return;
+    }
+    if (!descriptor->serialize(output, fields)) {
+      error(async_id, "failed to serialize");
+    } else {
       qDebug() << "serialized";
       serialized(async_id);
-    } else {
-      qWarning() <<  "Descriptor is null.";
-      error(async_id, "Descriptor is null.");
     }
   }
 

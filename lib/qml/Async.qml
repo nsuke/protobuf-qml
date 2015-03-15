@@ -29,7 +29,9 @@ Item {
     property var handlers: []
 
     property var processor: AsyncProcessor {
-      onError: detail.handle(detail.signalTypes.ERROR, id, error, true);
+      onError: {
+        detail.handle(detail.signalTypes.ERROR, id, error, true);
+      }
       onParsed: detail.handle(detail.signalTypes.PARSED, id, fields);
       onSerialized: detail.handle(detail.signalTypes.SERIALIZED, id);
       onSerializedArray: detail.handle(detail.signalTypes.SERIALIZED_ARRAY, id, array);
@@ -40,13 +42,21 @@ Item {
       if (typeof optional == 'undefined') {
         optional = false;
       }
-      var cb = handlers[id];
+      var entry = handlers[id];
+      var cb = entry && entry[target];
       if (cb) {
-        cb[target](data);
-        delete handlers[id];
-        index.next = id;
-      } else if (!optional) {
-        console.warn('Callback not found for ID : ' + id);
+        if (typeof cb != 'function') {
+          console.warn('Callback is not function : (ID: ' + id + ', TYPE: ' + target + ')');
+        } else {
+          cb(data);
+          delete handlers[id];
+          index.next = id;
+        }
+      } else {
+        if (!optional) {
+          console.warn('Callback not found for ID : ' + id);
+        }
+        console.log(data);
       }
     }
 

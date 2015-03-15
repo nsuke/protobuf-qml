@@ -10,7 +10,7 @@ Item {
   }
 
   TestCase {
-    name: 'PrimitiveFieldTest'
+    name: 'OneofFieldTest'
 
     function init() {
       buffer.clear();

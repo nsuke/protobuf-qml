@@ -26,10 +26,10 @@ const char* boolToString(bool value) {
 void FieldGenerator::generateInit(io::Printer& p) {
   if (t_->is_repeated()) {
     p.Print(
-        "  this._raw[$index$] = [];\n"
-        "  if (values && values.$name$ instanceof Array) {\n"
-        "    this.$name$ = values.$name$;\n"
-        "  }\n",
+        "    this._raw[$index$] = [];\n"
+        "    if (values && values.$name$ && values.$name$ instanceof Array) {\n"
+        "      this.$name$(values.$name$);\n"
+        "    }\n",
         "index",
         SimpleItoa(t_->index()),
         "name",
@@ -37,7 +37,7 @@ void FieldGenerator::generateInit(io::Printer& p) {
         "capital_name",
         capital_name_);
   } else {
-    p.Print("  this.$name$ = (values && values.$name$)",
+    p.Print("    this.$name$(",
             "index",
             SimpleItoa(t_->index()),
             "name",
@@ -46,7 +46,7 @@ void FieldGenerator::generateInit(io::Printer& p) {
 #define PRINT_DEFAULT_VALUE(type1, type2, convert)                            \
   case FieldDescriptor::CPPTYPE_##type1:                                      \
     p.Print(                                                                  \
-        " || $default$;\n", "default", convert(t_->default_value_##type2())); \
+        "$default$);\n", "default", convert(t_->default_value_##type2())); \
     break;
       PRINT_DEFAULT_VALUE(INT32, int32, SimpleItoa);
       PRINT_DEFAULT_VALUE(INT64, int64, SimpleItoa);
@@ -59,10 +59,10 @@ void FieldGenerator::generateInit(io::Printer& p) {
 #undef PRINT_DEFAULT_VALUE
 
       case FieldDescriptor::CPPTYPE_STRING:
-        p.Print(" || \"$default$\";\n", "default", t_->default_value_string());
+        p.Print("'$default$');\n", "default", t_->default_value_string());
         break;
       case FieldDescriptor::CPPTYPE_MESSAGE:
-        p.Print(";\n");
+        p.Print("{});\n");
         break;
       default:
         qDebug() << t_->cpp_type();
@@ -72,7 +72,18 @@ void FieldGenerator::generateInit(io::Printer& p) {
 }
 
 void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
-  if (t_->message_type()) {
+  if (t_->is_repeated()) {
+    p.Print(
+        "        if ($arg$[$index$] && $arg$[$index$] instanceof Array) {\n"
+        "          this.$name$($arg$[$index$]);\n"
+        "        }\n",
+            "name",
+            camel_name_,
+            "arg",
+            arg,
+            "index",
+            SimpleItoa(t_->index()));
+  } else if (t_->message_type()) {
     p.Print({{"name", camel_name_},
              {"arg", arg},
              {"index", SimpleItoa(t_->index())},
@@ -81,9 +92,9 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
                   ? ""
                   : generateImportName(t_->message_type()->file()) + "."},
              {"message_type", generateLongName(t_->message_type())}},
-            "      this.$name$._mergeFromRawArray($arg$[$index$]);\n");
+            "        this.$name$()._mergeFromRawArray($arg$[$index$]);\n");
   } else {
-    p.Print("      this.$name$ = $arg$[$index$];\n",
+    p.Print("        this.$name$($arg$[$index$]);\n",
             "name",
             camel_name_,
             "arg",
@@ -100,24 +111,48 @@ void FieldGenerator::generateRepeatedMessageProperty(
 void FieldGenerator::generateRepeatedProperty(
     google::protobuf::io::Printer& p) {
   p.Print(
-      "  $name$: {\n"
-      "    get: function() {\n"
-      "      return this._raw[$index$];\n"
-      "    },\n"
-      "    set: function(value) {\n"
-      "      if (typeof value == 'undefined') {\n"
-      "        this._raw[$index$].length = 0;\n"
-      "      } else if (value instanceof Array) {\n"
-      "        this._raw[$index$].length = value.length;\n"
-      "        for(var i in value) {\n"
-      "          console.log('repeated value : ' + value[i]);\n"
-      "          this._raw[$index$][i] = value[i];\n"
-      "        }\n"
+      "  constructor.prototype.$name$ = function(indexOrValues, value) {\n"
+      "    if (typeof indexOrValues == 'undefined') {\n"
+      "      return;\n"
+      "    }\n"
+      "    if (indexOrValues instanceof Array) {\n"
+      "      this._raw[$index$].length = indexOrValues.length;\n"
+      "      for (var i in indexOrValues) {\n"
+      "        this._raw[$index$][i] = indexOrValues[i];\n"
       "      }\n"
-      "    },\n"
-      "  },\n",
+      "      return;\n"
+      "    }\n"
+      "    if (typeof indexOrValues != 'number') {\n"
+      "      throw new TypeError('Index should be a number.');\n"
+      "    }\n"
+      "    if (typeof value == 'undefined') {\n"
+      "      return this._raw[$index$][indexOrValues];\n"
+      "    } else {\n"
+      "      this._raw[$index$][indexOrValues] = value;\n"
+      "    }\n"
+      "  };\n"
+      "  constructor.prototype.$name$Count = function() {\n"
+      "    return this._raw[$index$].length;\n"
+      "  };\n"
+      "  constructor.prototype.add$capital_name$ = function(value) {\n"
+      "    if (typeof value == 'undefined') {\n"
+      "      throw new TypeError('Cannot add undefined.');\n"
+      "    }\n"
+      "    this._raw[$index$].push(value);\n"
+      "  };\n"
+      "  constructor.prototype.remove$capital_name$ = function(index) {\n"
+      "    if (typeof index != 'number') {\n"
+      "      throw new TypeError('Index should be a number.');\n"
+      "    }\n"
+      "    this._raw[$index$].splice(index, 1);\n"
+      "  };\n"
+      "  constructor.prototype.clear$capital_name$ = function() {\n"
+      "    this._raw[$index$].length = 0;\n"
+      "  };\n",
       "name",
       camel_name_,
+      "capital_name",
+      capital_name_,
       "index",
       SimpleItoa(t_->index()));
 }
@@ -125,19 +160,14 @@ void FieldGenerator::generateRepeatedProperty(
 void FieldGenerator::generateOptionalMessageProperty(
     google::protobuf::io::Printer& p) {
   p.Print(
-      "  $name$: {\n"
-      "    get: function() {\n"
-      "      if (typeof this._$name$ == 'undefined') {\n"
-      "        this._$name$ = new $message_scope$$message_type$();\n"
-      "        this._$name$._raw = this._raw[$index$]\n"
-      "      }\n"
+      "  constructor.prototype.$name$ = function(value) {\n"
+      "    if (typeof value == 'undefined') {\n"
       "      return this._$name$;\n"
-      "    },\n"
-      "    set: function(value) {\n"
+      "    } else {\n"
       "      this._$name$ = new $message_scope$$message_type$(value);\n"
       "      this._raw[$index$] = this._$name$._raw;\n"
-      "    },\n"
-      "  },\n",
+      "    }\n"
+      "  };\n",
       "name",
       camel_name_,
       "index",
@@ -153,14 +183,13 @@ void FieldGenerator::generateOptionalMessageProperty(
 void FieldGenerator::generateOptionalProperty(
     google::protobuf::io::Printer& p) {
   p.Print(
-      "  $name$: {\n"
-      "    get: function() {\n"
+      "  constructor.prototype.$name$ = function(value) {\n"
+      "    if (typeof value == 'undefined') {\n"
       "      return this._raw[$index$];\n"
-      "    },\n"
-      "    set: function(value) {\n"
+      "    } else {\n"
       "      this._raw[$index$] = value;\n"
-      "    },\n"
-      "  },\n",
+      "    }\n"
+      "  };\n",
       "name",
       camel_name_,
       "index",
