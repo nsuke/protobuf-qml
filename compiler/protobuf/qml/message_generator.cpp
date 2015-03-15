@@ -26,7 +26,7 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   p.Print(
       "var $message_name$ = (function() {\n"
       "  var constructor = function(values) {\n"
-      "    this._raw = new Array($field_count$);\n"
+      "    this._raw = new Array($field_count$);\n\n"
       "    this._mergeFromRawArray = function(rawArray) {\n"
       "      if (rawArray && rawArray instanceof Array) {\n",
       "message_name",
@@ -47,8 +47,8 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "    for (var k in values) {\n"
       "      this[k](values[k]);\n"
       "    }\n"
-      "  };\n"
-      "  Protobuf.Message.createMessageType(constructor, "
+      "  };\n\n"
+      "  Protobuf.Boilerplate.createMessageType(constructor, "
       "_file.descriptor.messageType($message_index$));\n",
       "message_name",
       name_,

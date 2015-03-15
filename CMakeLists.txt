@@ -71,7 +71,7 @@ endif()
 copy(${CMAKE_CURRENT_BINARY_DIR}/plugins/Protobuf
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/qml/qmldir
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/qml/Async.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/qml/message.js
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/qml/boilerplate.js
   ${CMAKE_CURRENT_BINARY_DIR}/libprotobuf-qml.so)
 
 copy(${CMAKE_CURRENT_BINARY_DIR}/test
