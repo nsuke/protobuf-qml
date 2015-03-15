@@ -19,6 +19,7 @@ before_install:
   - if [ "$CC" = "clang" ]; then export CC=clang-3.6; export CXX=clang++-3.6; export PATH=/usr/lib/llvm-3.6/bin:"$PATH"; export USE_CLANG=1; fi
 
 script:
-  - mkdir -p cmake_build && cd cmake_build && cmake -GNinja ..
-  - ninja
+  - build/download_dependency.py -j4
+  - mkdir -p cmake_build && cd cmake_build && cmake -GNinja -DCMAKE_PREFIX_PATH=../build/deps ..
+  - ninja -j4
   - ctest -VV
