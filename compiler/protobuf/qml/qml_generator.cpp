@@ -62,7 +62,7 @@ void FileGenerator::generateJsFile(io::Printer& p) {
             import_name);
     deps_.emplace_back(std::move(import_name));
   }
-  p.Print("\n");
+  p.Print("'use strict';\n\n");
   p.Print(
       "var _file = {\n"
       "  get descriptor() {\n"

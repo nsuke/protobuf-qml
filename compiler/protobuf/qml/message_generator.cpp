@@ -40,7 +40,14 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   for (auto& g : field_generators_) {
     g.generateInit(p);
   }
-  p.Print("};\n\n");
+  p.Print(
+      "\n"
+      "  Object.seal(this);\n"
+      "\n"
+      "  for (var k in values) {\n"
+      "    this[k] = values[k];\n"
+      "  }\n"
+      "};\n\n");
 }
 
 void MessageGenerator::generateMessagePrototype(io::Printer& p) {

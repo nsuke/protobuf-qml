@@ -36,6 +36,7 @@ Item {
     }
 
     function handle(target, id, data, optional) {
+      'use strict';
       if (typeof optional == 'undefined') {
         optional = false;
       }
@@ -50,7 +51,8 @@ Item {
     }
 
     function executeAsync(type, f, onSuccess, onError, args) {
-      console.log('Executing ' + f + ' with args ' + args);
+      'use strict';
+      // console.log('Executing ' + f + ' with args ' + args);
       var id = detail.index.next;
       var handler = {
         timestamp: Date.now(),
@@ -64,16 +66,19 @@ Item {
   }
 
   function parse(input, descriptor, onSuccess, onError) {
+    'use strict';
     detail.executeAsync(detail.signalTypes.PARSED, 'parse',
         onSuccess, onError, [input, descriptor]);
   }
 
   function parseArray(input, descriptor, onSuccess, onError) {
+    'use strict';
     detail.executeAsync(detail.signalTypes.PARSED, 'parseArray',
         onSuccess, onError, [input, descriptor]);
   }
 
   function serialize(output, descriptor, message, onSuccess, onError) {
+    'use strict';
     console.assert(output);
     console.assert(descriptor);
     detail.executeAsync(detail.signalTypes.SERIALIZED, 'serialize',
@@ -81,6 +86,7 @@ Item {
   }
 
   function serializeArray(descriptor, message, onSuccess, onError) {
+    'use strict';
     detail.executeAsync(detail.signalTypes.SERIALIZED_ARRAY, 'serializeArray',
         onSuccess, onError, [descriptor, message]);
   }
