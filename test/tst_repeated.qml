@@ -109,9 +109,9 @@ Item {
           verify(msg2);
           verify(msg2.msgs1);
           compare(msg2.msgs1Count(), 2);
-          compare(msg2.msgs1(0).field1, 300);
-          compare(typeof msg2.msgs1(0).repeatedStringField, 'undefined');
-          verify(typeof msg2.msgs1(1).repeatedStringField);
+          compare(msg2.msgs1(0).field1(), 300);
+          compare(msg2.msgs1(0).repeatedStringFieldCount(), 0);
+          verify(msg2.msgs1(1).repeatedStringFieldCount() > 0);
           verify(typeof msg2.msgs1(1).repeatedStringField(0), 'baz');
           called.value = true;
         });

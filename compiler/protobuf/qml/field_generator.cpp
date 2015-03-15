@@ -13,9 +13,9 @@ using namespace google::protobuf;
 FieldGenerator::FieldGenerator(const FieldDescriptor* t)
     : t_(t), camel_name_(t_ ? camelize(t_->name()) : "") {
   capital_name_ = camel_name_;
-  if (capital_name_.size() > 0 && capital_name_[0] <= 'z' &&
-      capital_name_[8] >= 'a') {
-    capital_name_[0] += std::abs('A' - 'a');
+  if (!capital_name_.empty() && capital_name_[0] <= 'z' &&
+      capital_name_[0] >= 'a') {
+    capital_name_[0] += 'A' - 'a';
   }
 }
 
@@ -25,8 +25,11 @@ const char* boolToString(bool value) {
 
 void FieldGenerator::generateInit(io::Printer& p) {
   if (t_->is_repeated()) {
+    if (t_->message_type()) {
+      p.Print("    this._$name$ = new Array();\n", "name", camel_name_);
+    }
     p.Print(
-        "    this._raw[$index$] = [];\n"
+        "    this._raw[$index$] = new Array();\n"
         "    if (values && values.$name$ && values.$name$ instanceof Array) {\n"
         "      this.$name$(values.$name$);\n"
         "    }\n",
@@ -43,10 +46,9 @@ void FieldGenerator::generateInit(io::Printer& p) {
             "name",
             camel_name_);
     switch (t_->cpp_type()) {
-#define PRINT_DEFAULT_VALUE(type1, type2, convert)                            \
-  case FieldDescriptor::CPPTYPE_##type1:                                      \
-    p.Print(                                                                  \
-        "$default$);\n", "default", convert(t_->default_value_##type2())); \
+#define PRINT_DEFAULT_VALUE(type1, type2, convert)                             \
+  case FieldDescriptor::CPPTYPE_##type1:                                       \
+    p.Print("$default$);\n", "default", convert(t_->default_value_##type2())); \
     break;
       PRINT_DEFAULT_VALUE(INT32, int32, SimpleItoa);
       PRINT_DEFAULT_VALUE(INT64, int64, SimpleItoa);
@@ -72,17 +74,42 @@ void FieldGenerator::generateInit(io::Printer& p) {
 }
 
 void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
-  if (t_->is_repeated()) {
+  if (t_->is_repeated() && t_->message_type()) {
+    std::map<std::string, std::string> variables{
+        {"name", camel_name_},
+        {"index", SimpleItoa(t_->index())},
+        {"capital_name", capital_name_},
+        {"message_scope",
+         (t_->file() == t_->message_type()->file())
+             ? ""
+             : generateImportName(t_->message_type()->file()) + "."},
+        {"message_type", generateLongName(t_->message_type())},
+        {"arg", arg},
+    };
+
+    p.Print(
+        variables,
+        "        if ($arg$[$index$] && $arg$[$index$] instanceof Array) {\n"
+        "          for (var i in $arg$[$index$]) {\n"
+        "            if (typeof this._$name$[i] == 'undefined') {\n"
+        "              var msg = new $message_scope$$message_type$();\n"
+        "              this._$name$[i] = msg;\n"
+        "              this._raw[$index$][i] = msg._raw;\n"
+        "            }\n"
+        "            this._$name$[i]._mergeFromRawArray($arg$[$index$][i]);\n"
+        "          }\n"
+        "        }\n");
+  } else if (t_->is_repeated()) {
     p.Print(
         "        if ($arg$[$index$] && $arg$[$index$] instanceof Array) {\n"
         "          this.$name$($arg$[$index$]);\n"
         "        }\n",
-            "name",
-            camel_name_,
-            "arg",
-            arg,
-            "index",
-            SimpleItoa(t_->index()));
+        "name",
+        camel_name_,
+        "arg",
+        arg,
+        "index",
+        SimpleItoa(t_->index()));
   } else if (t_->message_type()) {
     p.Print({{"name", camel_name_},
              {"arg", arg},
@@ -106,6 +133,70 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
 
 void FieldGenerator::generateRepeatedMessageProperty(
     google::protobuf::io::Printer& p) {
+  std::map<std::string, std::string> variables{
+      {"name", camel_name_},
+      {"index", SimpleItoa(t_->index())},
+      {"capital_name", capital_name_},
+      {"message_scope",
+       (t_->file() == t_->message_type()->file())
+           ? ""
+           : generateImportName(t_->message_type()->file()) + "."},
+      {"message_type", generateLongName(t_->message_type())},
+  };
+
+  p.Print(
+      variables,
+      "  constructor.prototype.$name$ = function(indexOrValues, value) {\n"
+      "    if (typeof indexOrValues == 'undefined') {\n"
+      "      return;\n"
+      "    }\n"
+      "    if (indexOrValues instanceof Array) {\n"
+      "      this._$name$.length = indexOrValues.length;\n"
+      "      this._raw[$index$].length = indexOrValues.length;\n"
+      "      for (var i in indexOrValues) {\n"
+      "        var msg = new $message_scope$$message_type$(indexOrValues[i]);\n"
+      "        this._$name$[i] = msg;\n"
+      "        this._raw[$index$][i] = msg._raw;\n"
+      "      }\n"
+      "      return;\n"
+      "    }\n"
+      "    if (typeof indexOrValues != 'number') {\n"
+      "      throw new TypeError('Index should be a number.');\n"
+      "    }\n"
+      "    if (typeof value == 'undefined') {\n"
+      "      return this._$name$[indexOrValues];\n"
+      "    } else {\n"
+      "      var msg = new $message_scope$$message_type$(value);\n"
+      "      this._$name$[indexOrValues] = msg;\n"
+      "      this._raw[$index$][indexOrValues] = msg._raw;\n"
+      "    }\n"
+      "  };\n"
+      "  constructor.prototype.$name$Count = function() {\n"
+      "    console.assert(this._$name$.length == this._raw[$index$].length);\n"
+      "    return this._$name$.length;\n"
+      "  };\n"
+      "  constructor.prototype.add$capital_name$ = function(value) {\n"
+      "    if (typeof value == 'undefined') {\n"
+      "      throw new TypeError('Cannot add undefined.');\n"
+      "    }\n"
+      "    var msg = new $message_scope$$message_type$(value);\n"
+      "    this._$name$.push(msg);\n"
+      "    this._raw[$index$].push(msg._raw);\n"
+      "    console.assert(this._$name$.length == this._raw[$index$].length);\n"
+      "  };\n"
+      "  constructor.prototype.remove$capital_name$ = function(index) {\n"
+      "    if (typeof index != 'number') {\n"
+      "      throw new TypeError('Index should be a number.');\n"
+      "    }\n"
+      "    this._raw[$index$].splice(index, 1);\n"
+      "    this._$name$.splice(index, 1);\n"
+      "    console.assert(this._$name$.length == this._raw[$index$].length);\n"
+      "  };\n"
+      "  constructor.prototype.clear$capital_name$ = function() {\n"
+      "    this._raw[$index$].length = 0;\n"
+      "    this._$name$.length = 0;\n"
+      "    console.assert(this._$name$.length == this._raw[$index$].length);\n"
+      "  };\n");
 }
 
 void FieldGenerator::generateRepeatedProperty(

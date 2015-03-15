@@ -16,7 +16,7 @@ DescriptorWrapper::~DescriptorWrapper() {
 }
 
 bool packFieldsToMessage(const QVariantList& value, Message& msg);
-QVariantList unpackFieldsFromMessage(const Message& msg);
+QVariant unpackFieldsFromMessage(const Message& msg);
 
 // TODO: Handle invalid QVariant that cannot be converted
 void setReflectionRepeatedValue(const Reflection& ref,
@@ -109,7 +109,7 @@ void setReflectionValue(const Reflection& ref,
   }
 }
 
-QVariantList getReflectionRepeatedValue(const Reflection& ref,
+QVariant getReflectionRepeatedValue(const Reflection& ref,
                                         const Message& msg,
                                         const FieldDescriptor* field,
                                         int size) {
@@ -179,7 +179,7 @@ QVariant getReflectionValue(const Reflection& ref,
   return QVariant();
 }
 
-QVariantList unpackFieldsFromMessage(const Message& msg) {
+QVariant unpackFieldsFromMessage(const Message& msg) {
   QVariantList result;
   bool parsed = false;
   auto reflection = msg.GetReflection();
@@ -228,10 +228,10 @@ QVariantList unpackFieldsFromMessage(const Message& msg) {
   //    }
   //  }
   //}
-  return parsed ? std::move(result) : QVariantList();
+  return parsed ? std::move(result) : QVariant();
 }
 
-QVariantList DescriptorWrapper::parse(InputDevice* input) {
+QVariant DescriptorWrapper::parse(InputDevice* input) {
   if (!input) return QVariantList();
   auto msg = sharedMessage();
   msg->Clear();

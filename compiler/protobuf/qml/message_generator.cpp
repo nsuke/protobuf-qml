@@ -44,8 +44,12 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   }
   p.Print(
       "    Object.seal(this);\n"
-      "    for (var k in values) {\n"
-      "      this[k](values[k]);\n"
+      "    if (values instanceof $message_name$) {\n"
+      "      this._mergeFromRawArray(values._raw);\n"
+      "    } else {\n"
+      "      for (var k in values) {\n"
+      "        this[k](values[k]);\n"
+      "      }\n"
       "    }\n"
       "  };\n\n"
       "  Protobuf.Boilerplate.createMessageType(constructor, "
@@ -76,9 +80,6 @@ void MessageGenerator::generateMessageProperties(io::Printer& p) {
   p.Print("Object.defineProperties($message_name$.prototype, {\n",
           "message_name",
           name_);
-  // for (auto& g : field_generators_) {
-  //   g.generateProperty(p);
-  // }
   p.Print("});\n\n");
   for (auto& g : enum_generators_) {
     g.generateEnum(p);

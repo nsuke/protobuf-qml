@@ -3,6 +3,7 @@
 
 #include "descriptor_database.h"
 #include <QObject>
+#include <QMetaType>
 
 namespace protobuf {
 namespace qml {
@@ -38,10 +39,10 @@ class AsyncProcessor : public QObject {
     }
     auto x = descriptor->parse(input);
     qDebug() << "parsed";
-    if (x.isEmpty()) {
+    if (!x.isValid() || !x.canConvert(QMetaType::QVariantList)) {
       error(async_id, "Failed to parse any message");
     } else {
-      parsed(async_id, x);
+      parsed(async_id, x.value<QVariantList>());
     }
   }
 
