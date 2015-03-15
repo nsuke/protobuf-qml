@@ -298,7 +298,7 @@ bool packFieldsToMessage(const QVariantList& fields, Message& msg) {
 }
 
 bool DescriptorWrapper::serialize(OutputDevice* output,
-                                   const QVariantList& value) {
+                                  const QVariantList& value) {
   try {
     if (!output || value.isEmpty()) return false;
     auto msg = sharedMessage();
