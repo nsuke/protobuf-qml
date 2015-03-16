@@ -3,7 +3,6 @@
 
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/io/printer.h>
-#include <qglobal.h>
 
 namespace protobuf {
 namespace qml {

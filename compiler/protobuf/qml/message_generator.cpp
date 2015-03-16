@@ -1,5 +1,4 @@
 #include "protobuf/qml/message_generator.h"
-#include <google/protobuf/stubs/strutil.h>
 
 namespace protobuf {
 namespace qml {
@@ -31,12 +30,8 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "    this._raw = [new Array($field_count$), new Array($oneof_count$)];\n\n"
       "    this._mergeFromRawArray = function(rawArray) {\n"
       "      if (rawArray && rawArray instanceof Array) {\n",
-      "message_name",
-      name_,
-      "field_count",
-      SimpleItoa(t_->field_count()),
-      "oneof_count",
-      SimpleItoa(t_->oneof_decl_count() + 1));
+      "message_name", name_, "field_count", std::to_string(t_->field_count()),
+      "oneof_count", std::to_string(t_->oneof_decl_count() + 1));
   for (auto& g : field_generators_) {
     g.generateMerge(p, "rawArray");
   }
@@ -74,17 +69,10 @@ void MessageGenerator::generateMessagePrototype(io::Printer& p) {
   p.Print(
       "Protobuf.Message.createMessageType($message_name$, "
       "_file.descriptor.messageType($message_index$));\n\n",
-      "message_name",
-      name_,
-      "message_index",
-      SimpleItoa(t_->index()));
+      "message_name", name_, "message_index", std::to_string(t_->index()));
 }
 
 void MessageGenerator::generateMessageProperties(io::Printer& p) {
-  // p.Print("Object.defineProperties($message_name$.prototype, {\n",
-  //         "message_name",
-  //         name_);
-  // p.Print("});\n\n");
   for (auto& g : enum_generators_) {
     g.generateEnum(p);
   }

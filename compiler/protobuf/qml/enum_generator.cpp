@@ -1,6 +1,5 @@
 #include "protobuf/qml/enum_generator.h"
 #include "protobuf/qml/compiler/util.h"
-#include <google/protobuf/stubs/strutil.h>
 #include <sstream>
 
 namespace protobuf {
@@ -19,7 +18,7 @@ void EnumGenerator::generateEnum(io::Printer& p) {
             "enum_value_name",
             t_->value(i)->name(),
             "enum_value",
-            SimpleItoa(t_->value(i)->number()));
+            std::to_string(t_->value(i)->number()));
   }
   p.Print(
       "\n"
@@ -30,7 +29,7 @@ void EnumGenerator::generateEnum(io::Printer& p) {
             "enum_value_name",
             t_->value(i)->name(),
             "enum_value",
-            SimpleItoa(t_->value(i)->number()));
+            std::to_string(t_->value(i)->number()));
   }
   p.Print(
       "    }\n"

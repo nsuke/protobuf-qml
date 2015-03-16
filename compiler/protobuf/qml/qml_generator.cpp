@@ -2,7 +2,6 @@
 #include "protobuf/qml/compiler/util.h"
 
 #include <google/protobuf/io/zero_copy_stream.h>
-#include <google/protobuf/stubs/strutil.h>
 #include <QByteArray>
 
 #include <memory>
@@ -84,7 +83,7 @@ void FileGenerator::generateJsFile(io::Printer& p) {
       "};\n"
       "\n",
       "file_descriptor_size",
-      SimpleItoa(file_desc_size),
+      std::to_string(file_desc_size),
       "file_descriptor",
       file_desc_str,
       "file_name",
