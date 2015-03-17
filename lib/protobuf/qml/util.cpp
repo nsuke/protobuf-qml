@@ -35,5 +35,13 @@ std::string camelize(const std::string& name) {
   }
   return ss.str();
 }
+
+std::string capitalizeAll(std::string name) {
+  for (int i = 0; i < name.size(); ++i) {
+    auto c = name[i];
+    name[i] = is_small_char(c) ? capitalize(c) : c;
+  }
+  return std::move(name);
+}
 }
 }

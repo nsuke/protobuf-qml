@@ -1,8 +1,9 @@
 #ifndef PROTOBUF_QML_MESSAGE_GENERATOR_H
 #define PROTOBUF_QML_MESSAGE_GENERATOR_H
 
-#include "protobuf/qml/field_generator.h"
 #include "protobuf/qml/enum_generator.h"
+#include "protobuf/qml/field_generator.h"
+#include "protobuf/qml/oneof_generator.h"
 #include <string>
 
 namespace protobuf {
@@ -40,6 +41,7 @@ class MessageGenerator {
   std::vector<MessageGenerator> message_generators_;
   std::vector<EnumGenerator> enum_generators_;
   std::vector<FieldGenerator> field_generators_;
+  std::vector<OneofGenerator> oneof_generators_;
 };
 }
 }

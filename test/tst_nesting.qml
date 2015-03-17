@@ -36,6 +36,7 @@ Item {
     }
 
     function test_deeply_nested() {
+      skip("TODO: Restore oneof implementation");
       var called = {};
       var msg1 = new Test2.NestingMessage({
         evenMoreNestedMessage2: {

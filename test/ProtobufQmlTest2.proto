@@ -14,6 +14,7 @@ message ThirdMessage {
   oneof test_oneof {
     string name = 4;
     SecondMessage sub_message = 9;
+    int32 num = 5;
   }
 }
 

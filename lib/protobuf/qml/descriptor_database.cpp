@@ -27,8 +27,8 @@ bool packToMessage(QVariant value, Message& msg) {
       !vlist[1].canConvert(QMetaType::QVariantList)) {
     return false;
   }
-  return packToMessage(
-      vlist[0].value<QVariantList>(), vlist[1].value<QList<int>>(), msg);
+  return packToMessage(vlist[0].value<QVariantList>(),
+                       vlist[1].value<QList<int>>(), msg);
 }
 
 QVariant unpackFromMessage(const Message& msg);
@@ -59,10 +59,8 @@ void setReflectionRepeatedValue(const Reflection& ref,
       break;
     case FieldDescriptor::CPPTYPE_ENUM:
       for (int i = 0; i < size; i++)
-        ref.AddEnum(
-            &msg,
-            field,
-            field->enum_type()->FindValueByNumber(list[i].value<int>()));
+        ref.AddEnum(&msg, field, field->enum_type()->FindValueByNumber(
+                                     list[i].value<int>()));
       break;
     case FieldDescriptor::CPPTYPE_MESSAGE:
       for (int i = 0; i < size; i++) {
@@ -115,8 +113,7 @@ void setReflectionValue(const Reflection& ref,
       ref.SetString(&msg, field, value.value<QString>().toStdString());
       break;
     case FieldDescriptor::CPPTYPE_ENUM:
-      ref.SetEnum(&msg,
-                  field,
+      ref.SetEnum(&msg, field,
                   field->enum_type()->FindValueByNumber(value.value<int>()));
       break;
     case FieldDescriptor::CPPTYPE_MESSAGE:
@@ -207,12 +204,12 @@ QVariant unpackFromMessage(const Message& msg) {
       auto oneof_value = &oneofs[oneof->index()];
       if (*oneof_value < 0) {
         auto d = reflection->GetOneofFieldDescriptor(msg, oneof);
-        *oneof_value = d ? d->index() : 0;
+        *oneof_value = d ? d->number() : 0;
         if (*oneof_value > 0) {
           parsed = true;
         }
       }
-      if (*oneof_value != desc->index()) {
+      if (*oneof_value != desc->number()) {
         result.append(QVariant());
         continue;
       }
@@ -266,7 +263,7 @@ bool packToMessage(const QVariantList& fields,
     auto desc = descriptor->field(i);
     if ((!desc->containing_oneof() && field.isValid()) ||
         (desc->containing_oneof() && oneofs.size() > desc->index_in_oneof() &&
-         oneofs[desc->index_in_oneof()] == i)) {
+         oneofs[desc->index_in_oneof()] == desc->number())) {
       if (desc->is_repeated()) {
         if (!field.canConvert(QMetaType::QVariantList)) {
           qWarning() << "Invalid type for repeated field: "

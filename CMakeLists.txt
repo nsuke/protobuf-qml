@@ -32,8 +32,9 @@ target_link_libraries(protobuf-qml
 set(protoc-gen-qml_SOURCES
   compiler/protobuf/qml/main.cpp
   compiler/protobuf/qml/enum_generator.cpp
-  compiler/protobuf/qml/message_generator.cpp
   compiler/protobuf/qml/field_generator.cpp
+  compiler/protobuf/qml/message_generator.cpp
+  compiler/protobuf/qml/oneof_generator.cpp
   compiler/protobuf/qml/qml_generator.cpp
   compiler/protobuf/qml/compiler/util.cpp)
 add_executable(protoc-gen-qml ${protoc-gen-qml_SOURCES})
