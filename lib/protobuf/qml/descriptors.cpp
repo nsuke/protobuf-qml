@@ -1,4 +1,4 @@
-#include "protobuf/qml/descriptor_database.h"
+#include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/util.h"
 #include <google/protobuf/descriptor.pb.h>
 

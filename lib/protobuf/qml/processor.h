@@ -1,7 +1,7 @@
 #ifndef PROTOBUF_QML_PROCESSOR_H
 #define PROTOBUF_QML_PROCESSOR_H
 
-#include "descriptor_database.h"
+#include "descriptors.h"
 #include <QObject>
 #include <QMetaType>
 

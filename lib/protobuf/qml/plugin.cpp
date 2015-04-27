@@ -1,5 +1,5 @@
 #include "protobuf/qml/plugin.h"
-#include "protobuf/qml/descriptor_database.h"
+#include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/io.h"
 #include "protobuf/qml/memory.h"
 #include "protobuf/qml/wire_format_lite.h"

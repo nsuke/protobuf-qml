@@ -14,7 +14,7 @@ include_directories(lib)
 
 set(protobuf-qml_SOURCES
   lib/protobuf/qml/util.cpp
-  lib/protobuf/qml/descriptor_database.cpp
+  lib/protobuf/qml/descriptors.cpp
   lib/protobuf/qml/file.cpp
   lib/protobuf/qml/io.cpp
   lib/protobuf/qml/memory.cpp
