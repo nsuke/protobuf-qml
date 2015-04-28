@@ -29,10 +29,10 @@ You need Qt 5 installed on your system.
 $ build/download_dependency.py
 $ mkdir -p cmake_build && cd cmake_build
 $ cmake \
-    -DPROTOBUF_PROTOC_LIBRARY=../build/deps/lib/libprotoc.so \
-    -DPROTOBUF_LIBRARY=../build/deps/lib/libprotobuf.so \
-    -DPROTOBUF_INCLUDE_DIR=../build/deps/include \
-    -DPROTOBUF_PROTOC_EXECUTABLE=../build/deps/bin/protoc \
+    -DPROTOBUF_PROTOC_LIBRARY=../build/deps/protobuf3/lib/libprotoc.so \
+    -DPROTOBUF_LIBRARY=../build/deps/protobuf3/lib/libprotobuf.so \
+    -DPROTOBUF_INCLUDE_DIR=../build/deps/protobuf3/include \
+    -DPROTOBUF_PROTOC_EXECUTABLE=../build/deps/protobuf3/bin/protoc \
     ..
 $ make
 ```
