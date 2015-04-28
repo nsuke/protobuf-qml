@@ -37,8 +37,15 @@ $ cmake \
 $ make
 ```
 
+Testing:
+---
+In the cmake_build directory:
+```
+$ ./protobuf-qml-test -import plugins
+```
+
 Dependency versions:
-----
+---
 Tested with following library versions:
 * [Protocol Buffers 3.0 snapshot](https://github.com/nsuke/protobuf-qml/releases/download/deps/protobuf3.tar.bz2)
 * Qt 5.2 and 5.5 snapshot
