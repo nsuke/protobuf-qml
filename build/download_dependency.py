@@ -6,6 +6,8 @@ import os
 import string
 import subprocess
 import sys
+import tarfile
+import urllib2
 
 ROOT_DIR = os.path.realpath(os.path.dirname(__file__))
 DEPS_DIR = os.path.join(ROOT_DIR, 'deps')
@@ -30,6 +32,23 @@ def execute(cmd, cwd=DEPS_DIR, env=os.environ, err=None, err_expr=['error:', 'fa
   except Exception:
     sys.stderr.write(err)
     raise
+
+
+class TarDependency(object):
+  def __init__(self, **kwargs):
+    self.__dict__.update(kwargs)
+
+  def prepare(self, jobs):
+    print('Downloading a file from [%s].' % self.url)
+    dlpath = os.path.join(DEPS_DIR, 'download_cache')
+    rsp = urllib2.urlopen(self.url)
+    with open(dlpath, 'w') as dl:
+      dl.write(rsp.read())
+    print('Extracting files.')
+    with open(dlpath, 'r') as dl:
+      with tarfile.open(fileobj=dl) as arc:
+        arc.extractall(DEPS_DIR)
+    return True
 
 
 class GitDependency(object):
@@ -82,7 +101,7 @@ class GitDependency(object):
     cmd = ['git', 'checkout', '-f', target]
     return execute(cmd, cwd=self.dir)
 
-  def prepare(self):
+  def prepare(self, jobs):
     return self.get_source()
 
 
@@ -114,10 +133,14 @@ class CppGitDependency(GitDependency):
 def main(argv):
   p = argparse.ArgumentParser()
   p.add_argument('--jobs', '-j', type=int)
+  p.add_argument('--git', action='store_true')
   args = p.parse_args(argv)
   if not os.path.exists(DEPS_DIR):
     os.makedirs(DEPS_DIR)
-  d = CppGitDependency('protobuf', 'https://github.com/google/protobuf.git', '9d31c227a3ab0260c3e6ebc7e1a555f47582dab4')
+  if args.git:
+    d = CppGitDependency('protobuf3', 'https://github.com/google/protobuf.git', 'ca9d1a053a8590caa1a1f81491b0381f052fa734')
+  else:
+    d = TarDependency(name='protobuf3', url='https://github.com/nsuke/protobuf-qml/releases/download/deps/protobuf3.tar.bz2')
   res = d.prepare(args.jobs)
   return 0 if res else 1
 
