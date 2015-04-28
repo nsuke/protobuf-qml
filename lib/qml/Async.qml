@@ -5,99 +5,96 @@ Item {
   QtObject {
     id: detail
 
-    readonly property var signalTypes: ({
-      'ERROR': 0,
-      'PARSED': 1,
-      'SERIALIZED': 2,
-      'SERIALIZED_ARRAY': 3,
-    })
+    function handlerStorage() {
+      var that = this;
+      this.handlers = [];
 
-    property var index: ({
-      _i: 0,
-      get next() {
-        for (var i = this._i;
-            i < handlers.length && typeof handlers[i] != 'undefined'; ++i) {
-        }
-        this._i = i;
-        return this._i;
-      },
-      set next(v) {
-        this._i = v;
-      },
-    })
-
-    property var handlers: []
-
-    property var processor: AsyncProcessor {
-      onError: {
-        detail.handle(detail.signalTypes.ERROR, id, error, true);
-      }
-      onParsed: detail.handle(detail.signalTypes.PARSED, id, fields);
-      onSerialized: detail.handle(detail.signalTypes.SERIALIZED, id);
-      onSerializedArray: detail.handle(detail.signalTypes.SERIALIZED_ARRAY, id, array);
+      this.index = {
+        _i: 0,
+        get next() {
+          for (var i = this._i;
+          i < that.handlers.length && typeof that.handlers[i] != 'undefined'; ++i) {
+          }
+          this._i = i;
+          return this._i;
+        },
+        set next(v) {
+          this._i = v;
+        },
+      };
+      
+      this.addHandler = function(cb) {
+        var i = that.index.next;
+        var entry = {
+          timestamp: Date.now(),
+          'handler': cb,
+        };
+        that.handlers[i] = entry;
+        return i;
+      };
     }
 
-    function handle(target, id, data, optional) {
+    property var parseHandlers: new handlerStorage()
+    property var serializeHandlers: new handlerStorage()
+    property var serializeArrayHandlers: new handlerStorage()
+
+    property var processor: AsyncProcessor {
+      onParsed: detail.handle(detail.parseHandlers, id, fields, err);
+      onSerialized: detail.handle(detail.serializeHandlers, id, err);
+      onSerializedArray: detail.handle(detail.serializeArrayHandlers, id, array, err);
+    }
+
+    function handle(storage, id, data, err) {
       'use strict';
-      if (typeof optional == 'undefined') {
-        optional = false;
-      }
-      var entry = handlers[id];
-      var cb = entry && entry[target];
+      var entry = storage.handlers[id];
+      var cb = entry['handler'];
       if (cb) {
         if (typeof cb != 'function') {
-          console.warn('Callback is not function : (ID: ' + id + ', TYPE: ' + target + ')');
+          console.error('Callback is not function : (ID: ' + id + ', TYPE: ' + target + ')');
         } else {
-          cb(data);
-          delete handlers[id];
-          index.next = id;
+          cb(data, err);
+          delete storage.handlers[id];
+          storage.index.next = id;
         }
       } else {
         if (!optional) {
-          console.warn('Callback not found for ID : ' + id);
+          console.error('Callback not found for ID : ' + id);
         }
         console.log(data);
       }
     }
 
-    function executeAsync(type, f, onSuccess, onError, args) {
+    function executeAsync(storage, f, cb, args) {
       'use strict';
-      // console.log('Executing ' + f + ' with args ' + args);
-      var id = detail.index.next;
-      var handler = {
-        timestamp: Date.now(),
-      };
-      handler[signalTypes.ERROR] = onError;
-      handler[type] = onSuccess;
-      handlers[id] = handler;
+      var id = storage.addHandler(cb);
       args.push(id);
       processor[f].apply(processor, args);
     }
   }
 
-  function parse(input, descriptor, onSuccess, onError) {
+  function parse(input, descriptor, cb) {
     'use strict';
-    detail.executeAsync(detail.signalTypes.PARSED, 'parse',
-        onSuccess, onError, [input, descriptor]);
+    detail.executeAsync(detail.parseHandlers, 'parse',
+        cb, [input, descriptor]);
   }
 
-  function parseArray(input, descriptor, onSuccess, onError) {
+  function parseArray(input, descriptor, cb) {
     'use strict';
-    detail.executeAsync(detail.signalTypes.PARSED, 'parseArray',
-        onSuccess, onError, [input, descriptor]);
+    detail.executeAsync(detail.parseHandlers, 'parseArray',
+        cb, [input, descriptor]);
   }
 
-  function serialize(output, descriptor, message, onSuccess, onError) {
+  function serialize(output, descriptor, message, cb) {
     'use strict';
     console.assert(output);
     console.assert(descriptor);
-    detail.executeAsync(detail.signalTypes.SERIALIZED, 'serialize',
-        onSuccess, onError, [output, descriptor, message[0], message[1]]);
+    detail.executeAsync(detail.serializeHandlers, 'serialize',
+        cb, [output, descriptor, message[0], message[1]]);
   }
 
-  function serializeArray(descriptor, message, onSuccess, onError) {
+  function serializeArray(descriptor, message, cb) {
     'use strict';
-    detail.executeAsync(detail.signalTypes.SERIALIZED_ARRAY, 'serializeArray',
-        onSuccess, onError, [descriptor, message]);
+    detail.executeAsync(detail.serializeArrayHandlers, 'serializeArray',
+        cb, [descriptor, message]);
   }
 }

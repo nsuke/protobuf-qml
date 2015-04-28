@@ -20,10 +20,12 @@ Item {
     function test_serialize_undefined() {
       var called = {};
       var msg1 = new Test1.Msg1({field1: 42});
-      msg1.serializeTo(undefined, function() {
-        fail();
-      }, function(err) {
-        called.value = true;
+      msg1.serializeTo(undefined, function(err) {
+        if (!err) {
+          fail();
+        } else {
+          called.value = true;
+        }
       });
       tryCompare(called, 'value', true, 100);
     }
@@ -32,10 +34,12 @@ Item {
       var called = {};
       buffer.size = 0;
       var msg1 = new Test1.Msg1({field1: 42});
-      msg1.serializeTo(buffer.output, function() {
-        fail();
-      }, function(err) {
-        called.value = true;
+      msg1.serializeTo(buffer.output, function(err) {
+        if (!err) {
+          fail();
+        } else {
+          called.value = true;
+        }
       });
       tryCompare(called, 'value', true, 100);
     }

@@ -12,17 +12,16 @@ class AsyncProcessor : public QObject {
   Q_OBJECT
 
  signals:
-  void error(int id, const QString& error);
-  void parsed(int id, QVariantList fields);
-  void serialized(int id);
-  void serializedArray(int id, QByteArray data);
+  void parsed(int id, QVariantList fields, const QVariant& err);
+  void serialized(int id, const QVariant& err);
+  void serializedArray(int id, QByteArray data, const QVariant& err);
 
  public:
   Q_INVOKABLE void parseArray(const QByteArray& array,
                               DescriptorWrapper* descriptor,
                               int async_id) {
     qDebug() << "parseArray";
-    error(async_id, "Not implemented");
+    raiseParseError(async_id, notImplemented());
   }
 
   Q_INVOKABLE void parse(InputDevice* input,
@@ -30,19 +29,19 @@ class AsyncProcessor : public QObject {
                          int async_id) {
     qDebug() << "parse";
     if (!input) {
-      error(async_id, "input is null");
+      raiseParseError(async_id, invalidArg("input is null"));
       return;
     }
     if (!descriptor) {
-      error(async_id, "descriptor is null.");
+      raiseParseError(async_id, invalidArg("descriptor is null"));
       return;
     }
     auto x = descriptor->parse(input);
     qDebug() << "parsed";
     if (!x.isValid() || !x.canConvert(QMetaType::QVariantList)) {
-      error(async_id, "Failed to parse any message");
+      raiseParseError(async_id, parseError("Failed to parse any message"));
     } else {
-      parsed(async_id, x.value<QVariantList>());
+      parsed(async_id, x.value<QVariantList>(), noError());
     }
   }
 
@@ -53,18 +52,18 @@ class AsyncProcessor : public QObject {
                              int async_id) {
     qDebug() << "serialize";
     if (!output) {
-      error(async_id, "input is null");
+      raiseSerializationError(async_id, invalidArg("input is null"));
       return;
     }
     if (!descriptor) {
-      error(async_id, "descriptor is null.");
+      raiseSerializationError(async_id, invalidArg("descriptor is null"));
       return;
     }
     if (!descriptor->serialize(output, fields, oneofs)) {
-      error(async_id, "failed to serialize");
+      raiseSerializationError(async_id, serializationError());
     } else {
       qDebug() << "serialized";
-      serialized(async_id);
+      serialized(async_id, noError());
     }
   }
 
@@ -72,7 +71,43 @@ class AsyncProcessor : public QObject {
                                   const QVariantList& fields,
                                   int async_id) {
     qDebug() << "serializeArray";
-    error(async_id, "Not implemented");
+    raiseSerializeArrayError(async_id, notImplemented());
+  }
+
+ private:
+  QVariant error(const QString& name, const QString& message) {
+    return QVariantMap{{"name", name}, {"message", message}};
+  }
+
+  QVariant noError() { return QVariant(); }
+
+  QVariant parseError(const QString& message) {
+    return error("ParseError", message);
+  }
+
+  void raiseParseError(int id, QVariant err) {
+    qWarning() << "raiseParseError : " << err;
+    parsed(id, QVariantList(), err);
+  }
+
+  void raiseSerializationError(int id, QVariant err) {
+    serialized(id, err);
+  }
+
+  void raiseSerializeArrayError(int id, QVariant err) {
+    serializedArray(id, QByteArray(), err);
+  }
+
+  QVariant serializationError(const QString& message = "") {
+    return error("SerializationError", message);
+  }
+
+  QVariant notImplemented() {
+    return error("NotImplementedError", "Not implemented");
+  }
+
+  QVariant invalidArg(const QString& message) {
+    return error("ArgumentError", message);
   }
 
   // signals:

@@ -19,27 +19,27 @@ Item {
 
     function test_parse_undefined() {
       var called = {};
-      Test1.Msg1.parseFrom(undefined, function(msg){
-        console.log('msg ' + msg._raw);
-        fail();
-      }, function(err) {
-        console.log(err);
-        verify('error ' + err);
-        called.value = true;
-      });
+      Test1.Msg1.parseFrom(undefined, function(msg, err) {
+        if (!err) {
+          console.log('msg ' + msg._raw);
+          fail();
+        } else {
+          verify('error ' + err);
+          called.value = true;
+        }});
       tryCompare(called, 'value', true, 100);
     }
 
     function test_parse_empty() {
       var called = {};
-      Test1.Msg1.parseFrom(buffer.input, function(msg){
-        console.log('msg ' + msg._raw);
-        fail();
-      }, function(err) {
-        console.log(err);
-        verify('error ' + err);
-        called.value = true;
-      });
+      Test1.Msg1.parseFrom(buffer.input, function(msg, err) {
+        if (!err) {
+          console.log('msg ' + msg._raw);
+          fail();
+        } else {
+          verify('error ' + err);
+          called.value = true;
+        }});
       tryCompare(called, 'value', true, 100);
     }
 
@@ -48,15 +48,15 @@ Item {
       var msg1 = new Test1.Msg1({field1: -42});
       msg1.serializeTo(buffer.output, function() {
         buffer.size = 0;
-        Test1.Msg1.parseFrom(buffer.input, function(msg) {
-          console.log('msg ' + msg._raw);
-          fail();
-        }, function(err) {
-          console.log(err);
-          verify('error ' + err);
-          called.value = true;
+        Test1.Msg1.parseFrom(buffer.input, function(msg, err) {
+          if (!err) {
+            console.log('msg ' + msg._raw);
+            fail();
+          } else {
+            verify('error ' + err);
+            called.value = true;
+          }});
         });
-      });
       tryCompare(called, 'value', true, 100);
     }
   }
