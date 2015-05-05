@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(protobuf-qml)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 

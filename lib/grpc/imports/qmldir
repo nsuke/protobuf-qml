@@ -1,0 +1,2 @@
+module Grpc
+plugin grpc-qml
