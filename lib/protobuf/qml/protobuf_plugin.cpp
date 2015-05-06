@@ -1,4 +1,4 @@
-#include "protobuf/qml/plugin.h"
+#include "protobuf/qml/protobuf_plugin.h"
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/io.h"
 #include "protobuf/qml/memory.h"
@@ -15,7 +15,7 @@ QObject* descriptorPoolFactory(QQmlEngine*, QJSEngine*) {
   return new protobuf::qml::DescriptorPoolWrapper;
 }
 
-void ProtobufQmlTestPlugin::registerTypes(const char* uri) {
+void ProtobufQmlPlugin::registerTypes(const char* uri) {
   qmlRegisterSingletonType<protobuf::qml::QmlWireFormatLite>(
       uri, 1, 0, "WireFormatLite", wireFormatLiteFactory);
   qmlRegisterSingletonType<protobuf::qml::DescriptorPoolWrapper>(

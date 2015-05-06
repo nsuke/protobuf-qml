@@ -1,10 +1,10 @@
-#ifndef PROTOBUF_QML_PLUGIN_H
-#define PROTOBUF_QML_PLUGIN_H
+#ifndef PROTOBUF_QML_PROTOBUF_PLUGIN_H
+#define PROTOBUF_QML_PROTOBUF_PLUGIN_H
 
 #include "protobuf/qml/common.h"
 #include <QQmlExtensionPlugin>
 
-class PROTOBUF_QML_DLLEXPORT ProtobufQmlTestPlugin
+class PROTOBUF_QML_DLLEXPORT ProtobufQmlPlugin
     : public QQmlExtensionPlugin {
   Q_OBJECT
   Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QQmlExtensionInterface")
@@ -12,4 +12,4 @@ class PROTOBUF_QML_DLLEXPORT ProtobufQmlTestPlugin
   virtual void registerTypes(const char* uri) override;
 };
 
-#endif  // PROTOBUF_QML_PLUGIN_H
+#endif  // PROTOBUF_QML_PROTOBUF_PLUGIN_H

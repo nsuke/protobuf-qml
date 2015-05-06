@@ -12,24 +12,47 @@ find_package(Qt5Qml REQUIRED)
 
 include_directories(${PROTOBUF_INCLUDE_DIRS})
 include_directories(compiler)
+
+find_package(GRPC++)
+if(GRPC++_FOUND)
+  include_directories(${GRPC++_INCLUDE_DIRS})
+endif()
+
+function(copy TAG DEST)
+  foreach(FIL ${ARGN})
+    get_filename_component(FIL_ABS ${FIL} ABSOLUTE)
+    get_filename_component(FIL_NAME ${FIL} NAME)
+    set(DST ${DEST}/${FIL_NAME})
+    add_custom_command(OUTPUT ${DST} DEPENDS ${FIL_ABS}
+      COMMAND ${CMAKE_COMMAND} -E copy ${FIL_ABS} ${DST})
+    add_custom_target("copy-${TAG}-${FIL_NAME}" ALL DEPENDS ${DST})
+  endforeach()
+endfunction()
+
+if(CMAKE_VERSION VERSION_LESS 3.1.0)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+endif()
+
+function(PROTOBUF_QML_TARGET TARGET)
+  if(NOT CMAKE_VERSION VERSION_LESS 3.1.0)
+    set(CXX_FEATURES
+      cxx_auto_type
+      cxx_lambdas
+      cxx_nullptr
+      cxx_override
+      cxx_range_for)
+    target_compile_features(${TARGET} PUBLIC ${CXX_FEATURES})
+  endif()
+endfunction()
+
+set(PROTOBUF_QML_TARGETS protobuf-qml protoc-gen-qml)
+
 include_directories(lib)
+add_subdirectory(lib/protobuf)
 
-set(protobuf-qml_SOURCES
-  lib/protobuf/qml/util.cpp
-  lib/protobuf/qml/descriptors.cpp
-  lib/protobuf/qml/file.cpp
-  lib/protobuf/qml/io.cpp
-  lib/protobuf/qml/memory.cpp
-  lib/protobuf/qml/plugin.cpp
-  lib/protobuf/qml/processor.cpp
-  lib/protobuf/qml/wire_format_lite.cpp)
-add_library(protobuf-qml SHARED ${protobuf-qml_SOURCES})
-
-target_compile_definitions(protobuf-qml PRIVATE -DPROTOBUF_QML_EXPORT)
-
-target_link_libraries(protobuf-qml
-  ${PROTOBUF_LIBRARIES}
-  Qt5::Qml)
+if(GRPC++_FOUND)
+  add_subdirectory(lib/grpc)
+endif()
 
 set(protoc-gen-qml_SOURCES
   compiler/protobuf/qml/main.cpp
@@ -40,44 +63,19 @@ set(protoc-gen-qml_SOURCES
   compiler/protobuf/qml/qml_generator.cpp
   compiler/protobuf/qml/compiler/util.cpp)
 add_executable(protoc-gen-qml ${protoc-gen-qml_SOURCES})
+protobuf_qml_target(protoc-gen-qml)
 target_link_libraries(protoc-gen-qml
   protobuf-qml
   ${PROTOBUF_PROTOC_LIBRARIES}
   ${PROTOBUF_LIBRARIES}
   Qt5::Core)
-
-function(copy DEST)
-  foreach(FIL ${ARGN})
-    get_filename_component(FIL_ABS ${FIL} ABSOLUTE)
-    get_filename_component(FIL_NAME ${FIL} NAME)
-    set(DST ${DEST}/${FIL_NAME})
-    add_custom_command(OUTPUT ${DST} DEPENDS ${FIL_ABS}
-      COMMAND ${CMAKE_COMMAND} -E copy ${FIL_ABS} ${DST})
-    add_custom_target("copy-qml-${FIL_NAME}" ALL DEPENDS ${DST})
-  endforeach()
-endfunction()
-
-if(NOT CMAKE_VERSION VERSION_LESS 3.1.0)
-  set(CXX_FEATURES
-    cxx_auto_type
-    cxx_lambdas
-    cxx_nullptr
-    cxx_override
-    cxx_range_for)
-  target_compile_features(protobuf-qml PUBLIC ${CXX_FEATURES})
-  target_compile_features(protoc-gen-qml PUBLIC ${CXX_FEATURES})
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+if(GRPC++_FOUND)
+  target_link_libraries(protoc-gen-qml ${GRPC++_LIBRARIES})
 endif()
 
 
-copy(${CMAKE_CURRENT_BINARY_DIR}/plugins/Protobuf
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/qml/qmldir
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/qml/Async.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/lib/qml/boilerplate.js
-  ${CMAKE_CURRENT_BINARY_DIR}/libprotobuf-qml.so)
-
-copy(${CMAKE_CURRENT_BINARY_DIR}/test
+copy(protobuf-qml-test
+  ${CMAKE_CURRENT_BINARY_DIR}/test
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_jsobject.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_message.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_nesting.qml
@@ -89,6 +87,7 @@ copy(${CMAKE_CURRENT_BINARY_DIR}/test
 
 find_package(Qt5QuickTest REQUIRED)
 add_executable(protobuf-qml-test test/test_main.cpp)
+protobuf_qml_target(protobuf-qml-test)
 target_link_libraries(protobuf-qml-test Qt5::QuickTest)
 enable_testing()
 add_test(NAME protobuf-qml-test
