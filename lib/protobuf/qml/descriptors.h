@@ -1,6 +1,5 @@
 #ifndef PROTOBUF_QML_DESCRIPTOR_DATABASE_H
 #define PROTOBUF_QML_DESCRIPTOR_DATABASE_H
-#include "protobuf/qml/io.h"
 #include <google/protobuf/descriptor_database.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
@@ -20,7 +19,7 @@ class DescriptorWrapper;
 class DescriptorWrapper : public QObject {
   Q_OBJECT
 
- signals:
+signals:
   void parseCompleted(int key, QVariant result, bool error);
   void serializeCompleted(int key, bool error);
   void maxThreadsChanged();
@@ -31,16 +30,22 @@ class DescriptorWrapper : public QObject {
       : QObject(p), descriptor_(descriptor) {}
   ~DescriptorWrapper();
 
-  QVariant parse(InputDevice* input);
-  bool serialize(OutputDevice* output, const QVariantList& fields, const QList<int>& oneofs);
+  // QVariant parse(InputDevice* input);
+  // bool serialize(OutputDevice* output,
+  //                const QVariantList& fields,
+  //                const QList<int>& oneofs);
 
   void clearSharedMessage() { message_.setLocalData(nullptr); }
 
- private:
+  google::protobuf::Message* dataToMessage(const QVariant& msgData);
+
+  QVariant dataFromMessage(const google::protobuf::Message& msg);
+
   google::protobuf::Message* newMessage() {
     return message_factory_.GetPrototype(descriptor_)->New();
   }
 
+ private:
   google::protobuf::Message* sharedMessage() {
     if (!message_.hasLocalData()) message_.setLocalData(newMessage());
     return message_.localData();

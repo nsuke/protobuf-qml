@@ -2,6 +2,7 @@
 #include "protobuf/qml/util.h"
 #include <google/protobuf/descriptor.pb.h>
 
+#include <QDebug>
 #include <QVariantList>
 #include <sstream>
 #include <vector>
@@ -32,6 +33,16 @@ bool packToMessage(QVariant value, Message& msg) {
 }
 
 QVariant unpackFromMessage(const Message& msg);
+
+Message* DescriptorWrapper::dataToMessage(const QVariant& msgData) {
+  auto msg = newMessage();
+  packToMessage(msgData, *msg);
+  return msg;
+}
+
+QVariant DescriptorWrapper::dataFromMessage(const Message& msg) {
+  return unpackFromMessage(msg);
+}
 
 // TODO: Handle invalid QVariant that cannot be converted
 void setReflectionRepeatedValue(const Reflection& ref,
@@ -229,7 +240,7 @@ QVariant unpackFromMessage(const Message& msg) {
     } else {
       result.append(QVariant());
     }
-    qDebug() << "result : " << result;
+    // qDebug() << "result : " << result;
     Q_ASSERT(result.size() == i + 1);
   }
 
@@ -242,15 +253,15 @@ QVariant unpackFromMessage(const Message& msg) {
   return QVariant();
 }
 
-QVariant DescriptorWrapper::parse(InputDevice* input) {
-  if (!input) return QVariantList();
-  auto msg = sharedMessage();
-  msg->Clear();
-  auto session = input->createSession();
-  if (!session) return QVariantList();
-  msg->ParseFromZeroCopyStream(session.stream());
-  return unpackFromMessage(*msg);
-}
+// QVariant DescriptorWrapper::parse(InputDevice* input) {
+//   if (!input) return QVariantList();
+//   auto msg = sharedMessage();
+//   msg->Clear();
+//   auto session = input->createSession();
+//   if (!session) return QVariantList();
+//   msg->ParseFromZeroCopyStream(session.stream());
+//   return unpackFromMessage(*msg);
+// }
 
 bool packToMessage(const QVariantList& fields,
                    const QList<int>& oneofs,
@@ -276,7 +287,7 @@ bool packToMessage(const QVariantList& fields,
           }
         }
       } else {
-        qDebug() << "field : " << field;
+        // qDebug() << "field : " << field;
         setReflectionValue(*reflection, msg, desc, field);
       }
     }
@@ -284,26 +295,26 @@ bool packToMessage(const QVariantList& fields,
   return true;
 }
 
-bool DescriptorWrapper::serialize(OutputDevice* output,
-                                  const QVariantList& fields,
-                                  const QList<int>& oneofs) {
-  try {
-    if (!output || fields.isEmpty()) return false;
-    auto msg = sharedMessage();
-    msg->Clear();
-    if (packToMessage(fields, oneofs, *msg)) {
-      auto session = output->createSession();
-      return msg->SerializeToZeroCopyStream(session.stream());
-    }
-    return false;
-  } catch (google::protobuf::FatalException& ex) {
-    qWarning() << "Serialize failed : " << ex.what();
-    return false;
-  } catch (std::exception& ex) {
-    qWarning() << "Serialize failed : " << ex.what();
-    return false;
-  }
-}
+// bool DescriptorWrapper::serialize(OutputDevice* output,
+//                                   const QVariantList& fields,
+//                                   const QList<int>& oneofs) {
+//   try {
+//     if (!output || fields.isEmpty()) return false;
+//     auto msg = sharedMessage();
+//     msg->Clear();
+//     if (packToMessage(fields, oneofs, *msg)) {
+//       auto session = output->createSession();
+//       return msg->SerializeToZeroCopyStream(session.stream());
+//     }
+//     return false;
+//   } catch (google::protobuf::FatalException& ex) {
+//     qWarning() << "Serialize failed : " << ex.what();
+//     return false;
+//   } catch (std::exception& ex) {
+//     qWarning() << "Serialize failed : " << ex.what();
+//     return false;
+//   }
+// }
 
 FileDescriptorWrapper* DescriptorPoolWrapper::addFileDescriptor(
     QVariant encoded) {

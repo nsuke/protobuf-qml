@@ -73,7 +73,6 @@ if(GRPC++_FOUND)
   target_link_libraries(protoc-gen-qml ${GRPC++_LIBRARIES})
 endif()
 
-
 copy(protobuf-qml-test
   ${CMAKE_CURRENT_BINARY_DIR}/test
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_jsobject.qml

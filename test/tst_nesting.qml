@@ -24,8 +24,8 @@ Item {
           nestedField: 'nesting',
         },
       });
-      msg1.serializeTo(buffer.output, function() {
-        Test2.NestingMessage.parseFrom(buffer.input, function(msg2) {
+      msg1.serializeTo(buffer, function() {
+        Test2.NestingMessage.parseFrom(buffer, function(msg2) {
           verify(msg2);
           verify(msg2.nestedMessage());
           compare(msg2.nestedMessage().nestedField(), 'nesting');
@@ -43,8 +43,8 @@ Item {
           deeplyNestedField: 'nesting message',
         },
       });
-      msg1.serializeTo(buffer.output, function() {
-        Test2.NestingMessage.parseFrom(buffer.input, function(msg2) {
+      msg1.serializeTo(buffer, function() {
+        Test2.NestingMessage.parseFrom(buffer, function(msg2) {
           verify(msg2);
           verify(msg2.evenMoreNestedMessage2());
           compare(msg2.evenMoreNestedMessage2().deeplyNestedField(), 'nesting message');
