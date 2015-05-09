@@ -10,7 +10,7 @@ namespace protobuf {
 namespace qml {
 
 class EnumGenerator {
- public:
+public:
   EnumGenerator(const google::protobuf::EnumDescriptor* t)
       : t_(t), long_name_(t ? generateLongName(t) : "") {
     if (!t) {
@@ -19,7 +19,7 @@ class EnumGenerator {
   }
   void generateEnum(google::protobuf::io::Printer& p);
 
- private:
+private:
   const google::protobuf::EnumDescriptor* t_;
   std::string long_name_;
 };

@@ -12,7 +12,7 @@ namespace qml {
 class EnumGenerator;
 
 class MessageGenerator {
- public:
+public:
   MessageGenerator(const google::protobuf::Descriptor* t = nullptr);
 
   MessageGenerator(MessageGenerator&& other) : t_(other.t_) {
@@ -28,7 +28,7 @@ class MessageGenerator {
     generateMessageProperties(p);
   }
 
- private:
+private:
   MessageGenerator(const MessageGenerator&) = delete;
   MessageGenerator& operator=(const MessageGenerator&) = delete;
 

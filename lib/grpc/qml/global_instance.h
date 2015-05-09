@@ -10,7 +10,7 @@ namespace qml {
 
 class GRPC_QML_DLLEXPORT GlobalInstance : public QObject {
   Q_OBJECT
- public:
+public:
   GlobalInstance(QObject* p = 0) : QObject(p) {}
   ~GlobalInstance();
   Q_INVOKABLE void init() { grpc_init(); }

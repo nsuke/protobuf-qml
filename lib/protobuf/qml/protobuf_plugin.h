@@ -4,11 +4,10 @@
 #include "protobuf/qml/common.h"
 #include <QQmlExtensionPlugin>
 
-class PROTOBUF_QML_DLLEXPORT ProtobufQmlPlugin
-    : public QQmlExtensionPlugin {
+class PROTOBUF_QML_DLLEXPORT ProtobufQmlPlugin : public QQmlExtensionPlugin {
   Q_OBJECT
   Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QQmlExtensionInterface")
- public:
+public:
   virtual void registerTypes(const char* uri) override;
 };
 

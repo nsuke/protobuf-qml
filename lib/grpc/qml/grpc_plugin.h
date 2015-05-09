@@ -5,11 +5,10 @@
 
 #include <QQmlExtensionPlugin>
 
-class GRPC_QML_DLLEXPORT GrpcQmlPlugin
-    : public QQmlExtensionPlugin {
+class GRPC_QML_DLLEXPORT GrpcQmlPlugin : public QQmlExtensionPlugin {
   Q_OBJECT
   Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QQmlExtensionInterface")
- public:
+public:
   virtual void registerTypes(const char* uri) override;
 };
 

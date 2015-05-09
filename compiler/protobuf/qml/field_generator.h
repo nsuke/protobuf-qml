@@ -8,7 +8,7 @@ namespace protobuf {
 namespace qml {
 
 class FieldGenerator {
- public:
+public:
   FieldGenerator(FieldGenerator&& other)
       : t_(other.t_),
         camel_name_(std::move(other.camel_name_)),
@@ -19,7 +19,7 @@ class FieldGenerator {
   void generateMerge(google::protobuf::io::Printer&, const std::string& arg);
   void generateProperty(google::protobuf::io::Printer&);
 
- private:
+private:
   std::string defaultValue();
   void generateRepeatedMessageProperty(google::protobuf::io::Printer&);
   void generateRepeatedProperty(google::protobuf::io::Printer&);

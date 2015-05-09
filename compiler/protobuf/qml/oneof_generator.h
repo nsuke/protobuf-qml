@@ -8,11 +8,11 @@ namespace protobuf {
 namespace qml {
 
 class OneofGenerator {
- public:
+public:
   OneofGenerator(const google::protobuf::OneofDescriptor* t);
   void generate(google::protobuf::io::Printer&);
 
- private:
+private:
   void generateCaseEnum(google::protobuf::io::Printer&);
   void generateCase(google::protobuf::io::Printer&);
   void generateClear(google::protobuf::io::Printer&);

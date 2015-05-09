@@ -29,7 +29,7 @@ signals:
   void dataEnd(int tag);
   void error(int tag, const QVariant& data);
 
- public:
+public:
   Processor(QObject* p = 0) : QObject(p) {}
   virtual ~Processor() {}
   DescriptorWrapper* descriptor() const { return desc_; }
@@ -64,7 +64,7 @@ signals:
     doRead(tag);
   }
 
- protected:
+protected:
   virtual void doWrite(int tag, const google::protobuf::Message& msg) {
     error(tag, "Not supported.");
   }
@@ -81,7 +81,7 @@ signals:
     data(tag, desc_->dataFromMessage(msg));
   }
 
- private:
+private:
   int max_tag_ = 0;
   DescriptorWrapper* desc_ = nullptr;
 };
@@ -89,12 +89,12 @@ signals:
 class GenericStreamProcessor : public Processor {
   Q_OBJECT
 
- public:
+public:
   explicit GenericStreamProcessor(QObject* p = nullptr) : Processor(p) {}
 
   void doRead(int tag) final;
 
- protected:
+protected:
   void doWrite(int tag, const google::protobuf::Message& msg) final;
 
   virtual google::protobuf::io::ZeroCopyInputStream* openInput(int tag) = 0;

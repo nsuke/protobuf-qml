@@ -12,7 +12,7 @@ namespace protobuf {
 namespace qml {
 
 class QmlGenerator : public google::protobuf::compiler::CodeGenerator {
- public:
+public:
   virtual bool Generate(
       const google::protobuf::FileDescriptor* file,
       const std::string& parameter,
@@ -21,7 +21,7 @@ class QmlGenerator : public google::protobuf::compiler::CodeGenerator {
 };
 
 class FileGenerator {
- public:
+public:
   FileGenerator(const google::protobuf::FileDescriptor* file);
 
   void generateJsFile(google::protobuf::io::Printer&);
@@ -29,7 +29,7 @@ class FileGenerator {
                        const google::protobuf::Descriptor*,
                        bool top_level = true);
 
- private:
+private:
   int serializedFileDescriptor(std::string&);
 
   const google::protobuf::FileDescriptor* file_;

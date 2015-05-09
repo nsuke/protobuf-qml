@@ -22,7 +22,7 @@ signals:
   void sizeChanged();
   void blockSizeChanged();
 
- public:
+public:
   explicit MemoryBuffer(QObject* p = nullptr) : GenericStreamProcessor(p) {}
 
   int block_size() const { return block_size_; }
@@ -46,13 +46,13 @@ signals:
     return QByteArray::fromRawData(data(), size());
   }
 
- protected:
+protected:
   google::protobuf::io::ZeroCopyInputStream* openInput(int tag) override;
 
   google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag,
                                                          int hint) override;
 
- private:
+private:
   int effective_block_size() const {
     return block_size_ > 0 ? block_size_ : -1;
   }

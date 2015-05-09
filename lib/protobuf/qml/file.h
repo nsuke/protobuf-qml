@@ -15,7 +15,7 @@ class PROTOBUF_QML_DLLEXPORT FileIO : public GenericStreamProcessor {
 signals:
   void pathChanged();
 
- public:
+public:
   explicit FileIO(QObject* p = nullptr) : GenericStreamProcessor(p) {}
 
   const QString& path() { return path_; }
@@ -29,19 +29,20 @@ signals:
   Q_INVOKABLE bool exists();
   Q_INVOKABLE void clear();
 
- protected:
+protected:
   google::protobuf::io::ZeroCopyInputStream* openInput(int tag) override;
 
-  void closeInput(int tag, google::protobuf::io::ZeroCopyInputStream* stream) override;
+  void closeInput(int tag,
+                  google::protobuf::io::ZeroCopyInputStream* stream) override;
 
-  google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag, int hint) override;
+  google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag,
+                                                         int hint) override;
 
-  void closeOutput(int tag, google::protobuf::io::ZeroCopyOutputStream* stream) override;
+  void closeOutput(int tag,
+                   google::protobuf::io::ZeroCopyOutputStream* stream) override;
 
- private:
-  const char* cPath() const {
-    return path_.toStdString().c_str();
-  }
+private:
+  const char* cPath() const { return path_.toStdString().c_str(); }
 
   QString path_;
   int file_;

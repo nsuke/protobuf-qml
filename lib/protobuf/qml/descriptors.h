@@ -24,7 +24,7 @@ signals:
   void serializeCompleted(int key, bool error);
   void maxThreadsChanged();
 
- public:
+public:
   DescriptorWrapper(const google::protobuf::Descriptor* descriptor,
                     QObject* p = 0)
       : QObject(p), descriptor_(descriptor) {}
@@ -40,7 +40,7 @@ signals:
     return message_factory_.GetPrototype(descriptor_)->New();
   }
 
- private:
+private:
   google::protobuf::Message* sharedMessage() {
     if (!message_.hasLocalData()) message_.setLocalData(newMessage());
     return message_.localData();
@@ -55,7 +55,7 @@ signals:
 class FileDescriptorWrapper : public QObject {
   Q_OBJECT
 
- public:
+public:
   FileDescriptorWrapper(const google::protobuf::FileDescriptor* descriptor,
                         QObject* p = 0)
       : QObject(p), descriptor_(descriptor) {}
@@ -69,17 +69,17 @@ class FileDescriptorWrapper : public QObject {
     return nullptr;
   }
 
- private:
+private:
   const google::protobuf::FileDescriptor* descriptor_;
 };
 
 class DescriptorPoolWrapper : public QObject {
   Q_OBJECT
 
- public:
+public:
   Q_INVOKABLE protobuf::qml::FileDescriptorWrapper* addFileDescriptor(QVariant);
 
- private:
+private:
   google::protobuf::DescriptorPool pool_;
   // We keep track of "children" object to control object delete order.
   // Since Qt deleteChildren occurs *after* deleting fileds, we cannot delete

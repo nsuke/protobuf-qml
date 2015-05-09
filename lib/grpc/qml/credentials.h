@@ -9,13 +9,13 @@ namespace qml {
 
 class GRPC_QML_DLLEXPORT Credentials : public QObject {
   Q_OBJECT
- public:
+public:
   Credentials(QObject* p = 0) : QObject(p) {}
 };
 
 class GRPC_QML_DLLEXPORT InsecureCredentials : public Credentials {
   Q_OBJECT
- public:
+public:
   InsecureCredentials(QObject* p = 0) : Credentials(p) {}
 };
 }

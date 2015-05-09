@@ -17,7 +17,7 @@ signals:
   void credentialsChanged();
   void targetChanged();
 
- public:
+public:
   const QString& target() const { return target_; }
   void set_target(const QString& target) {
     if (target != target_) {
@@ -35,7 +35,7 @@ signals:
     }
   }
 
- private:
+private:
   QString target_;
   Credentials* creds_;
 };
