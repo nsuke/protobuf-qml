@@ -4,8 +4,8 @@
 #include "protobuf/qml/processor.h"
 #include "protobuf/qml/common.h"
 
+#include <QByteArray>
 #include <QObject>
-#include <QVariantMap>
 #include <memory>
 
 namespace protobuf {
@@ -36,10 +36,21 @@ signals:
     buffer_.resize(size_);
   }
 
+  char* data() { return buffer_.data(); }
+
+  const char* data() const { return buffer_.data(); }
+
+  QByteArray asByteArray() { return QByteArray::fromRawData(data(), size()); }
+
+  const QByteArray asByteArray() const {
+    return QByteArray::fromRawData(data(), size());
+  }
+
  protected:
   google::protobuf::io::ZeroCopyInputStream* openInput(int tag) override;
 
-  google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag, int hint) override;
+  google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag,
+                                                         int hint) override;
 
  private:
   int effective_block_size() const {
