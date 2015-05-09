@@ -12,7 +12,7 @@ namespace protobuf {
 namespace qml {
 
 // It doesn't manage offset at all.
-class PROTOBUF_QML_DLLEXPORT MemoryBuffer2 : public Processor {
+class PROTOBUF_QML_DLLEXPORT MemoryBuffer : public GenericStreamProcessor {
   Q_OBJECT
   Q_PROPERTY(int size READ size WRITE set_size NOTIFY sizeChanged)
   Q_PROPERTY(int blockSize READ block_size WRITE set_block_size NOTIFY
@@ -23,7 +23,7 @@ signals:
   void blockSizeChanged();
 
  public:
-  MemoryBuffer2(QObject* p = nullptr) : Processor(p) {}
+  explicit MemoryBuffer(QObject* p = nullptr) : GenericStreamProcessor(p) {}
 
   int block_size() const { return block_size_; }
   void set_block_size(int size);
@@ -36,10 +36,10 @@ signals:
     buffer_.resize(size_);
   }
 
-  virtual void doRead(int tag) override;
-
  protected:
-  virtual void doWrite(int tag, const google::protobuf::Message& msg) override;
+  google::protobuf::io::ZeroCopyInputStream* openInput(int tag) override;
+
+  google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag, int hint) override;
 
  private:
   int effective_block_size() const {

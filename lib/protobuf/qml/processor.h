@@ -6,13 +6,22 @@
 #include <QMetaType>
 #include <QObject>
 
+namespace google {
+namespace protobuf {
+namespace io {
+class ZeroCopyInputStream;
+class ZeroCopyOutputStream;
+}
+}
+}
+
 namespace protobuf {
 namespace qml {
 
 class Processor : public QObject {
   Q_OBJECT
-  Q_PROPERTY(protobuf::qml::DescriptorWrapper* descriptor READ descriptor WRITE set_descriptor
-                 NOTIFY descriptorChanged)
+  Q_PROPERTY(protobuf::qml::DescriptorWrapper* descriptor READ descriptor WRITE
+                 set_descriptor NOTIFY descriptorChanged)
 
 signals:
   void descriptorChanged();
@@ -32,9 +41,7 @@ signals:
   }
 
   // returns seemingly unused tag, not guaranteed.
-  Q_INVOKABLE int getFreeTag() {
-    return ++max_tag_;
-  }
+  Q_INVOKABLE int getFreeTag() { return ++max_tag_; }
 
   // TODO: need timeout
   Q_INVOKABLE void write(int tag, const QVariant& data);
@@ -62,13 +69,9 @@ signals:
     error(tag, "Not supported.");
   }
 
-  virtual void doWriteEnd(int tag) {
-    error(tag, "Not supported.");
-  }
+  virtual void doWriteEnd(int tag) { error(tag, "Not supported."); }
 
-  virtual void doRead(int tag) {
-    error(tag, "Not supported.");
-  }
+  virtual void doRead(int tag) { error(tag, "Not supported."); }
 
   void emitMessageData(int tag, const google::protobuf::Message& msg) {
     if (!desc_) {
@@ -83,6 +86,25 @@ signals:
   DescriptorWrapper* desc_ = nullptr;
 };
 
+class GenericStreamProcessor : public Processor {
+  Q_OBJECT
+
+ public:
+  explicit GenericStreamProcessor(QObject* p = nullptr) : Processor(p) {}
+
+  void doRead(int tag) final;
+
+ protected:
+  void doWrite(int tag, const google::protobuf::Message& msg) final;
+
+  virtual google::protobuf::io::ZeroCopyInputStream* openInput(int tag) = 0;
+  virtual google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag,
+                                                                 int hint) = 0;
+  virtual void closeInput(int tag,
+                          google::protobuf::io::ZeroCopyInputStream* stream);
+  virtual void closeOutput(int tag,
+                           google::protobuf::io::ZeroCopyOutputStream* stream);
+};
 }
 }
 

@@ -82,7 +82,9 @@ copy(protobuf-qml-test
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_parse_error.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_primitive.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_repeated.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_serialize_error.qml)
+  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_serialize_error.qml
+  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_file.qml
+  )
 
 find_package(Qt5QuickTest REQUIRED)
 add_executable(protobuf-qml-test test/test_main.cpp)

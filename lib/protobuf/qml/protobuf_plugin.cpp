@@ -1,6 +1,7 @@
 #include "protobuf/qml/protobuf_plugin.h"
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/memory.h"
+#include "protobuf/qml/file.h"
 #include "protobuf/qml/processor.h"
 #include <QObject>
 #include <QtQml>
@@ -17,5 +18,6 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
   qmlRegisterUncreatableType<protobuf::qml::DescriptorWrapper>(
       uri, 1, 0, "Descriptor", "");
   qmlRegisterType<protobuf::qml::Processor>(uri, 1, 0, "Processor");
-  qmlRegisterType<protobuf::qml::MemoryBuffer2>(uri, 1, 0, "MemoryBuffer");
+  qmlRegisterType<protobuf::qml::MemoryBuffer>(uri, 1, 0, "MemoryBuffer");
+  qmlRegisterType<protobuf::qml::FileIO>(uri, 1, 0, "FileIO");
 }
