@@ -10,12 +10,12 @@ find_package(Protobuf REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Qml REQUIRED)
 
-include_directories(${PROTOBUF_INCLUDE_DIRS})
+include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIRS})
 include_directories(compiler)
 
 find_package(GRPC++)
 if(GRPC++_FOUND)
-  include_directories(${GRPC++_INCLUDE_DIRS})
+  include_directories(SYSTEM ${GRPC++_INCLUDE_DIRS})
 endif()
 
 function(copy TAG DEST)
