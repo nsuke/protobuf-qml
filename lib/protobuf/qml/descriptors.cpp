@@ -253,16 +253,6 @@ QVariant unpackFromMessage(const Message& msg) {
   return QVariant();
 }
 
-// QVariant DescriptorWrapper::parse(InputDevice* input) {
-//   if (!input) return QVariantList();
-//   auto msg = sharedMessage();
-//   msg->Clear();
-//   auto session = input->createSession();
-//   if (!session) return QVariantList();
-//   msg->ParseFromZeroCopyStream(session.stream());
-//   return unpackFromMessage(*msg);
-// }
-
 bool packToMessage(const QVariantList& fields,
                    const QList<int>& oneofs,
                    Message& msg) {
@@ -294,27 +284,6 @@ bool packToMessage(const QVariantList& fields,
   }
   return true;
 }
-
-// bool DescriptorWrapper::serialize(OutputDevice* output,
-//                                   const QVariantList& fields,
-//                                   const QList<int>& oneofs) {
-//   try {
-//     if (!output || fields.isEmpty()) return false;
-//     auto msg = sharedMessage();
-//     msg->Clear();
-//     if (packToMessage(fields, oneofs, *msg)) {
-//       auto session = output->createSession();
-//       return msg->SerializeToZeroCopyStream(session.stream());
-//     }
-//     return false;
-//   } catch (google::protobuf::FatalException& ex) {
-//     qWarning() << "Serialize failed : " << ex.what();
-//     return false;
-//   } catch (std::exception& ex) {
-//     qWarning() << "Serialize failed : " << ex.what();
-//     return false;
-//   }
-// }
 
 FileDescriptorWrapper* DescriptorPoolWrapper::addFileDescriptor(
     QVariant encoded) {

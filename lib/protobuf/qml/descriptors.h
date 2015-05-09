@@ -30,11 +30,6 @@ signals:
       : QObject(p), descriptor_(descriptor) {}
   ~DescriptorWrapper();
 
-  // QVariant parse(InputDevice* input);
-  // bool serialize(OutputDevice* output,
-  //                const QVariantList& fields,
-  //                const QList<int>& oneofs);
-
   void clearSharedMessage() { message_.setLocalData(nullptr); }
 
   google::protobuf::Message* dataToMessage(const QVariant& msgData);
