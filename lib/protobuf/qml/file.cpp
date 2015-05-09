@@ -37,7 +37,6 @@ void FileIO::clear() {
 }
 
 io::ZeroCopyInputStream* FileIO::openInput(int tag) {
-  qDebug() << __PRETTY_FUNCTION__ << " : " << cPath();
   if (path_.isEmpty()) {
     error(tag, "Path is empty");
     return nullptr;
@@ -50,7 +49,6 @@ io::ZeroCopyInputStream* FileIO::openInput(int tag) {
     error(tag, QString::fromStdString(ss.str()));
     return nullptr;
   }
-  qDebug() << __PRETTY_FUNCTION__ << " : RETURN";
   return new io::FileInputStream(file_);
 }
 
@@ -68,7 +66,6 @@ void FileIO::closeInput(int tag, io::ZeroCopyInputStream* stream) {
 }
 
 io::ZeroCopyOutputStream* FileIO::openOutput(int tag, int hint) {
-  qDebug() << __PRETTY_FUNCTION__ << " : " << cPath();
   if (path_.isEmpty()) {
     error(tag, "Path is empty");
     return nullptr;
@@ -82,7 +79,6 @@ io::ZeroCopyOutputStream* FileIO::openOutput(int tag, int hint) {
     error(tag, QString::fromStdString(ss.str()));
     return nullptr;
   }
-  qDebug() << __PRETTY_FUNCTION__ << " : RETURN";
   return new io::FileOutputStream(file_);
 }
 
