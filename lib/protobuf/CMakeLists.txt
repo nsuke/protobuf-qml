@@ -1,6 +1,5 @@
 
 set(protobuf-qml_SOURCES
-  qml/util.cpp
   qml/descriptors.cpp
   qml/file.cpp
   qml/memory.cpp
