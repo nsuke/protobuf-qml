@@ -18,6 +18,8 @@ signals:
   void targetChanged();
 
 public:
+  explicit Channel(QObject* p = 0) : QObject(p) {}
+
   const QString& target() const { return target_; }
   void set_target(const QString& target) {
     if (target != target_) {
@@ -26,7 +28,6 @@ public:
     }
   }
 
-  Channel(QObject* p = 0) : QObject(p) {}
   Credentials* credentials() const { return creds_; }
   void set_credentials(Credentials* creds) {
     if (creds != creds_) {

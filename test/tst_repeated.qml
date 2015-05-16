@@ -27,8 +27,8 @@ Item {
           43,
         ],
       });
-      msg1.serializeTo(buffer, function() {
-        Test1.Msg1.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.repeatedField);
           compare(msg2.repeatedFieldCount(), 3);
@@ -50,8 +50,8 @@ Item {
           'FooBar 2',
         ],
       });
-      msg1.serializeTo(buffer, function() {
-        Test1.Msg1.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.repeatedStringField);
           compare(msg2.repeatedStringFieldCount(), 2);
@@ -74,8 +74,8 @@ Item {
           Test1.Enum1.ENUM_VALUE_FIRST,
         ],
       });
-      msg1.serializeTo(buffer, function() {
-        Test1.Msg1.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.repeatedEnumField);
           compare(msg2.repeatedEnumFieldCount(), 4);
@@ -104,8 +104,8 @@ Item {
           },
         ],
       });
-      msg1.serializeTo(buffer, function() {
-        Test2.Msg2.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test2.Msg2.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.msgs1);
           compare(msg2.msgs1Count(), 2);

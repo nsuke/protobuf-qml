@@ -38,7 +38,7 @@ void FileIO::clear() {
 
 io::ZeroCopyInputStream* FileIO::openInput(int tag) {
   if (path_.isEmpty()) {
-    error(tag, "Path is empty");
+    parseError(tag, "Path is empty");
     return nullptr;
   }
   file_ = open(cPath(), O_BINARY | O_RDONLY);
@@ -46,7 +46,7 @@ io::ZeroCopyInputStream* FileIO::openInput(int tag) {
     file_ = 0;
     std::ostringstream ss;
     ss <<  "Failed to open file to read : " << strerror(errno);
-    error(tag, QString::fromStdString(ss.str()));
+    parseError(tag, QString::fromStdString(ss.str()));
     return nullptr;
   }
   return new io::FileInputStream(file_);
@@ -67,7 +67,7 @@ void FileIO::closeInput(int tag, io::ZeroCopyInputStream* stream) {
 
 io::ZeroCopyOutputStream* FileIO::openOutput(int tag, int hint) {
   if (path_.isEmpty()) {
-    error(tag, "Path is empty");
+    serializeError(tag, "Path is empty");
     return nullptr;
   }
   constexpr int mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
@@ -76,7 +76,7 @@ io::ZeroCopyOutputStream* FileIO::openOutput(int tag, int hint) {
     file_ = 0;
     std::ostringstream ss;
     ss << "Failed to open file to write : " << strerror(errno);
-    error(tag, QString::fromStdString(ss.str()));
+    serializeError(tag, QString::fromStdString(ss.str()));
     return nullptr;
   }
   return new io::FileOutputStream(file_);

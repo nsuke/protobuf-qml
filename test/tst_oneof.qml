@@ -29,8 +29,8 @@ Item {
       msg1.name('should be erased by the other');
       msg1.subMessage().str('foobar');
 
-      msg1.serializeTo(buffer, function() {
-        Test2.ThirdMessage.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test2.ThirdMessage.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           verify(msg2.subMessage());
           compare(msg2.name(), '');

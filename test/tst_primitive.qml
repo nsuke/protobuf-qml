@@ -20,8 +20,8 @@ Item {
     function test_write_read() {
       var called = {};
       var msg1 = new Test1.Msg1({field1: -42});
-      msg1.serializeTo(buffer, function() {
-        Test1.Msg1.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           compare(msg2.field1(), -42);
           called.called = true;
         });
@@ -35,14 +35,14 @@ Item {
         camelFieldTest1: 80,
       });
       var called = {};
-      msg1.serializeTo(buffer, function() {
+      msg1.serializeTo(buffer.output, function() {
         called.called = true;
       });
       tryCompare(called, 'called', true, 100);
 
       var msg2 = null;
       called.called = false;
-      Test1.Msg1.parseFrom(buffer, function(msg) {
+      Test1.Msg1.parseFrom(buffer.input, function(msg) {
         msg2 = msg;
         called.called = true;
       });
@@ -56,12 +56,12 @@ Item {
       var msg2 = new Test2.SecondMessage({
         str: 'some text',
       });
-      msg2.serializeTo(buffer, function(err) {
+      msg2.serializeTo(buffer.output, function(err) {
         if (err) {
           fail('serialize error');
         }
         called.serialized = true;
-        Test2.SecondMessage.parseFrom(buffer, function(msg2, err) {
+        Test2.SecondMessage.parseFrom(buffer.input, function(msg2, err) {
           if (err) {
             fail('parse error');
           }
@@ -79,8 +79,8 @@ Item {
       var msg1 = new Test1.Msg1({
         field1: -80000000000,
       });
-      msg1.serializeTo(buffer, function() {
-        Test1.Msg1.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           compare(msg2.field1(), -80000000000);
           called.called = true;
@@ -95,8 +95,8 @@ Item {
         field1: 0,
         camelFieldTest1: 80000000000,
       });
-      msg1.serializeTo(buffer, function() {
-        Test1.Msg1.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           compare(msg2.camelFieldTest1(), 80000000000);
           called.called = true;
@@ -111,8 +111,8 @@ Item {
         field1: 9,
         stringField: 'foo Bar',
       });
-      msg1.serializeTo(buffer, function() {
-        Test1.Msg1.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           compare(msg2.stringField(), 'foo Bar');
           called.called = true;
@@ -125,8 +125,8 @@ Item {
       skip('TODO: default value test');
       var called = {};
       var msg1 = new Test1.Msg1({field1: -42});
-      msg1.serializeTo(buffer, function() {
-        Test1.Msg1.parseFrom(buffer, function(msg2) {
+      msg1.serializeTo(buffer.output, function() {
+        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
           verify(msg2);
           compare(typeof msg2.optionalField1(), 'undefined');
           called.called = true;

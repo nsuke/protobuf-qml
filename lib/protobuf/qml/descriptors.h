@@ -1,5 +1,6 @@
 #ifndef PROTOBUF_QML_DESCRIPTOR_DATABASE_H
 #define PROTOBUF_QML_DESCRIPTOR_DATABASE_H
+
 #include <google/protobuf/descriptor_database.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>

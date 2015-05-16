@@ -35,7 +35,7 @@ Item {
       var called = {};
       buffer.size = 0;
       var msg1 = new Test1.Msg1({field1: 42});
-      msg1.serializeTo(buffer, function(err) {
+      msg1.serializeTo(buffer.output, function(err) {
         if (!err) {
           fail();
         } else {
