@@ -15,5 +15,6 @@ target_link_libraries(protobuf-qml
 copy(protobuf-qml
   ${CMAKE_BINARY_DIR}/plugins/Protobuf
   imports/qmldir
-  imports/boilerplate.js
+  imports/call.js
+  imports/message.js
   ${CMAKE_CURRENT_BINARY_DIR}/libprotobuf-qml.so)

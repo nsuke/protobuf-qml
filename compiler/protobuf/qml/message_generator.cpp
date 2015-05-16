@@ -56,7 +56,7 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "      }\n"
       "    }\n"
       "  };\n\n"
-      "  Protobuf.Boilerplate.createMessageType(type, "
+      "  Protobuf.Message.createMessageType(type, "
       "_file.descriptor.messageType($message_index$));\n\n",
       "message_name", name_, "message_index", std::to_string(t_->index()));
   // p.Print("  type.prototype.clear = function() {\n");
