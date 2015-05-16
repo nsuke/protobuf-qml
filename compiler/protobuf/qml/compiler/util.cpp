@@ -1,6 +1,5 @@
 #include "protobuf/qml/compiler/util.h"
 
-#include <google/protobuf/compiler/cpp/cpp_helpers.h>
 #include <sstream>
 #include <stack>
 #include <stdexcept>
@@ -31,6 +30,16 @@ void appendLongName(std::ostream& o, Descriptor* t) {
   }
 }
 
+std::string strip_proto(const std::string& fullname) {
+  constexpr auto ext = ".proto";
+  constexpr auto ext_size = 6;
+  auto base_size = fullname.size() - ext_size;
+  if (base_size <= 0 || fullname.compare(base_size, ext_size, ext)) {
+    throw std::logic_error("Invalid proto file name.");
+  }
+  return fullname.substr(0, base_size);
+}
+
 std::string generateLongName(const google::protobuf::Descriptor* t) {
   std::ostringstream ss;
   appendLongName(ss, t);
@@ -52,13 +61,13 @@ std::string generateLongName(const google::protobuf::EnumDescriptor* t) {
 
 std::string generateFilePath(const google::protobuf::FileDescriptor* t) {
   std::ostringstream ss;
-  ss << google::protobuf::compiler::cpp::StripProto(t->name()) << ".pb.js";
+  ss << strip_proto(t->name()) << ".pb.js";
   return ss.str();
 }
 
 std::string generateImportName(const google::protobuf::FileDescriptor* t) {
   std::ostringstream ss;
-  ss << "Q__" << google::protobuf::compiler::cpp::StripProto(t->name()) << "__";
+  ss << "Q__" << strip_proto(t->name()) << "__";
   return ss.str();
 }
 }
