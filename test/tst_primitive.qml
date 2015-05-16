@@ -23,10 +23,10 @@ Item {
       msg1.serializeTo(buffer, function() {
         Test1.Msg1.parseFrom(buffer, function(msg2) {
           compare(msg2.field1(), -42);
-          called.value = true;
+          called.called = true;
         });
       });
-      tryCompare(called, 'value', true, 100);
+      tryCompare(called, 'called', true, 100);
     }
 
     function test_camel_case() {
@@ -36,17 +36,17 @@ Item {
       });
       var called = {};
       msg1.serializeTo(buffer, function() {
-        called['value'] = true;
+        called.called = true;
       });
-      tryCompare(called, 'value', true, 100);
+      tryCompare(called, 'called', true, 100);
 
       var msg2 = null;
-      called.value = false;
+      called.called = false;
       Test1.Msg1.parseFrom(buffer, function(msg) {
         msg2 = msg;
-        called['value'] = true;
+        called.called = true;
       });
-      tryCompare(called, 'value', true, 100);
+      tryCompare(called, 'called', true, 100);
       verify(msg2);
       compare(msg2.camelFieldTest1(), 80);
     }
@@ -56,17 +56,19 @@ Item {
       var msg2 = new Test2.SecondMessage({
         str: 'some text',
       });
-      msg2.serializeTo(buffer, function() {
+      msg2.serializeTo(buffer, function(err) {
+        if (err) {
+          fail('serialize error');
+        }
         called.serialized = true;
-        Test2.SecondMessage.parseFrom(buffer, function(msg2) {
+        Test2.SecondMessage.parseFrom(buffer, function(msg2, err) {
+          if (err) {
+            fail('parse error');
+          }
           verify(msg2);
           compare(msg2.str(), 'some text');
           called.parsed = true;
-        }, function(err) {
-          fail();
         });
-      }, function(err) {
-        fail();
       });
       tryCompare(called, 'serialized', true, 100);
       tryCompare(called, 'parsed', true, 100);
@@ -81,10 +83,10 @@ Item {
         Test1.Msg1.parseFrom(buffer, function(msg2) {
           verify(msg2);
           compare(msg2.field1(), -80000000000);
-          called.value = true;
+          called.called = true;
         });
       });
-      tryCompare(called, 'value', true, 100);
+      tryCompare(called, 'called', true, 100);
     }
 
     function test_64bit() {
@@ -97,10 +99,10 @@ Item {
         Test1.Msg1.parseFrom(buffer, function(msg2) {
           verify(msg2);
           compare(msg2.camelFieldTest1(), 80000000000);
-          called.value = true;
+          called.called = true;
         });
       });
-      tryCompare(called, 'value', true, 100);
+      tryCompare(called, 'called', true, 100);
     }
 
     function test_string() {
@@ -113,10 +115,10 @@ Item {
         Test1.Msg1.parseFrom(buffer, function(msg2) {
           verify(msg2);
           compare(msg2.stringField(), 'foo Bar');
-          called.value = true;
+          called.called = true;
         });
       });
-      tryCompare(called, 'value', true, 100);
+      tryCompare(called, 'called', true, 100);
     }
 
     function test_write_read_missing() {
@@ -127,10 +129,10 @@ Item {
         Test1.Msg1.parseFrom(buffer, function(msg2) {
           verify(msg2);
           compare(typeof msg2.optionalField1(), 'undefined');
-          called.value = true;
+          called.called = true;
         });
       });
-      tryCompare(called, 'value', true, 100);
+      tryCompare(called, 'called', true, 100);
     }
   }
 }
