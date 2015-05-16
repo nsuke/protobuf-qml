@@ -50,6 +50,8 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "    Object.seal(this);\n"
       "    if (values instanceof $message_name$) {\n"
       "      this._mergeFromRawArray(values._raw);\n"
+      "    } else if (values instanceof Array) {\n"
+      "      this._mergeFromRawArray(values);\n"
       "    } else {\n"
       "      for (var k in values) {\n"
       "        this[k](values[k]);\n"
