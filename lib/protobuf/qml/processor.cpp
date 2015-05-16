@@ -9,12 +9,12 @@ using namespace ::google::protobuf;
 
 void Processor::write(int tag, const QVariant& data) {
   max_tag_ = std::max(tag, max_tag_);
-  if (!desc_) {
+  if (!write_desc_) {
     qWarning("Descriptor is null");
     error(tag, "Descriptor is null.");
     return;
   }
-  auto msg = desc_->dataToMessage(data);
+  auto msg = write_desc_->dataToMessage(data);
   if (!msg) {
     error(tag, "Failed to convert message data to protobuf message object.");
     return;
@@ -31,7 +31,7 @@ void GenericStreamProcessor::doRead(int tag) {
     error(tag, "Failed to open input stream");
     return;
   }
-  std::unique_ptr<google::protobuf::Message> msg(descriptor()->newMessage());
+  std::unique_ptr<google::protobuf::Message> msg(read_descriptor()->newMessage());
   if (!msg) {
     error(tag, "Failed to create protobuf message object");
     return;
