@@ -83,36 +83,52 @@ void ProtobufSerializer::close(
 
 namespace detail {
 
-GenericSerializer::GenericSerializer(GenericStreamProcessor* p)
-    : ProtobufSerializer(p), p_(p) {
+GenericSerializer::GenericSerializer(GenericChannel* channel, QObject* p)
+    : ProtobufSerializer(p), channel_(channel) {
+  connect(channel, &GenericChannel::serializeError, this,
+          &GenericSerializer::error);
 }
 google::protobuf::io::ZeroCopyOutputStream* GenericSerializer::open(int tag,
                                                                     int hint) {
-  return p_->openOutput(tag, hint);
+  return channel_->openOutput(tag, hint);
 }
 void GenericSerializer::close(
     int tag, google::protobuf::io::ZeroCopyOutputStream* stream) {
-  p_->closeOutput(tag, stream);
+  channel_->closeOutput(tag, stream);
 }
 
-GenericParser::GenericParser(GenericStreamProcessor* p)
-    : ProtobufParser(p), p_(p) {
+GenericParser::GenericParser(GenericChannel* channel, QObject* p)
+    : ProtobufParser(p), channel_(channel) {
+  connect(channel, &GenericChannel::parseError, this, &GenericParser::error);
 }
 
 google::protobuf::io::ZeroCopyInputStream* GenericParser::open(int tag) {
-  return p_->openInput(tag);
+  return channel_->openInput(tag);
 }
 
 void GenericParser::close(int tag,
                           google::protobuf::io::ZeroCopyInputStream* stream) {
-  p_->closeInput(tag, stream);
+  channel_->closeInput(tag, stream);
 }
 }
 
-GenericStreamProcessor::GenericStreamProcessor(QObject* p)
-    : QObject(p),
-      ser_(new detail::GenericSerializer(this)),
-      parser_(new detail::GenericParser(this)) {
+GenericStreamProcessor::GenericStreamProcessor(QObject* p) : QObject(p) {
+}
+
+void GenericStreamProcessor::set_channel(GenericChannel* channel) {
+  if (channel_ != channel) {
+    channel_ = channel;
+    if (channel_) {
+      ser_.reset(new detail::GenericSerializer(channel, this));
+      parser_.reset(new detail::GenericParser(channel, this));
+    } else {
+      ser_.reset();
+      parser_.reset();
+    }
+    channelChanged();
+    inputChanged();
+    outputChanged();
+  }
 }
 
 Q_INVOKABLE Processor* GenericStreamProcessor::input() {

@@ -19,8 +19,20 @@ class ZeroCopyOutputStream;
 namespace protobuf {
 namespace qml {
 
+class Channel : public QObject {
+  Q_OBJECT
+
+public:
+  explicit Channel(QObject* p = nullptr) : QObject(p) {}
+};
+
 class Processor : public QObject {
   Q_OBJECT
+
+  Q_PROPERTY(protobuf::qml::Channel* channel READ channel WRITE set_channel
+                 NOTIFY channelChanged)
+  Q_PROPERTY(QString methodName READ method_name WRITE set_method_name NOTIFY
+                 methodNameChanged)
   Q_PROPERTY(protobuf::qml::DescriptorWrapper* readDescriptor READ
                  read_descriptor WRITE set_read_descriptor NOTIFY
                      readDescriptorChanged)
@@ -29,6 +41,8 @@ class Processor : public QObject {
                      writeDescriptorChanged)
 
 signals:
+  void channelChanged();
+  void methodNameChanged();
   void readDescriptorChanged();
   void writeDescriptorChanged();
   void data(int tag, const QVariant& data);
@@ -36,8 +50,26 @@ signals:
   void error(int tag, const QVariant& data);
 
 public:
-  Processor(QObject* p = 0) : QObject(p) {}
+  explicit Processor(QObject* p = nullptr) : QObject(p) {}
   virtual ~Processor() {}
+
+  Q_INVOKABLE virtual bool init() { return true; }
+
+  Channel* channel() const { return channel_; }
+  void set_channel(Channel* channel) {
+    if (channel_ != channel) {
+      channel_ = channel;
+      channelChanged();
+    }
+  }
+
+  const QString& method_name() const { return method_name_; }
+  void set_method_name(const QString& method_name) {
+    if (method_name_ != method_name) {
+      method_name_ = method_name;
+      methodNameChanged();
+    }
+  }
 
   DescriptorWrapper* read_descriptor() const { return read_desc_; }
   void set_read_descriptor(DescriptorWrapper* read_desc) {
@@ -92,6 +124,8 @@ protected:
 
 private:
   int max_tag_ = 0;
+  Channel* channel_;
+  QString method_name_;
   DescriptorWrapper* read_desc_ = nullptr;
   DescriptorWrapper* write_desc_ = nullptr;
 };
@@ -126,66 +160,94 @@ protected:
                      google::protobuf::io::ZeroCopyInputStream* stream);
 };
 
-class GenericStreamProcessor;
+class GenericChannel;
 
 namespace detail {
+
 class GenericSerializer : public ProtobufSerializer {
   Q_OBJECT
+
 public:
-  GenericSerializer(GenericStreamProcessor* p);
+  GenericSerializer(GenericChannel* channel, QObject* p);
 
 protected:
   google::protobuf::io::ZeroCopyOutputStream* open(int tag, int hint) final;
   void close(int tag, google::protobuf::io::ZeroCopyOutputStream* stream) final;
 
 private:
-  GenericStreamProcessor* p_;
+  GenericChannel* channel_;
 };
 
 class GenericParser : public ProtobufParser {
   Q_OBJECT
+
 public:
-  GenericParser(GenericStreamProcessor* p);
+  GenericParser(GenericChannel* channel, QObject* p);
 
 protected:
   google::protobuf::io::ZeroCopyInputStream* open(int tag) final;
   void close(int tag, google::protobuf::io::ZeroCopyInputStream* stream) final;
 
 private:
-  GenericStreamProcessor* p_;
+  GenericChannel* channel_;
 };
 }
 
-class GenericStreamProcessor : public QObject {
+class GenericChannel : public Channel {
   Q_OBJECT
 
-  Q_PROPERTY(protobuf::qml::Processor* input READ input);
-  Q_PROPERTY(protobuf::qml::Processor* output READ output);
+signals:
+  void parseError(int tag, const QVariant& data);
+  void serializeError(int tag, const QVariant& data);
 
 public:
-  GenericStreamProcessor(QObject* p = 0);
-
-  Processor* input();
-  Processor* output();
+  explicit GenericChannel(QObject* p = nullptr) : Channel(p) {}
 
 protected:
-  virtual google::protobuf::io::ZeroCopyInputStream* openInput(int tag) = 0;
+  virtual google::protobuf::io::ZeroCopyInputStream* openInput(int tag) {
+    return nullptr;
+  }
   virtual google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag,
-                                                                 int hint) = 0;
+                                                                 int hint) {
+    return nullptr;
+  }
   virtual void closeOutput(int tag,
                            google::protobuf::io::ZeroCopyOutputStream* stream) {
   }
   virtual void closeInput(int tag,
                           google::protobuf::io::ZeroCopyInputStream* stream) {}
-  void parseError(int tag, const QVariant& data) { parser_->error(tag, data); }
-  void serializeError(int tag, const QVariant& data) { ser_->error(tag, data); }
 
 private:
-  std::unique_ptr<detail::GenericSerializer> ser_;
-  std::unique_ptr<detail::GenericParser> parser_;
-
   friend class detail::GenericSerializer;
   friend class detail::GenericParser;
+};
+
+class GenericStreamProcessor : public QObject {
+  Q_OBJECT
+
+  Q_PROPERTY(protobuf::qml::GenericChannel* channel READ channel WRITE
+                 set_channel NOTIFY channelChanged);
+  Q_PROPERTY(protobuf::qml::Processor* input READ input NOTIFY inputChanged);
+  Q_PROPERTY(protobuf::qml::Processor* output READ output NOTIFY outputChanged);
+
+signals:
+  void channelChanged();
+  void inputChanged();
+  void outputChanged();
+
+public:
+  explicit GenericStreamProcessor(QObject* p = nullptr);
+
+  GenericChannel* channel() const { return channel_; }
+  void set_channel(GenericChannel* channel);
+
+  Processor* input();
+  Processor* output();
+
+private:
+  GenericChannel* channel_ = nullptr;
+  std::unique_ptr<detail::GenericSerializer> ser_;
+  std::unique_ptr<detail::GenericParser> parser_;
 };
 }
 }

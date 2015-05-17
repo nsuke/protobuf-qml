@@ -27,7 +27,7 @@ signals:
 
 public:
   DescriptorWrapper(const google::protobuf::Descriptor* descriptor,
-                    QObject* p = 0)
+                    QObject* p = nullptr)
       : QObject(p), descriptor_(descriptor) {}
   ~DescriptorWrapper();
 
@@ -58,7 +58,7 @@ class FileDescriptorWrapper : public QObject {
 
 public:
   FileDescriptorWrapper(const google::protobuf::FileDescriptor* descriptor,
-                        QObject* p = 0)
+                        QObject* p = nullptr)
       : QObject(p), descriptor_(descriptor) {}
 
   Q_INVOKABLE protobuf::qml::DescriptorWrapper* messageType(int i) {
