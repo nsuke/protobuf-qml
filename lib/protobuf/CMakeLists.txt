@@ -17,6 +17,7 @@ copy(protobuf-qml
   imports/qmldir
   imports/call.js
   imports/message.js
+  imports/BufferService.qml
   imports/MemoryBuffer.qml
-  imports/FileIO.qml
+  imports/File.qml
   ${CMAKE_CURRENT_BINARY_DIR}/libprotobuf-qml.so)

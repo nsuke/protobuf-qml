@@ -22,7 +22,7 @@ namespace qml {
 using namespace ::google::protobuf;
 
 
-bool FileIO::exists() {
+bool FileChannel::exists() {
   if (!path_.isEmpty()) {
     return false;
   }
@@ -30,13 +30,13 @@ bool FileIO::exists() {
   return f.good();
 }
 
-void FileIO::clear() {
+void FileChannel::clear() {
   if (exists()) {
     std::remove(cPath());
   }
 }
 
-io::ZeroCopyInputStream* FileIO::openInput(int tag) {
+io::ZeroCopyInputStream* FileChannel::openInput(int tag) {
   if (path_.isEmpty()) {
     parseError(tag, "Path is empty");
     return nullptr;
@@ -52,7 +52,7 @@ io::ZeroCopyInputStream* FileIO::openInput(int tag) {
   return new io::FileInputStream(file_);
 }
 
-void FileIO::closeInput(int tag, io::ZeroCopyInputStream* stream) {
+void FileChannel::closeInput(int tag, io::ZeroCopyInputStream* stream) {
   if (stream) {
     if (!reinterpret_cast<io::FileInputStream*>(stream)->Close()) {
       qWarning() << "Failed to close input stream : " << strerror(errno);
@@ -65,7 +65,7 @@ void FileIO::closeInput(int tag, io::ZeroCopyInputStream* stream) {
   }
 }
 
-io::ZeroCopyOutputStream* FileIO::openOutput(int tag, int hint) {
+io::ZeroCopyOutputStream* FileChannel::openOutput(int tag, int hint) {
   if (path_.isEmpty()) {
     serializeError(tag, "Path is empty");
     return nullptr;
@@ -82,7 +82,7 @@ io::ZeroCopyOutputStream* FileIO::openOutput(int tag, int hint) {
   return new io::FileOutputStream(file_);
 }
 
-void FileIO::closeOutput(int tag, io::ZeroCopyOutputStream* stream) {
+void FileChannel::closeOutput(int tag, io::ZeroCopyOutputStream* stream) {
   if (stream) {
     if (!reinterpret_cast<io::FileOutputStream*>(stream)->Close()) {
       qWarning() << "Failed to close output stream : " << strerror(errno);

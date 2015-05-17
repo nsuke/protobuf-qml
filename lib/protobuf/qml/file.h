@@ -8,7 +8,7 @@
 namespace protobuf {
 namespace qml {
 
-class PROTOBUF_QML_DLLEXPORT FileIO : public GenericChannel {
+class PROTOBUF_QML_DLLEXPORT FileChannel : public BufferChannel {
   Q_OBJECT
   Q_PROPERTY(QString path READ path WRITE set_path NOTIFY pathChanged)
 
@@ -16,7 +16,7 @@ signals:
   void pathChanged();
 
 public:
-  explicit FileIO(QObject* p = nullptr) : GenericChannel(p) {}
+  explicit FileChannel(QObject* p = nullptr) : BufferChannel(p) {}
 
   const QString& path() { return path_; }
   void set_path(const QString& path) {

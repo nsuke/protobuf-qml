@@ -1,5 +1,6 @@
 module Protobuf
 Message 1.0 message.js
+BufferService 1.0 BufferService.qml
 MemoryBuffer 1.0 MemoryBuffer.qml
-FileIO 1.0 FileIO.qml
+File 1.0 File.qml
 plugin protobuf-qml

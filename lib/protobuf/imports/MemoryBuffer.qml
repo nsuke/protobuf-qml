@@ -1,9 +1,9 @@
 import Protobuf 1.0 as Protobuf
 
-Protobuf.GenericStreamProcessor {
-  property alias size: impl.size
-  property alias blockSize: impl.blockSize
-  function clear() { impl.clear(); }
+Protobuf.BufferService {
+  property alias size: channel.size
+  property alias blockSize: channel.blockSize
+  function clear() { channel.clear(); }
 
-  channel: Protobuf.MemoryBufferImpl { id: impl }
+  channel: Protobuf.MemoryBufferChannel { id: channel }
 }

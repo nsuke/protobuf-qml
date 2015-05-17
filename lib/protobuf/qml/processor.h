@@ -19,14 +19,35 @@ class ZeroCopyOutputStream;
 namespace protobuf {
 namespace qml {
 
+class Call : public QObject {
+  Q_OBJECT
+
+public:
+  enum CallType {
+    Unary = 0,
+    Reader,
+    Writer,
+    ReaderWriter,
+  };
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 5, 0))
+  Q_ENUM(CallType)
+#else
+  Q_ENUMS(CallType)
+#endif
+
+private:
+  Call() {}
+};
+
+class Processor;
+
 class Channel : public QObject {
   Q_OBJECT
 
 public:
   explicit Channel(QObject* p = nullptr) : QObject(p) {}
 };
-
-class Processor;
 
 namespace detail {
 
@@ -175,9 +196,7 @@ private:
 
   void writeThread(int tag, const QVariant& data);
 
-  void writeEmptyThread(int tag) {
-    doEmptyWrite(tag);
-  }
+  void writeEmptyThread(int tag) { doEmptyWrite(tag); }
 
   void writeEndThread(int tag) {
     if (!write_desc_) {
@@ -199,70 +218,29 @@ private:
   friend class detail::Worker;
 };
 
-class ProtobufSerializer : public Processor {
+class BufferChannel;
+
+class BufferMethod : public Processor {
   Q_OBJECT
 
 public:
-  explicit ProtobufSerializer(QObject* p = nullptr) : Processor(p) {}
-
-protected:
-  void doWrite(int tag, const google::protobuf::Message& msg) final;
-
-  virtual google::protobuf::io::ZeroCopyOutputStream* open(int tag,
-                                                           int hint) = 0;
-  virtual void close(int tag,
-                     google::protobuf::io::ZeroCopyOutputStream* stream);
-};
-
-class ProtobufParser : public Processor {
-  Q_OBJECT
-
-public:
-  explicit ProtobufParser(QObject* p = nullptr) : Processor(p) {}
+  explicit BufferMethod(QObject* p = nullptr) : Processor(p) {
+    connect(this, &Processor::channelChanged, [this] {
+      if (channel() && !(buffer_ = qobject_cast<BufferChannel*>(channel()))) {
+        qWarning() << "Incompatible channel.";
+      }
+    });
+  }
 
 protected:
   void doWrite(int tag, const google::protobuf::Message& msg) final;
   void doEmptyWrite(int tag) final;
 
-  virtual google::protobuf::io::ZeroCopyInputStream* open(int tag) = 0;
-  virtual void close(int tag,
-                     google::protobuf::io::ZeroCopyInputStream* stream);
-};
-
-class GenericChannel;
-
-namespace detail {
-
-class GenericSerializer : public ProtobufSerializer {
-  Q_OBJECT
-
-public:
-  GenericSerializer(GenericChannel* channel, QObject* p);
-
-protected:
-  google::protobuf::io::ZeroCopyOutputStream* open(int tag, int hint) final;
-  void close(int tag, google::protobuf::io::ZeroCopyOutputStream* stream) final;
-
 private:
-  GenericChannel* channel_;
+  BufferChannel* buffer_;
 };
 
-class GenericParser : public ProtobufParser {
-  Q_OBJECT
-
-public:
-  GenericParser(GenericChannel* channel, QObject* p);
-
-protected:
-  google::protobuf::io::ZeroCopyInputStream* open(int tag) final;
-  void close(int tag, google::protobuf::io::ZeroCopyInputStream* stream) final;
-
-private:
-  GenericChannel* channel_;
-};
-}
-
-class GenericChannel : public Channel {
+class BufferChannel : public Channel {
   Q_OBJECT
 
 signals:
@@ -270,7 +248,7 @@ signals:
   void serializeError(int tag, const QVariant& data);
 
 public:
-  explicit GenericChannel(QObject* p = nullptr) : Channel(p) {}
+  explicit BufferChannel(QObject* p = nullptr) : Channel(p) {}
 
 protected:
   virtual google::protobuf::io::ZeroCopyInputStream* openInput(int tag) {
@@ -287,36 +265,7 @@ protected:
                           google::protobuf::io::ZeroCopyInputStream* stream) {}
 
 private:
-  friend class detail::GenericSerializer;
-  friend class detail::GenericParser;
-};
-
-class GenericStreamProcessor : public QObject {
-  Q_OBJECT
-
-  Q_PROPERTY(protobuf::qml::GenericChannel* channel READ channel WRITE
-                 set_channel NOTIFY channelChanged);
-  Q_PROPERTY(protobuf::qml::Processor* input READ input NOTIFY inputChanged);
-  Q_PROPERTY(protobuf::qml::Processor* output READ output NOTIFY outputChanged);
-
-signals:
-  void channelChanged();
-  void inputChanged();
-  void outputChanged();
-
-public:
-  explicit GenericStreamProcessor(QObject* p = nullptr);
-
-  GenericChannel* channel() const { return channel_; }
-  void set_channel(GenericChannel* channel);
-
-  Processor* input();
-  Processor* output();
-
-private:
-  GenericChannel* channel_ = nullptr;
-  std::unique_ptr<detail::GenericSerializer> ser_;
-  std::unique_ptr<detail::GenericParser> parser_;
+  friend class BufferMethod;
 };
 }
 }

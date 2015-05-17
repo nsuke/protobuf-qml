@@ -5,7 +5,7 @@ import 'ProtobufQmlTest.pb.js' as Test1
 import 'ProtobufQmlTest2.pb.js' as Test2
 
 Item {
-  Protobuf.FileIO {
+  Protobuf.File {
     id: buffer
     // TODO: get random tmp file in a cross platform manner
     path: '/tmp/__tmp__protobuf__qml__'
