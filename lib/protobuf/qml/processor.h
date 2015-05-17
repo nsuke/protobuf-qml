@@ -26,9 +26,35 @@ public:
   explicit Channel(QObject* p = nullptr) : QObject(p) {}
 };
 
+class Processor;
+
+namespace detail {
+
+class Worker : public QObject {
+  Q_OBJECT
+
+signals:
+  void write(int tag, const QVariant& data);
+  void writeEmpty(int tag);
+  void writeEnd(int tag);
+
+public:
+  explicit Worker(Processor* p);
+
+  ~Worker() {
+    thread_.quit();
+    thread_.wait();
+  }
+
+private:
+  QThread thread_;
+};
+}
+
 class Processor : public QObject {
   Q_OBJECT
 
+  Q_PROPERTY(bool async READ async WRITE set_async NOTIFY asyncChanged)
   Q_PROPERTY(protobuf::qml::Channel* channel READ channel WRITE set_channel
                  NOTIFY channelChanged)
   Q_PROPERTY(QString methodName READ method_name WRITE set_method_name NOTIFY
@@ -41,6 +67,7 @@ class Processor : public QObject {
                      writeDescriptorChanged)
 
 signals:
+  void asyncChanged();
   void channelChanged();
   void methodNameChanged();
   void readDescriptorChanged();
@@ -55,9 +82,18 @@ public:
 
   Q_INVOKABLE virtual bool init() { return true; }
 
+  bool async() const { return async_; }
+  void set_async(bool async) {
+    if (async != async_) {
+      async_ = async;
+      asyncChanged();
+    }
+  }
+
   Channel* channel() const { return channel_; }
   void set_channel(Channel* channel) {
     if (channel_ != channel) {
+      stopWorker();
       channel_ = channel;
       channelChanged();
     }
@@ -66,6 +102,7 @@ public:
   const QString& method_name() const { return method_name_; }
   void set_method_name(const QString& method_name) {
     if (method_name_ != method_name) {
+      stopWorker();
       method_name_ = method_name;
       methodNameChanged();
     }
@@ -74,6 +111,10 @@ public:
   DescriptorWrapper* read_descriptor() const { return read_desc_; }
   void set_read_descriptor(DescriptorWrapper* read_desc) {
     if (read_desc != read_desc_) {
+      // Need to stop worker before switching resource accessed by worker
+      // thread. This means that setting descriptor in middle of processing may
+      // result in data loss.
+      stopWorker();
       read_desc_ = read_desc;
       readDescriptorChanged();
     }
@@ -82,6 +123,7 @@ public:
   DescriptorWrapper* write_descriptor() const { return write_desc_; }
   void set_write_descriptor(DescriptorWrapper* write_desc) {
     if (write_desc != write_desc_) {
+      stopWorker();
       write_desc_ = write_desc;
       writeDescriptorChanged();
     }
@@ -95,12 +137,12 @@ public:
 
   Q_INVOKABLE void writeEnd(int tag) {
     max_tag_ = std::max(tag, max_tag_);
-    if (!write_desc_) {
-      qWarning("Descriptor is null");
-      error(tag, "Descriptor is null.");
-      return;
+    if (async_) {
+      ensureWorker();
+      worker_->writeEnd(tag);
+    } else {
+      writeEndThread(tag);
     }
-    doWriteEnd(tag);
   }
 
 protected:
@@ -123,11 +165,38 @@ protected:
   }
 
 private:
+  void stopWorker() { worker_.reset(); }
+
+  void ensureWorker() {
+    if (!worker_) {
+      worker_.reset(new detail::Worker(this));
+    }
+  }
+
+  void writeThread(int tag, const QVariant& data);
+
+  void writeEmptyThread(int tag) {
+    doEmptyWrite(tag);
+  }
+
+  void writeEndThread(int tag) {
+    if (!write_desc_) {
+      qWarning("Descriptor is null");
+      error(tag, "Descriptor is null.");
+      return;
+    }
+    doWriteEnd(tag);
+  }
+
+  bool async_ = true;
   int max_tag_ = 0;
   Channel* channel_;
   QString method_name_;
   DescriptorWrapper* read_desc_ = nullptr;
   DescriptorWrapper* write_desc_ = nullptr;
+
+  std::unique_ptr<detail::Worker> worker_;
+  friend class detail::Worker;
 };
 
 class ProtobufSerializer : public Processor {

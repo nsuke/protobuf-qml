@@ -7,6 +7,18 @@ namespace qml {
 
 using namespace ::google::protobuf;
 
+namespace detail {
+Worker::Worker(Processor* p) {
+  moveToThread(&thread_);
+  connect(this, &Worker::write,
+          [p](int tag, const QVariant& data) { p->writeThread(tag, data); });
+  connect(this, &Worker::writeEmpty,
+          [p](int tag) { p->writeEmptyThread(tag); });
+  connect(this, &Worker::writeEnd, [p](int tag) { p->writeEndThread(tag); });
+  thread_.start();
+}
+}
+
 void Processor::write(int tag, const QVariant& data) {
   max_tag_ = std::max(tag, max_tag_);
   if (data.isValid()) {
@@ -15,15 +27,34 @@ void Processor::write(int tag, const QVariant& data) {
       error(tag, "Descriptor is null.");
       return;
     }
-    auto msg = write_desc_->dataToMessage(data);
-    if (!msg) {
-      error(tag, "Failed to convert message data to protobuf message object.");
-      return;
+    if (async_) {
+      ensureWorker();
+      worker_->write(tag, data);
+    } else {
+      writeThread(tag, data);
     }
-    doWrite(tag, *msg);
   } else {
-    doEmptyWrite(tag);
+    if (async_) {
+      ensureWorker();
+      worker_->writeEmpty(tag);
+    } else {
+      writeEmptyThread(tag);
+    }
   }
+}
+
+void Processor::writeThread(int tag, const QVariant& data) {
+  if (!write_desc_) {
+    qWarning("Descriptor is null");
+    error(tag, "Descriptor is null.");
+    return;
+  }
+  auto msg = write_desc_->dataToMessage(data);
+  if (!msg) {
+    error(tag, "Failed to convert message data to protobuf message object.");
+    return;
+  }
+  doWrite(tag, *msg);
 }
 
 void ProtobufParser::doWrite(int tag, const google::protobuf::Message& empty) {
