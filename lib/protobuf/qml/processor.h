@@ -111,20 +111,6 @@ public:
   explicit Method(QObject* p = nullptr) : QObject(p) {}
   virtual ~Method() { deinit(); }
 
-  Q_INVOKABLE virtual bool init() {
-    if (!initialized_ && channel_) {
-      initialized_ = channel_->registerMethod(this, call_type_);
-    }
-    return initialized_;
-  }
-
-  Q_INVOKABLE virtual void deinit() {
-    if (channel_) {
-      channel_->deregisterMethod(this);
-      initialized_ = false;
-    }
-  }
-
   CallType call_type() const { return call_type_; }
   void set_call_type(int call_type) {
     if (call_type_ != call_type) {
@@ -147,6 +133,7 @@ public:
       stopWorker();
       deinit();
       channel_ = channel;
+      init();
       channelChanged();
     }
   }
@@ -200,6 +187,20 @@ protected:
   }
 
 private:
+  bool init() {
+    if (!initialized_ && channel_) {
+      initialized_ = channel_->registerMethod(this, call_type_);
+    }
+    return initialized_;
+  }
+
+  void deinit() {
+    if (channel_) {
+      channel_->deregisterMethod(this);
+      initialized_ = false;
+    }
+  }
+
   void stopWorker() { worker_.reset(); }
 
   void ensureWorker() {
