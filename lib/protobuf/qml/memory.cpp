@@ -22,16 +22,18 @@ void MemoryBufferChannel::set_size(int size) {
   }
 }
 
-google::protobuf::io::ZeroCopyInputStream* MemoryBufferChannel::openInput(int tag) {
+google::protobuf::io::ZeroCopyInputStream* MemoryBufferChannel::openInput(
+    int tag) {
   return new google::protobuf::io::ArrayInputStream(buffer_.data(),
                                                     buffer_.size());
 }
 
-google::protobuf::io::ZeroCopyOutputStream* MemoryBufferChannel::openOutput(int tag,
-                                                                     int hint) {
+google::protobuf::io::ZeroCopyOutputStream* MemoryBufferChannel::openOutput(
+    int tag, int hint) {
   buffer_.resize(hint);
   return new google::protobuf::io::ArrayOutputStream(buffer_.data(),
                                                      buffer_.size());
 }
+
 }
 }

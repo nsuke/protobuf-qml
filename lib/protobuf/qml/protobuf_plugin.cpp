@@ -18,12 +18,9 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
   qmlRegisterUncreatableType<protobuf::qml::DescriptorWrapper>(
       uri, 1, 0, "Descriptor", "");
   qmlRegisterType<protobuf::qml::Channel>(uri, 1, 0, "Channel");
-  qmlRegisterType<protobuf::qml::Processor>(uri, 1, 0, "Processor");
+  qmlRegisterType<protobuf::qml::Method>(uri, 1, 0, "Method");
 
-  qmlRegisterType<protobuf::qml::BufferMethod>(uri, 1, 0, "BufferMethod");
   qmlRegisterType<protobuf::qml::BufferChannel>(uri, 1, 0, "BufferChannel");
   qmlRegisterType<protobuf::qml::MemoryBufferChannel>(uri, 1, 0, "MemoryBufferChannel");
   qmlRegisterType<protobuf::qml::FileChannel>(uri, 1, 0, "FileChannel");
-
-  qmlRegisterUncreatableType<protobuf::qml::Call>(uri, 1, 0, "Call", "");
 }

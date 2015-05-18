@@ -6,13 +6,12 @@ Item {
   property var channel
   property string serviceName: 'GenericBuffer'
 
-  // readonly here does not work for Qt 5.2
-  // readonly property var input: PB.BufferMethod {
-  property var input: PB.BufferMethod {
+  // readonly for those properties does not seem to work for Qt 5.2
+  property var input: PB.Method {
     channel: root.channel
   }
 
-  property var output: PB.BufferMethod {
+  property var output: PB.Method {
     channel: root.channel
   }
 }

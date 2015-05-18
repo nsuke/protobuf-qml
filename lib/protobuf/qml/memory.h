@@ -52,7 +52,6 @@ protected:
   google::protobuf::io::ZeroCopyOutputStream* openOutput(int tag,
                                                          int hint) override;
 
-private:
   int effective_block_size() const {
     return block_size_ > 0 ? block_size_ : -1;
   }
