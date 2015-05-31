@@ -2,18 +2,18 @@ syntax = "proto3";
 
 message Msg1 {
   // non-camel
-  optional int64 field1 = 1;
+  int64 field1 = 1;
 
-  optional uint32 optional_field1 = 2;
-  optional uint64 camel_field_test1 = 3;
+  uint32 optional_field1 = 2;
+  uint64 camel_field_test1 = 3;
   repeated int32 repeated_field = 4 [packed=true];
 
   // string
-  optional string string_field = 5;
+  string string_field = 5;
   repeated string repeated_string_field = 33000;
 
   // enum
-  optional Enum1 enum_field = 6;
+  Enum1 enum_field = 6;
   repeated Enum1 repeated_enum_field = 7;
 }
 
