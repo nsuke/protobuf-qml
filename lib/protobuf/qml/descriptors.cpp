@@ -44,6 +44,22 @@ QVariant DescriptorWrapper::dataFromMessage(const Message& msg) {
   return unpackFromMessage(msg);
 }
 
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
+inline std::string QByteArrayToStdString(const QByteArray& ba) {
+  return ba.toStdString();
+}
+inline QByteArray QByteArrayFromStdString(const std::string& str) {
+  return QByteArray::fromStdString(str);
+}
+#else
+inline std::string QByteArrayToStdString(const QByteArray& ba) {
+  return std::string(ba.data(), ba.size());
+}
+inline QByteArray QByteArrayFromStdString(const std::string& str) {
+  return QByteArray(str.data(), str.size());
+}
+#endif
+
 // TODO: Handle invalid QVariant that cannot be converted
 void setReflectionRepeatedValue(const Reflection& ref,
                                 Message& msg,
@@ -66,7 +82,12 @@ void setReflectionRepeatedValue(const Reflection& ref,
     PROTOBUF_QML_ADD_REPEATED(BOOL, Bool, bool);
     case FieldDescriptor::CPPTYPE_STRING:
       for (int i = 0; i < size; i++)
-        ref.AddString(&msg, field, list[i].value<QString>().toStdString());
+        if (field->type() == FieldDescriptor::TYPE_BYTES) {
+          ref.AddString(&msg, field,
+                        QByteArrayToStdString(list[i].value<QByteArray>()));
+        } else {
+          ref.AddString(&msg, field, list[i].value<QString>().toStdString());
+        }
       break;
     case FieldDescriptor::CPPTYPE_ENUM:
       for (int i = 0; i < size; i++)
@@ -121,7 +142,12 @@ void setReflectionValue(const Reflection& ref,
       ref.SetBool(&msg, field, value.value<bool>());
       break;
     case FieldDescriptor::CPPTYPE_STRING:
-      ref.SetString(&msg, field, value.value<QString>().toStdString());
+      if (field->type() == FieldDescriptor::TYPE_BYTES) {
+        ref.SetString(&msg, field,
+                      QByteArrayToStdString(value.value<QByteArray>()));
+      } else {
+        ref.SetString(&msg, field, value.value<QString>().toStdString());
+      }
       break;
     case FieldDescriptor::CPPTYPE_ENUM:
       ref.SetEnum(&msg, field,
@@ -157,9 +183,15 @@ QVariant getReflectionRepeatedValue(const Reflection& ref,
 #undef PROTOBUF_QML_GET_REPEATED
 
     case FieldDescriptor::CPPTYPE_STRING:
-      for (int i = 0; i < size; i++)
-        result.append(
-            QString::fromStdString(ref.GetRepeatedString(msg, field, i)));
+      if (field->type() == FieldDescriptor::TYPE_BYTES) {
+        for (int i = 0; i < size; i++)
+          result.append(
+              QByteArrayFromStdString(ref.GetRepeatedString(msg, field, i)));
+      } else {
+        for (int i = 0; i < size; i++)
+          result.append(
+              QString::fromStdString(ref.GetRepeatedString(msg, field, i)));
+      }
       break;
 
     case FieldDescriptor::CPPTYPE_ENUM:
