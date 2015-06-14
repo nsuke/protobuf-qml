@@ -2,6 +2,7 @@
 #define PROTOBUF_QML_PROCESSOR_H
 
 #include "protobuf/qml/descriptors.h"
+#include "protobuf/qml/common.h"
 
 #include <QDebug>
 #include <QMetaType>
@@ -235,7 +236,7 @@ private:
   friend class Channel;
 };
 
-class BufferChannel : public Channel {
+class PROTOBUF_QML_DLLEXPORT BufferChannel : public Channel {
   Q_OBJECT
 
 public:

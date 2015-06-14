@@ -1,6 +1,7 @@
 #ifndef PROTOBUF_QML_DESCRIPTOR_DATABASE_H
 #define PROTOBUF_QML_DESCRIPTOR_DATABASE_H
 
+#include "protobuf/qml/common.h"
 #include <google/protobuf/descriptor_database.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
@@ -17,7 +18,7 @@ namespace qml {
 
 class DescriptorWrapper;
 
-class DescriptorWrapper : public QObject {
+class PROTOBUF_QML_DLLEXPORT DescriptorWrapper : public QObject {
   Q_OBJECT
 
 signals:
@@ -53,7 +54,7 @@ private:
   QThreadStorage<google::protobuf::Message*> message_;
 };
 
-class FileDescriptorWrapper : public QObject {
+class PROTOBUF_QML_DLLEXPORT FileDescriptorWrapper : public QObject {
   Q_OBJECT
 
 public:
@@ -74,7 +75,7 @@ private:
   const google::protobuf::FileDescriptor* descriptor_;
 };
 
-class DescriptorPoolWrapper : public QObject {
+class PROTOBUF_QML_DLLEXPORT DescriptorPoolWrapper : public QObject {
   Q_OBJECT
 
 public:

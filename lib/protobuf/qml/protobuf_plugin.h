@@ -4,7 +4,7 @@
 #include "protobuf/qml/common.h"
 #include <QQmlExtensionPlugin>
 
-class PROTOBUF_QML_DLLEXPORT ProtobufQmlPlugin : public QQmlExtensionPlugin {
+class ProtobufQmlPlugin : public QQmlExtensionPlugin {
   Q_OBJECT
   Q_PLUGIN_METADATA(IID "org.qt-project.Qt.QQmlExtensionInterface")
 public:

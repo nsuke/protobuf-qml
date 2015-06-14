@@ -3,6 +3,7 @@
 #include "protobuf/qml/memory.h"
 #include "protobuf/qml/file.h"
 #include "protobuf/qml/processor.h"
+#include "protobuf/qml/method.h"
 #include <QObject>
 #include <QtQml>
 
@@ -23,4 +24,8 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
   qmlRegisterType<protobuf::qml::BufferChannel>(uri, 1, 0, "BufferChannel");
   qmlRegisterType<protobuf::qml::MemoryBufferChannel>(uri, 1, 0, "MemoryBufferChannel");
   qmlRegisterType<protobuf::qml::FileChannel>(uri, 1, 0, "FileChannel");
+
+
+  qmlRegisterType<protobuf::qml::Channel2>(uri, 1, 0, "Channel2");
+  qmlRegisterType<protobuf::qml::UnaryMethodHolder>(uri, 1, 0, "UnaryMethodHolder");
 }
