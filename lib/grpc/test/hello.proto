@@ -11,4 +11,6 @@ message HelloResponse {
 service Hello {
   rpc SayHello(HelloRequest) returns(HelloResponse) {
   }
+  rpc BatchHello(stream HelloRequest) returns(HelloResponse) {
+  }
 }

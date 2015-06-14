@@ -28,4 +28,5 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
 
   qmlRegisterType<protobuf::qml::Channel2>(uri, 1, 0, "Channel2");
   qmlRegisterType<protobuf::qml::UnaryMethodHolder>(uri, 1, 0, "UnaryMethodHolder");
+  qmlRegisterType<protobuf::qml::WriterMethodHolder>(uri, 1, 0, "WriterMethodHolder");
 }

@@ -1,5 +1,6 @@
 #include "grpc/qml/base.h"
 #include "grpc/qml/unary.h"
+#include "grpc/qml/writer.h"
 
 namespace grpc {
 namespace qml {
@@ -98,9 +99,8 @@ bool Channel::ensureInit() {
     const QString& name,
     ::protobuf::qml::DescriptorWrapper* read,
     ::protobuf::qml::DescriptorWrapper* write) {
-  // TODO: Not implemented yet
-  // return !ensureInit() ? nullptr : new WriterMethod(name.toStdString(), read,
-  //                                                   write, raw_, cq_.get());
+  return !ensureInit() ? nullptr : new WriterMethod(name.toStdString(), read,
+                                                    write, raw_, cq_.get());
   return nullptr;
 }
 ::protobuf::qml::ReaderWriterMethod* Channel::registerReaderWriterMethod(

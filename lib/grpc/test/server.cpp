@@ -6,13 +6,29 @@
 #include <grpc++/server_credentials.h>
 #include <grpc++/status.h>
 #include <iostream>
+#include <sstream>
 
 class HelloServiceImpl : public Hello::Service {
   ::grpc::Status SayHello(::grpc::ServerContext* context,
-                       const ::HelloRequest* request,
-                       ::HelloResponse* response) override {
+                          const ::HelloRequest* request,
+                          ::HelloResponse* response) override {
     std::cout << "RECEIVED : " << request->name() << std::endl;
     response->set_greet(std::string("Hello ") + request->name());
+    return grpc::Status::OK;
+  }
+
+  ::grpc::Status BatchHello(::grpc::ServerContext* context,
+                            ::grpc::ServerReader<::HelloRequest>* reader,
+                            ::HelloResponse* response) override {
+    std::stringstream ss;
+    ss << "Hello";
+    HelloRequest request;
+    while (reader->Read(&request)) {
+      std::cout << "RECEIVED : " << request.name() << std::endl;
+      ss << " " << request.name();
+    }
+    std::cout << "RECEIVED END" << std::endl;
+    response->set_greet(ss.str());
     return grpc::Status::OK;
   }
 };

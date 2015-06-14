@@ -6,6 +6,7 @@ set(grpc-qml_SOURCES
   qml/grpc_plugin.cpp
   qml/base.cpp
   qml/unary.cpp
+  qml/writer.cpp
   )
 
 add_library(grpc-qml SHARED ${grpc-qml_SOURCES})

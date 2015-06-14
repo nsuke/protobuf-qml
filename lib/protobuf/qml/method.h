@@ -146,7 +146,42 @@ class PROTOBUF_QML_DLLEXPORT WriterMethod : public MethodBase {
 public:
   explicit WriterMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~WriterMethod() {}
-  virtual bool writesDone(int tag) { return false; }
+  virtual bool writesDone(int tag, int timeout) { return false; }
+};
+
+class PROTOBUF_QML_DLLEXPORT WriterMethodHolder : public MethodHolder {
+  Q_OBJECT
+
+public:
+  explicit WriterMethodHolder(QObject* p = nullptr) : MethodHolder(p) {}
+  ~WriterMethodHolder() {}
+
+  Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {
+    if (!ensureInit()) {
+      qWarning() << "Failed to initialize writer method implementation.";
+      return false;
+    }
+    return impl_->write(tag, data, timeout);
+  }
+
+  Q_INVOKABLE bool writesDone(int tag, int timeout) {
+    if (!ensureInit()) {
+      qWarning() << "Failed to initialize writer method implementation.";
+      return false;
+    }
+    return impl_->writesDone(tag, timeout);
+  }
+
+protected:
+  void deinit() final {
+    // TODO: Is it safe at any time ??
+    impl_.reset();
+  }
+
+private:
+  bool ensureInit();
+
+  std::unique_ptr<WriterMethod> impl_;
 };
 
 class PROTOBUF_QML_DLLEXPORT ReaderMethod : public MethodBase {
