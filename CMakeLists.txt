@@ -29,6 +29,21 @@ function(copy TAG DEST)
   endforeach()
 endfunction()
 
+function(protobuf_generate_qml QML_OUT)
+  foreach(FIL ${ARGN})
+    get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
+    get_filename_component(FIL_WE ${FIL} NAME_WE)
+    get_filename_component(FIL_DIR ${FIL} DIRECTORY)
+
+    add_custom_target("protobuf_generate_qml_${FIL_WE}" ALL
+      DEPENDS ${ABS_FIL} protoc-gen-qml
+      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+      --plugin=${CMAKE_BINARY_DIR}/protoc-gen-qml
+      -I ${FIL_DIR}
+      --qml_out  ${QML_OUT} ${ABS_FIL})
+  endforeach()
+endfunction()
+
 if(CMAKE_VERSION VERSION_LESS 3.1.0)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 endif()
@@ -96,21 +111,6 @@ add_test(NAME protobuf-qml-test
   COMMAND ./protobuf-qml-test
   -import ${CMAKE_CURRENT_BINARY_DIR}/plugins
   -input ${CMAKE_CURRENT_BINARY_DIR}/test)
-
-function(protobuf_generate_qml QML_OUT)
-  foreach(FIL ${ARGN})
-    get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
-    get_filename_component(FIL_WE ${FIL} NAME_WE)
-    get_filename_component(FIL_DIR ${FIL} DIRECTORY)
-
-    add_custom_target("protobuf_generate_qml_${FIL_WE}" ALL
-      DEPENDS ${ABS_FIL} protoc-gen-qml
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-      --plugin=protoc-gen-qml
-      -I ${FIL_DIR}
-      --qml_out  ${QML_OUT} ${ABS_FIL})
-  endforeach()
-endfunction()
 
 protobuf_generate_qml(${CMAKE_CURRENT_BINARY_DIR}/test
   ${CMAKE_CURRENT_SOURCE_DIR}/test/ProtobufQmlTest.proto

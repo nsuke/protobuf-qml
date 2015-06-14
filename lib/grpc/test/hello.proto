@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string greet = 1;
+}
+
+service Hello {
+  rpc SayHello(HelloRequest) returns(HelloResponse) {
+  }
+}

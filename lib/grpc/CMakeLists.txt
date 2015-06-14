@@ -1,17 +1,28 @@
-
+#
+# gRPC QML plugin
+#
 set(grpc-qml_SOURCES
-  qml/channel.cpp
   qml/credentials.cpp
   qml/grpc_plugin.cpp
-  qml/global_instance.cpp
+  qml/base.cpp
+  qml/unary.cpp
   )
+
 add_library(grpc-qml SHARED ${grpc-qml_SOURCES})
 protobuf_qml_target(grpc-qml)
+
+set_target_properties(
+  grpc-qml
+  PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plugins/Grpc)
+
 target_link_libraries(grpc-qml
+  protobuf-qml-core
   ${GRPC++_LIBRARIES}
   Qt5::Qml)
 
 copy(grpc-qml
   ${CMAKE_BINARY_DIR}/plugins/Grpc
-  imports/qmldir
-  ${CMAKE_CURRENT_BINARY_DIR}/libgrpc-qml.so)
+  imports/qmldir)
+
+add_subdirectory(test)
