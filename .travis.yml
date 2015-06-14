@@ -38,4 +38,4 @@ script:
   - tools/build_dependencies.py -j4
   - tools/bootstrap.py
   - ninja -j4 -C out
-  - python tools/run_test.py
+  - tools/run_test.py
