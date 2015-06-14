@@ -24,28 +24,62 @@ Currently no biniary distribution is available yet.
 
 Buiding:
 ---
-You need Qt 5 installed on your system.
+
+### Dependencies
+
+You need Qt 5 installed on your system. Other than that, here are current known dependencies.
+
+#### tools
+* cmake
+* make
+* ninja (optional in the near future)
+* Autotool (optional in the future)
+* curl
+
+#### libraries
+* zlib (optional in the future)
+
+#### python modules
+* simplejson (optional in the future)
+* mako (optional in the future)
+
+Ubuntu 14.04 example for installing above dependencies:
 ```
-$ build/download_dependency.py
-$ mkdir -p cmake_build && cd cmake_build
-$ cmake \
-    -DPROTOBUF_PROTOC_LIBRARY=../build/deps/protobuf3/lib/libprotoc.so \
-    -DPROTOBUF_LIBRARY=../build/deps/protobuf3/lib/libprotobuf.so \
-    -DPROTOBUF_INCLUDE_DIR=../build/deps/protobuf3/include \
-    -DPROTOBUF_PROTOC_EXECUTABLE=../build/deps/protobuf3/bin/protoc \
-    ..
-$ make
+# apt-get install
+      python-simplejson
+      python-mako
+      libgoogle-perftools-dev
+      curl
+      build-essential
+      cmake
+      ninja-build
+      autoconf
+      libtool
+      zlib1g-dev
 ```
+
+### Build
+
+The flow below is actually run on build server.
+Since Protocol Buffers 3 is not available as prebuilt binary, it is automatically built in the process.
+It's just load of configure, make, cmake etc under the cover.
+```
+$ source ./tools/setup_env.sh
+$ ./tools/build_dependencies.py
+$ ./tools/bootstrap.py
+$ ninja -C out
+```
+
+TBD: instruction to use system protobuf3 and gRPC
 
 Testing:
 ---
-In the cmake_build directory:
 ```
-$ ./protobuf-qml-test -import plugins
+$ ./tools/run_test.py
 ```
 
 Dependency versions:
 ---
 Tested with following library versions:
-* [Protocol Buffers 3.0 snapshot](https://github.com/nsuke/protobuf-qml/releases/download/deps/protobuf3.tar.bz2)
-* Qt 5.2 and 5.5 snapshot
+* Protocol Buffers 3.0-alpha3
+* Qt 5.2.1 and 5.4.2
