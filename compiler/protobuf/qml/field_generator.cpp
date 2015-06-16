@@ -1,7 +1,7 @@
 #include "protobuf/qml/field_generator.h"
 #include "protobuf/qml/enum_generator.h"
 #include "protobuf/qml/util.h"
-#include "protobuf/qml/compiler/util.h"
+#include "protobuf/qml/compiler_util.h"
 #include <QDebug>
 
 namespace protobuf {

@@ -1,5 +1,5 @@
 #include "protobuf/qml/enum_generator.h"
-#include "protobuf/qml/compiler/util.h"
+#include "protobuf/qml/compiler_util.h"
 #include <sstream>
 
 namespace protobuf {

@@ -1,5 +1,5 @@
 #include "protobuf/qml/qml_generator.h"
-#include "protobuf/qml/compiler/util.h"
+#include "protobuf/qml/compiler_util.h"
 
 #include <google/protobuf/io/zero_copy_stream.h>
 #include <QByteArray>

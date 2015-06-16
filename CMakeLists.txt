@@ -82,7 +82,7 @@ set(protoc-gen-qml_SOURCES
   compiler/protobuf/qml/message_generator.cpp
   compiler/protobuf/qml/oneof_generator.cpp
   compiler/protobuf/qml/qml_generator.cpp
-  compiler/protobuf/qml/compiler/util.cpp)
+  compiler/protobuf/qml/compiler_util.cpp)
 add_executable(protoc-gen-qml ${protoc-gen-qml_SOURCES})
 protobuf_qml_target(protoc-gen-qml)
 target_link_libraries(protoc-gen-qml
