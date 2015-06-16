@@ -23,21 +23,17 @@ public:
     method_->deleteCall(tag_);
   }
 
-  void onEvent(bool*) final {
+  void onEvent(bool ok, bool*) final {
     qDebug() << __PRETTY_FUNCTION__;
-    // TODO: check status
-    auto data = read_desc_->dataFromMessage(*message_);
-    method_->data(tag_, data);
-  }
+    if (!ok) {
+      std::cerr << status.details() << std::endl;
 
-  void onError(bool timeout) final {
-    qDebug() << __PRETTY_FUNCTION__;
-
-    // TODO: Deliver error message to the caller.
-    std::cerr << status.details() << std::endl;
-
-    auto msg = timeout ? "Timeout." : "Unknown error";
-    method_->error(tag_, msg);
+      method_->error(tag_, QString::fromStdString(status.details()));
+    } else {
+      // TODO: check status
+      auto data = read_desc_->dataFromMessage(*message_);
+      method_->data(tag_, data);
+    }
   }
 
   google::protobuf::Message* response() { return message_.get(); }

@@ -11,17 +11,20 @@ public:
       : call_(call), request_(std::move(request)) {
     std::cout << __PRETTY_FUNCTION__ << std::hex
               << reinterpret_cast<intptr_t>(this) << std::endl;
-    ;
   }
 
   ~WriterWriteOp() { qDebug() << __PRETTY_FUNCTION__; }
 
-  virtual void onEvent(bool* handled) { qDebug() << __PRETTY_FUNCTION__; }
-  virtual void onError(bool) {
+  void onEvent(bool ok, bool* handled) final {
     qDebug() << __PRETTY_FUNCTION__;
-    // TODO: Is is correct to end the call on write failure ?
-    call_->method()->error(call_->tag(), "Failed to write to channel");
-    call_->finish();
+    if (!ok) {
+      // TODO: Is is correct to end the call on write failure ?
+      call_->method()->error(call_->tag(), "Failed to write to channel");
+      call_->finish();
+    } else {
+      // TODO: No need to handle on fail ?
+      call_->handleWriteComplete();
+    }
   }
 
   google::protobuf::Message* request() { return request_.get(); }
@@ -44,17 +47,16 @@ public:
     call_->method()->deleteCall(call_->tag());
   }
 
-  virtual void onEvent(bool* handled) {
+  void onEvent(bool ok, bool* handled) final {
     qDebug() << __PRETTY_FUNCTION__;
+    if (!ok) {
+      // TODO: Is is correct to end the call on write failure ?
+      call_->method()->error(call_->tag(), "Error while finishing.");
+      return;
+    }
     call_->method()->data(
         call_->tag(),
         call_->read_descriptor()->dataFromMessage(*call_->response()));
-  }
-
-  virtual void onError(bool) {
-    qDebug() << __PRETTY_FUNCTION__;
-    // TODO: Is is correct to end the call on write failure ?
-    call_->method()->error(call_->tag(), "Error while finishing.");
   }
 
 private:
@@ -135,6 +137,10 @@ std::unique_ptr<SimpleHandler> deleteHandler(F f) {
   return std::move(handler);
 }
 
+WriterCall::~WriterCall() {
+  qDebug() << __PRETTY_FUNCTION__;
+}
+
 void WriterCall::finish() {
   qDebug() << __PRETTY_FUNCTION__;
   if (writer_) {
@@ -153,18 +159,50 @@ void WriterCall::ensureInit() {
   }
 }
 
-bool WriterCall::write(std::unique_ptr<google::protobuf::Message> request) {
-  ensureInit();
+void WriterCall::handleWriteComplete() {
+  qDebug() << __PRETTY_FUNCTION__;
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  if (requests_.empty() || done_) {
+    writing_ = false;
+  } else {
+    std::unique_ptr<google::protobuf::Message> next;
+    next.swap(requests_.front());
+    requests_.pop();
+    doWrite(std::move(next));
+  }
+}
+
+bool WriterCall::doWrite(std::unique_ptr<google::protobuf::Message> request) {
+  qDebug() << __PRETTY_FUNCTION__;
+  if (!request) {
+    // Someone enqueued nullptr to signal us we should be done here.
+    doWritesDone(done_timeout_);
+  }
   std::unique_ptr<WriterWriteOp> op(
       new WriterWriteOp(this, std::move(request)));
   auto req = op->request();
   writer_->Write(*req, op.release());
+  writing_ = true;
   return true;
 }
 
-bool WriterCall::writesDone(int timeout) {
+bool WriterCall::write(std::unique_ptr<google::protobuf::Message> request) {
   qDebug() << __PRETTY_FUNCTION__;
   ensureInit();
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  if (!writing_ && !done_) {
+    return doWrite(std::move(request));
+  } else {
+    // Enqueue awaiting requests because underlying gRPC call object does not
+    // allow more than one request at once.
+    requests_.push(std::move(request));
+    return true;
+  }
+}
+
+bool WriterCall::doWritesDone(int timeout) {
+  qDebug() << __PRETTY_FUNCTION__;
+  done_ = true;
   if (timeout >= 0) {
     context_.set_deadline(std::chrono::system_clock::now() +
                           std::chrono::milliseconds(timeout));
@@ -176,7 +214,22 @@ bool WriterCall::writesDone(int timeout) {
   return true;
 }
 
+bool WriterCall::writesDone(int timeout) {
+  qDebug() << __PRETTY_FUNCTION__;
+  ensureInit();
+  if (done_) return false;
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  if (writing_) {
+    // A bit hacky but nullptr signals that we are done.
+    done_timeout_ = timeout;
+    requests_.push(nullptr);
+  } else {
+    doWritesDone(timeout);
+  }
+}
+
 bool WriterMethod::write(int tag, const QVariant& data, int timeout) {
+  qDebug() << __PRETTY_FUNCTION__;
   // TODO: handle timeout
   std::unique_ptr<google::protobuf::Message> request(
       write_->dataToMessage(data));
@@ -206,6 +259,7 @@ bool WriterMethod::write(int tag, const QVariant& data, int timeout) {
 }
 
 bool WriterMethod::writesDone(int tag, int timeout) {
+  qDebug() << __PRETTY_FUNCTION__;
   WriterCall* call = nullptr;
   {
     std::lock_guard<std::mutex> lock(calls_mutex_);

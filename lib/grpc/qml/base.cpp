@@ -33,22 +33,17 @@ void Channel::startThread() {
     bool ok = false;
     bool handled = false;
     for (;;) {
-      auto shutdown = !cq_->Next(&tag, &ok);
-      if (shutdown) {
+      if (!cq_->Next(&tag, &ok)) {
         qDebug() << "Shutting down";
         cq_.reset();
         return;
       }
       std::unique_ptr<CallOp> op(reinterpret_cast<CallOp*>(tag));
-      if (!ok) {
-        // TODO: Remove the unused boolean arg
-        op->onError(false);
-      } else {
-        handled = true;
-        op->onEvent(&handled);
-        if (!handled) {
-          op.release();
-        }
+      tag = nullptr;
+      handled = true;
+      op->onEvent(ok, &handled);
+      if (!handled) {
+        op.release();
       }
     }
   }));

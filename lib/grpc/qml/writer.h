@@ -4,6 +4,7 @@
 #include "protobuf/qml/method.h"
 #include "grpc/qml/base.h"
 #include <mutex>
+#include <queue>
 #include <unordered_map>
 
 namespace grpc {
@@ -25,6 +26,8 @@ public:
         read_desc_(read_desc),
         response_(read_desc->newMessage()) {}
 
+  ~WriterCall();
+
   bool write(std::unique_ptr<google::protobuf::Message> request);
 
   bool writesDone(int timeout);
@@ -39,8 +42,16 @@ public:
   google::protobuf::Message* response() { return response_.get(); }
 
 private:
+  void handleWriteComplete();
+
+  bool doWrite(std::unique_ptr<google::protobuf::Message> request);
+  bool doWritesDone(int timeout);
   void ensureInit();
 
+  std::mutex write_mutex_;
+  bool writing_ = false;
+  bool done_ = false;
+  int done_timeout_ = -1;
   int tag_;
   grpc::ChannelInterface* channel_;
   grpc::CompletionQueue* cq_;
@@ -48,7 +59,11 @@ private:
   grpc::ClientContext context_;
   ::protobuf::qml::DescriptorWrapper* read_desc_;
   std::unique_ptr<google::protobuf::Message> response_;
+  std::queue<std::unique_ptr<google::protobuf::Message>> requests_;
   std::unique_ptr<grpc::ClientAsyncWriter<google::protobuf::Message>> writer_;
+
+  // For handleWriteComplete()
+  friend class WriterWriteOp;
 };
 
 class WriterMethod : public ::protobuf::qml::WriterMethod {

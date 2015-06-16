@@ -18,8 +18,7 @@ namespace qml {
 struct CallOp {
   virtual ~CallOp() {
   }
-  virtual void onEvent(bool* handled) {}
-  virtual void onError(bool) {}
+  virtual void onEvent(bool ok, bool* handled) {}
   grpc::Status status;
 };
 
@@ -84,7 +83,7 @@ private:
   std::shared_ptr<grpc::ChannelInterface> raw_;
 
   QString target_;
-  Credentials* creds_;
+  Credentials* creds_ = nullptr;
 
   std::unique_ptr<std::thread> thread_;
 };

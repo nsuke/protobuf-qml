@@ -1,3 +1,5 @@
+// To run this test, you need to run hello-server program beforehand
+
 import QtQuick 2.2
 import QtTest 1.0
 import Grpc 1.0 as G
@@ -90,8 +92,6 @@ Item {
 
       // and send 3 messages and not end
       var ok = call.write({name: 'Bar1'}, 1000);
-      // TODO: why the wait needed ?
-      wait(400);
       verify(ok);
       ok = call.write({name: 'Bar2'}, 1000);
       verify(ok);
