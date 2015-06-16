@@ -2,7 +2,7 @@
 #include "protobuf/qml/enum_generator.h"
 #include "protobuf/qml/util.h"
 #include "protobuf/qml/compiler_util.h"
-#include <QDebug>
+#include "protobuf/qml/compiler_common.h"
 
 namespace protobuf {
 namespace qml {
@@ -66,8 +66,8 @@ std::string FieldGenerator::defaultValue() {
     case FieldDescriptor::CPPTYPE_MESSAGE:
       return "{}";
     default:
-      qDebug() << t_->cpp_type();
-      Q_ASSERT(false);
+      PBQML_ASSERT(false, "boolToString", "ASSERT ERROR: Unknown type: ");
+      break;
   }
 }
 
@@ -268,7 +268,8 @@ void FieldGenerator::generateOptionalProperty(
     p.Print(variables_,
             "    if (this.$oneof_camel$Case() == "
             "type.$oneof_capital$Case.$capital_name$) {\n"
-            "      this._raw[ONEOF][$oneof_index$] = type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
+            "      this._raw[ONEOF][$oneof_index$] = "
+            "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
             "    }\n");
   }
   p.Print(variables_,

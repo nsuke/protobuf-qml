@@ -1,6 +1,6 @@
 #include "protobuf/qml/oneof_generator.h"
 #include "protobuf/qml/util.h"
-#include <qglobal.h>
+#include "protobuf/qml/compiler_common.h"
 
 namespace protobuf {
 namespace qml {
@@ -59,7 +59,8 @@ void OneofGenerator::generateClear(google::protobuf::io::Printer& p) {
       case FieldDescriptor::CPPTYPE_STRING:
       case FieldDescriptor::CPPTYPE_MESSAGE:
         p.Print("      case $type$.$capital_name$Case.$name$: {\n", "name",
-                capitalize(f->name()), "capital_name", capital_name_, "type", containing_type);
+                capitalize(f->name()), "capital_name", capital_name_, "type",
+                containing_type);
         p.Print("        this.clear$name$();\n", "name", capitalize(f->name()));
         p.Print(
             "        break;\n"
@@ -75,7 +76,8 @@ void OneofGenerator::generateClear(google::protobuf::io::Printer& p) {
       case FieldDescriptor::CPPTYPE_ENUM:
         break;
       default:
-        Q_ASSERT(false);
+        PBQML_ASSERT(false, "generateClear", "Unknown cpp type");
+        break;
     }
   }
   p.Print(variables_,

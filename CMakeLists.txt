@@ -7,6 +7,7 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  # TODO: check clang version
   # Generated code for Q_OBJECT fires too many of this
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override")
 endif()
@@ -85,6 +86,7 @@ set(protoc-gen-qml_SOURCES
   compiler/protobuf/qml/compiler_util.cpp)
 add_executable(protoc-gen-qml ${protoc-gen-qml_SOURCES})
 protobuf_qml_target(protoc-gen-qml)
+target_compile_definitions(protoc-gen-qml PRIVATE PBQML_COMPILER_HAS_QT)
 target_link_libraries(protoc-gen-qml
   protobuf-qml
   ${PROTOBUF_PROTOC_LIBRARIES}

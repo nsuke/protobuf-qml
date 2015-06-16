@@ -1,8 +1,8 @@
 #include "protobuf/qml/qml_generator.h"
+#include "protobuf/qml/base64.h"
 #include "protobuf/qml/compiler_util.h"
 
 #include <google/protobuf/io/zero_copy_stream.h>
-#include <QByteArray>
 
 #include <memory>
 #include <stdexcept>
@@ -101,16 +101,11 @@ int FileGenerator::serializedFileDescriptor(std::string& out) {
   FileDescriptorProto file_pb;
   file_->CopyTo(&file_pb);
   auto size = file_pb.ByteSize();
-  QByteArray byte_array(size, ' ');
-  if (!file_pb.SerializeToArray(byte_array.data(), byte_array.size())) {
+  auto buf = base64Buffer(size);
+  if (!file_pb.SerializeToArray(buf.data(), buf.size())) {
     throw std::runtime_error("Failed to serialize file descriptor");
   }
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
-  out = byte_array.toBase64().toStdString();
-#else
-  auto tmp_ba = byte_array.toBase64();
-  out = std::string(tmp_ba.data(), tmp_ba.size());
-#endif
+  out = toBase64(buf);
   return size;
 }
 }
