@@ -39,3 +39,7 @@ script:
   - tools/bootstrap.py
   - ninja -j4 -C out
   - tools/run_test.py
+
+matrix:
+  allow_failures:
+    - compiler: clang
