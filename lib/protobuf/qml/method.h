@@ -18,9 +18,6 @@ signals:
   void error(int tag, const QString& message);
   void closed(int tag);
 
-public:
-  virtual bool write(int tag, const QVariant& data, int timeout) { return false; }
-
 protected:
   explicit MethodBase(QObject* p = nullptr) : QObject(p) {}
   virtual ~MethodBase() {}
@@ -111,6 +108,9 @@ class PROTOBUF_QML_DLLEXPORT UnaryMethod : public MethodBase {
 public:
   explicit UnaryMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~UnaryMethod() {}
+  virtual bool write(int tag, const QVariant& data, int timeout) {
+    return false;
+  }
 };
 
 class PROTOBUF_QML_DLLEXPORT UnaryMethodHolder : public MethodHolder {
@@ -146,7 +146,10 @@ class PROTOBUF_QML_DLLEXPORT WriterMethod : public MethodBase {
 public:
   explicit WriterMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~WriterMethod() {}
-  virtual bool writesDone(int tag, int timeout) { return false; }
+  virtual bool write(int tag, const QVariant& data) { return false; }
+  virtual bool writesDone(int tag) { return false; }
+  virtual int timeout(int tag) const { return -1; }
+  virtual void set_timeout(int tag, int milliseconds) {}
 };
 
 class PROTOBUF_QML_DLLEXPORT WriterMethodHolder : public MethodHolder {
@@ -161,7 +164,7 @@ public:
       qWarning() << "Failed to initialize writer method implementation.";
       return false;
     }
-    return impl_->write(tag, data, timeout);
+    return impl_->write(tag, data);
   }
 
   Q_INVOKABLE bool writesDone(int tag, int timeout) {
@@ -169,7 +172,12 @@ public:
       qWarning() << "Failed to initialize writer method implementation.";
       return false;
     }
-    return impl_->writesDone(tag, timeout);
+    return impl_->writesDone(tag);
+  }
+
+  Q_INVOKABLE int timeout(int tag) const { return impl_->timeout(tag); }
+  Q_INVOKABLE void set_timeout(int tag, int milliseconds) {
+    impl_->set_timeout(tag, milliseconds);
   }
 
 protected:

@@ -30,7 +30,10 @@ public:
 
   bool write(std::unique_ptr<google::protobuf::Message> request);
 
-  bool writesDone(int timeout);
+  bool writesDone();
+
+  int timeout() const { return timeout_; }
+  void set_timeout(int timeout);
 
   void finish();
 
@@ -45,13 +48,13 @@ private:
   void handleWriteComplete();
 
   bool doWrite(std::unique_ptr<google::protobuf::Message> request);
-  bool doWritesDone(int timeout);
+  bool doWritesDone();
   void ensureInit();
 
   std::mutex write_mutex_;
   bool writing_ = false;
   bool done_ = false;
-  int done_timeout_ = -1;
+  int timeout_ = -1;
   int tag_;
   grpc::ChannelInterface* channel_;
   grpc::CompletionQueue* cq_;
@@ -86,12 +89,15 @@ public:
              grpc::RpcMethod::CLIENT_STREAMING,
              channel_->RegisterMethod(name.c_str())) {}
 
-  bool write(int tag, const QVariant& data, int timeout) final;
+  bool write(int tag, const QVariant& data) final;
 
-  bool writesDone(int tag, int timeout) final;
+  bool writesDone(int tag) final;
 
   void deleteCall(int tag) {  // TODO:
   }
+
+  int timeout(int tag) const final;
+  void set_timeout(int tag, int milliseconds) final;
 
   const grpc::RpcMethod& raw() const { return raw_; }
 
@@ -102,7 +108,7 @@ private:
   grpc::CompletionQueue* cq_;
   std::shared_ptr<grpc::ChannelInterface> channel_;
   grpc::RpcMethod raw_;
-  std::mutex calls_mutex_;
+  mutable std::mutex calls_mutex_;
   std::unordered_map<int, WriterCall> calls_;
 };
 }

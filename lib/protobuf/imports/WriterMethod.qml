@@ -98,11 +98,17 @@ Item {
     var t = ++p.tag;
     p.addCallback(t, callback);
     return {
-      write: function(data, timeout) {
-        return p.write(t, data, timeout);
+      get timeout() {
+        return impl.timeout(tag);
       },
-      writeEnd: function(timeout) {
-        return p.writeEnd(t, timeout);
+      set timeout(val) {
+        return impl.set_timeout(tag, val);
+      },
+      write: function(data) {
+        return p.write(t, data);
+      },
+      writeEnd: function() {
+        return p.writeEnd(t);
       },
     };
   }

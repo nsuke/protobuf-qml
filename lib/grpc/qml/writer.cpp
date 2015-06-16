@@ -176,7 +176,7 @@ bool WriterCall::doWrite(std::unique_ptr<google::protobuf::Message> request) {
   qDebug() << __PRETTY_FUNCTION__;
   if (!request) {
     // Someone enqueued nullptr to signal us we should be done here.
-    doWritesDone(done_timeout_);
+    doWritesDone();
   }
   std::unique_ptr<WriterWriteOp> op(
       new WriterWriteOp(this, std::move(request)));
@@ -200,37 +200,41 @@ bool WriterCall::write(std::unique_ptr<google::protobuf::Message> request) {
   }
 }
 
-bool WriterCall::doWritesDone(int timeout) {
+bool WriterCall::doWritesDone() {
   qDebug() << __PRETTY_FUNCTION__;
   done_ = true;
-  if (timeout >= 0) {
-    context_.set_deadline(std::chrono::system_clock::now() +
-                          std::chrono::milliseconds(timeout));
-  } else {
-    // TODO: set to infinite
-  }
   auto handler = deleteHandler([this] { finish(); });
   writer_->WritesDone(handler.release());
   return true;
 }
 
-bool WriterCall::writesDone(int timeout) {
+bool WriterCall::writesDone() {
   qDebug() << __PRETTY_FUNCTION__;
   ensureInit();
   if (done_) return false;
   std::lock_guard<std::mutex> lock(write_mutex_);
   if (writing_) {
     // A bit hacky but nullptr signals that we are done.
-    done_timeout_ = timeout;
     requests_.push(nullptr);
   } else {
-    doWritesDone(timeout);
+    doWritesDone();
   }
 }
 
-bool WriterMethod::write(int tag, const QVariant& data, int timeout) {
+void WriterCall::set_timeout(int timeout) {
+  timeout_ = timeout;
+  if (timeout >= 0) {
+    context_.set_deadline(std::chrono::system_clock::now() +
+                          std::chrono::milliseconds(timeout));
+  } else {
+    // Set to quasi-infinity
+    context_.set_deadline(
+        std::chrono::time_point<std::chrono::system_clock>::max());
+  }
+}
+
+bool WriterMethod::write(int tag, const QVariant& data) {
   qDebug() << __PRETTY_FUNCTION__;
-  // TODO: handle timeout
   std::unique_ptr<google::protobuf::Message> request(
       write_->dataToMessage(data));
   if (!request) {
@@ -258,7 +262,7 @@ bool WriterMethod::write(int tag, const QVariant& data, int timeout) {
   return call->write(std::move(request));
 }
 
-bool WriterMethod::writesDone(int tag, int timeout) {
+bool WriterMethod::writesDone(int tag) {
   qDebug() << __PRETTY_FUNCTION__;
   WriterCall* call = nullptr;
   {
@@ -272,7 +276,39 @@ bool WriterMethod::writesDone(int tag, int timeout) {
     call = &it->second;
   }
   Q_ASSERT(call);
-  return call->writesDone(timeout);
+  return call->writesDone();
+}
+
+int WriterMethod::timeout(int tag) const {
+  const WriterCall* call = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(calls_mutex_);
+    const auto it = calls_.find(tag);
+    if (it == calls_.end()) {
+      // not found
+      qWarning() << "Tag not found " << tag;
+      return false;
+    }
+    call = &it->second;
+  }
+  Q_ASSERT(call);
+  return call->timeout();
+}
+
+void WriterMethod::set_timeout(int tag, int milliseconds) {
+  WriterCall* call = nullptr;
+  {
+    std::lock_guard<std::mutex> lock(calls_mutex_);
+    auto it = calls_.find(tag);
+    if (it == calls_.end()) {
+      // not found
+      qWarning() << "Tag not found " << tag;
+      return;
+    }
+    call = &it->second;
+  }
+  Q_ASSERT(call);
+  return call->set_timeout(milliseconds);
 }
 }
 }

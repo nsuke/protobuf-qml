@@ -90,12 +90,14 @@ Item {
         val.called = true;
       });
 
+      call.timeout = 500;
+
       // and send 3 messages and not end
-      var ok = call.write({name: 'Bar1'}, 1000);
+      var ok = call.write({name: 'Bar1'});
       verify(ok);
-      ok = call.write({name: 'Bar2'}, 1000);
+      ok = call.write({name: 'Bar2'});
       verify(ok);
-      ok = call.write({name: 'Bar3'}, 1000);
+      ok = call.write({name: 'Bar3'});
       verify(ok);
 
       // should not receive response yet
@@ -105,7 +107,7 @@ Item {
       ok = call.writeEnd(1000);
 
       // should receive response
-      tryCompare(val, 'called', true, 2000);
+      tryCompare(val, 'called', true);
     }
   }
 }
