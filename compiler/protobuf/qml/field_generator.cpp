@@ -123,108 +123,113 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
   }
 }
 
-void FieldGenerator::generateRepeatedMessageProperty(
-    google::protobuf::io::Printer& p) {
-  p.Print(
-      variables_,
-      "  $type$.prototype.$name$ = function(indexOrValues, value) {\n"
-      "    if (typeof indexOrValues == 'undefined') {\n"
-      "      return;\n"
-      "    }\n"
-      "    if (indexOrValues instanceof Array) {\n"
-      "      this._$name$.length = indexOrValues.length;\n"
-      "      this._raw[FIELD][$index$].length = indexOrValues.length;\n"
-      "      for (var i in indexOrValues) {\n"
-      "        var msg = new $message_scope$$message_type$(indexOrValues[i]);\n"
-      "        this._$name$[i] = msg;\n"
-      "        this._raw[FIELD][$index$][i] = msg._raw;\n"
-      "      }\n"
-      "      return;\n"
-      "    }\n"
-      "    if (typeof indexOrValues != 'number') {\n"
-      "      throw new TypeError('Index should be a number.');\n"
-      "    }\n"
-      "    if (typeof value == 'undefined') {\n"
-      "      return this._$name$[indexOrValues];\n"
-      "    } else {\n"
-      "      var msg = new $message_scope$$message_type$(value);\n"
-      "      this._$name$[indexOrValues] = msg;\n"
-      "      this._raw[FIELD][$index$][indexOrValues] = msg._raw;\n"
-      "    }\n"
-      "  };\n"
-      "  $type$.prototype.$name$Count = function() {\n"
-      "    console.assert(this._$name$.length == "
-      "this._raw[FIELD][$index$].length);\n"
-      "    return this._$name$.length;\n"
-      "  };\n"
-      "  $type$.prototype.add$capital_name$ = function(value) {\n"
-      "    if (typeof value == 'undefined') {\n"
-      "      throw new TypeError('Cannot add undefined.');\n"
-      "    }\n"
-      "    var msg = new $message_scope$$message_type$(value);\n"
-      "    this._$name$.push(msg);\n"
-      "    this._raw[FIELD][$index$].push(msg._raw);\n"
-      "    console.assert(this._$name$.length == "
-      "this._raw[FIELD][$index$].length);\n"
-      "  };\n"
-      "  $type$.prototype.remove$capital_name$ = function(index) {\n"
-      "    if (typeof index != 'number') {\n"
-      "      throw new TypeError('Index should be a number.');\n"
-      "    }\n"
-      "    this._raw[FIELD][$index$].splice(index, 1);\n"
-      "    this._$name$.splice(index, 1);\n"
-      "    console.assert(this._$name$.length == "
-      "this._raw[FIELD][$index$].length);\n"
-      "  };\n"
-      "  $type$.prototype.clear$capital_name$ = function() {\n"
-      "    this._raw[FIELD][$index$].length = 0;\n"
-      "    this._$name$.length = 0;\n"
-      "    console.assert(this._$name$.length == "
-      "this._raw[FIELD][$index$].length);\n"
-      "  };\n");
+void FieldGenerator::messageAssertLength(google::protobuf::io::Printer& p) {
+  p.Print(variables_,
+          "    console.assert(this._$name$.length == "
+          "this._raw[FIELD][$index$].length);\n");
 }
 
-void FieldGenerator::generateRepeatedProperty(
-    google::protobuf::io::Printer& p) {
+void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
+                                              bool is_message) {
   p.Print(variables_,
           "  $type$.prototype.$name$ = function(indexOrValues, value) {\n"
           "    if (typeof indexOrValues == 'undefined') {\n"
           "      return;\n"
-          "    }\n"
+          "    }\n");
+
+  p.Print(variables_,
           "    if (indexOrValues instanceof Array) {\n"
-          "      this._raw[FIELD][$index$].length = indexOrValues.length;\n"
-          "      for (var i in indexOrValues) {\n"
-          "        this._raw[FIELD][$index$][i] = indexOrValues[i];\n"
+          "      this._raw[FIELD][$index$].length = indexOrValues.length;\n");
+
+  if (is_message) {
+    p.Print(variables_,
+            "      this._$name$.length = indexOrValues.length;\n"
+            "      for (var i in indexOrValues) {\n"
+            "        var msg = new "
+            "$message_scope$$message_type$(indexOrValues[i]);\n"
+            "        this._$name$[i] = msg;\n"
+            "        this._raw[FIELD][$index$][i] = msg._raw;\n");
+  } else {
+    p.Print(variables_,
+            "      for (var i in indexOrValues) {\n"
+            "        this._raw[FIELD][$index$][i] = indexOrValues[i];\n");
+  }
+
+  p.Print(variables_,
           "      }\n"
           "      return;\n"
           "    }\n"
           "    if (typeof indexOrValues != 'number') {\n"
           "      throw new TypeError('Index should be a number.');\n"
           "    }\n"
-          "    if (typeof value == 'undefined') {\n"
-          "      return this._raw[FIELD][$index$][indexOrValues];\n"
-          "    } else {\n"
-          "      this._raw[FIELD][$index$][indexOrValues] = value;\n"
+          "    if (typeof value == 'undefined') {\n");
+
+  if (is_message) {
+    p.Print(variables_,
+            "      return this._$name$[indexOrValues];\n"
+            "    } else {\n"
+            "      var msg = new $message_scope$$message_type$(value);\n"
+            "      this._$name$[indexOrValues] = msg;\n"
+            "      this._raw[FIELD][$index$][indexOrValues] = msg._raw;\n");
+  } else {
+    p.Print(variables_,
+            "      return this._raw[FIELD][$index$][indexOrValues];\n"
+            "    } else {\n"
+            "      this._raw[FIELD][$index$][indexOrValues] = value;\n");
+  }
+
+  p.Print(variables_,
           "    }\n"
           "  };\n"
-          "  $type$.prototype.$name$Count = function() {\n"
+          "  $type$.prototype.$name$Count = function() {\n");
+
+  if (is_message) {
+    messageAssertLength(p);
+  }
+
+  p.Print(variables_,
+
           "    return this._raw[FIELD][$index$].length;\n"
           "  };\n"
           "  $type$.prototype.add$capital_name$ = function(value) {\n"
           "    if (typeof value == 'undefined') {\n"
           "      throw new TypeError('Cannot add undefined.');\n"
-          "    }\n"
-          "    this._raw[FIELD][$index$].push(value);\n"
+          "    }\n");
+
+  if (is_message) {
+    p.Print(variables_,
+            "    var msg = new $message_scope$$message_type$(value);\n"
+            "    this._$name$.push(msg);\n"
+            "    this._raw[FIELD][$index$].push(msg._raw);\n");
+    messageAssertLength(p);
+  } else {
+    p.Print(variables_, "    this._raw[FIELD][$index$].push(value);\n");
+  }
+
+  p.Print(variables_,
           "  };\n"
           "  $type$.prototype.remove$capital_name$ = function(index) {\n"
           "    if (typeof index != 'number') {\n"
           "      throw new TypeError('Index should be a number.');\n"
           "    }\n"
-          "    this._raw[FIELD][$index$].splice(index, 1);\n"
+          "    this._raw[FIELD][$index$].splice(index, 1);\n");
+
+  if (is_message) {
+    p.Print(variables_, "    this._$name$.splice(index, 1);\n");
+    messageAssertLength(p);
+  }
+
+  p.Print(variables_,
           "  };\n"
           "  $type$.prototype.clear$capital_name$ = function() {\n"
-          "    this._raw[FIELD][$index$].length = 0;\n"
-          "  };\n");
+          "    this._raw[FIELD][$index$].length = 0;\n");
+
+  if (is_message) {
+    p.Print(variables_, "    this._$name$.length = 0;\n");
+    messageAssertLength(p);
+  }
+
+  p.Print(variables_, "  };\n");
 }
 
 void FieldGenerator::generateOptionalMessageProperty(
@@ -278,11 +283,10 @@ void FieldGenerator::generateOptionalProperty(
 }
 
 void FieldGenerator::generateProperty(google::protobuf::io::Printer& p) {
-  if (t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE && t_->is_repeated()) {
-    generateRepeatedMessageProperty(p);
-  } else if (t_->is_repeated()) {
-    generateRepeatedProperty(p);
-  } else if (t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE) {
+  auto is_message = t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE;
+  if (t_->is_repeated()) {
+    generateRepeatedProperty(p, is_message);
+  } else if (is_message) {
     generateOptionalMessageProperty(p);
   } else {
     generateOptionalProperty(p);

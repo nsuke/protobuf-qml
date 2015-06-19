@@ -21,10 +21,11 @@ public:
 
 private:
   std::string defaultValue();
-  void generateRepeatedMessageProperty(google::protobuf::io::Printer&);
-  void generateRepeatedProperty(google::protobuf::io::Printer&);
+  void generateRepeatedProperty(google::protobuf::io::Printer&,
+                                bool is_message);
   void generateOptionalMessageProperty(google::protobuf::io::Printer&);
   void generateOptionalProperty(google::protobuf::io::Printer&);
+  void messageAssertLength(google::protobuf::io::Printer& p);
 
   const google::protobuf::FieldDescriptor* t_;
   std::string camel_name_;
