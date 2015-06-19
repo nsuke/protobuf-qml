@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+message Bar {
+  string baz = 1;
+
+  oneof bar1 {
+    string bar_str1 = 2;
+    string bar_str2 = 3;
+  }
+
+  oneof bar2 {
+    string bar_str3 = 12;
+    string bar_str4 = 13;
+    uint64 bar_int1 = 14;
+  }
+}
+
+message Foo {
+  oneof simple {
+    uint32 oneof1 = 600000;
+    string oneof2 = 1;
+    fixed32 oneof3 = 11;
+    // TODO: Warn below because it breaks generated code
+    // uint32 simple_not_set = 5;
+  }
+
+  oneof msg {
+    Bar message_oneof1 = 2;
+    Bar message_oneof2 = 3;
+    uint64 oneof4 = 4;
+  }
+
+  message Baz {
+    oneof baz_x {
+      Bar baz1 = 7;
+      Bar baz2 = 6;
+      Bar baz3 = 5;
+    }
+  }
+
+  Baz baz = 12;
+}

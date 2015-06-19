@@ -146,5 +146,6 @@ add_test(NAME protobuf-qml-test
   -input ${CMAKE_CURRENT_BINARY_DIR}/test)
 
 protobuf_generate_qml(${CMAKE_CURRENT_BINARY_DIR}/test
+  ${CMAKE_CURRENT_SOURCE_DIR}/test/oneof_test.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/test/ProtobufQmlTest.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/test/ProtobufQmlTest2.proto)

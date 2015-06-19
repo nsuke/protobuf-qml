@@ -18,6 +18,7 @@ FieldGenerator::FieldGenerator(const FieldDescriptor* t)
         {"default", defaultValue()},
         {"name", camel_name_},
         {"capital_name", capital_name_},
+        {"all_capital_name", capitalizeAll(t_->name())},
         {"index", std::to_string(t_->index())},
     };
     if (t_->message_type()) {
@@ -100,6 +101,9 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
             "              this._$name$[i] = msg;\n"
             "              this._raw[FIELD][$index$][i] = msg._raw;\n"
             "            }\n"
+            "            if (typeof this._$name$[i] == 'undefined') {\n"
+            "              this.$name$({});\n"
+            "            }\n"
             "            "
             "this._$name$[i]._mergeFromRawArray($arg$[FIELD][$index$][i]);\n"
             "          }\n"
@@ -116,6 +120,9 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
     v.insert(std::make_pair("arg", arg));
     p.Print(
         v,
+        "        if (typeof this.$name$() == 'undefined') {\n"
+        "          this.$name$({});\n"
+        "        }\n"
         "        this.$name$()._mergeFromRawArray($arg$[FIELD][$index$]);\n");
   } else {
     p.Print("        this.$name$($arg$[FIELD][$index$]);\n", "name",
@@ -136,6 +143,14 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "    if (typeof indexOrValues == 'undefined') {\n"
           "      return;\n"
           "    }\n");
+
+  auto oneof = t_->containing_oneof();
+  if (oneof) {
+    p.Print(variables_,
+            "      this.clear$oneof_capital$();\n"
+            "      this._raw[ONEOF][$oneof_index$] = "
+            "type.$oneof_capital$Case.$all_capital_name$;\n");
+  }
 
   p.Print(variables_,
           "    if (indexOrValues instanceof Array) {\n"
@@ -224,6 +239,15 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "  $type$.prototype.clear$capital_name$ = function() {\n"
           "    this._raw[FIELD][$index$].length = 0;\n");
 
+  if (oneof) {
+    p.Print(variables_,
+            "    if (this.$oneof_camel$Case() == "
+            "type.$oneof_capital$Case.$all_capital_name$) {\n"
+            "      this._raw[ONEOF][$oneof_index$] = "
+            "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
+            "    }\n");
+  }
+
   if (is_message) {
     p.Print(variables_, "    this._$name$.length = 0;\n");
     messageAssertLength(p);
@@ -238,7 +262,17 @@ void FieldGenerator::generateOptionalMessageProperty(
           "  $type$.prototype.$name$ = function(value) {\n"
           "    if (typeof value == 'undefined') {\n"
           "      return this._$name$;\n"
-          "    } else {\n"
+          "    } else {\n");
+
+  auto oneof = t_->containing_oneof();
+  if (oneof) {
+    p.Print(variables_,
+            "      this.clear$oneof_capital$();\n"
+            "      this._raw[ONEOF][$oneof_index$] = "
+            "type.$oneof_capital$Case.$all_capital_name$;\n");
+  }
+
+  p.Print(variables_,
           "      var msg = new $message_scope$$message_type$(value);\n"
           "      this._$name$ = msg;\n"
           "      this._raw[FIELD][$index$] = msg._raw;\n"
@@ -246,8 +280,18 @@ void FieldGenerator::generateOptionalMessageProperty(
           "  };\n"
           "  $type$.prototype.clear$capital_name$ = function(value) {\n"
           "    this._raw[FIELD][$index$] = undefined;\n"
-          "    this._$name$ = undefined;\n"
-          "  };\n");
+          "    this._$name$ = undefined;\n");
+
+  if (oneof) {
+    p.Print(variables_,
+            "    if (this.$oneof_camel$Case() == "
+            "type.$oneof_capital$Case.$all_capital_name$) {\n"
+            "      this._raw[ONEOF][$oneof_index$] = "
+            "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
+            "    }\n");
+  }
+
+  p.Print(variables_, "  };\n");
 }
 
 void FieldGenerator::generateOptionalProperty(
@@ -262,7 +306,7 @@ void FieldGenerator::generateOptionalProperty(
     p.Print(variables_,
             "      this.clear$oneof_capital$();\n"
             "      this._raw[ONEOF][$oneof_index$] = "
-            "type.$oneof_capital$Case.$capital_name$;\n");
+            "type.$oneof_capital$Case.$all_capital_name$;\n");
   }
   p.Print(variables_,
           "      this._raw[FIELD][$index$] = value;\n"
@@ -272,7 +316,7 @@ void FieldGenerator::generateOptionalProperty(
   if (oneof) {
     p.Print(variables_,
             "    if (this.$oneof_camel$Case() == "
-            "type.$oneof_capital$Case.$capital_name$) {\n"
+            "type.$oneof_capital$Case.$all_capital_name$) {\n"
             "      this._raw[ONEOF][$oneof_index$] = "
             "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
             "    }\n");

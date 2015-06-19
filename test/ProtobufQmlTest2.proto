@@ -42,6 +42,7 @@ message NestingMessage {
   NestedEnum nested_enum = 2;
   NestedMessage.MoreNestedEnum more_nested_enum = 3;
   NestedMessage.MoreNestedMessage.EvenMoreNestedMessage even_more_nested_message = 4;
+
   oneof nested_oneof {
     NestedMessage nested_message2 = 11;
     NestedEnum nested_enum2 = 12;

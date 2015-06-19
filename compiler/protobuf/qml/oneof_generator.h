@@ -10,6 +10,7 @@ namespace qml {
 class OneofGenerator {
 public:
   OneofGenerator(const google::protobuf::OneofDescriptor* t);
+  void generateMerge(google::protobuf::io::Printer&, const std::string& arg);
   void generate(google::protobuf::io::Printer&);
 
 private:

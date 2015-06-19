@@ -1,6 +1,7 @@
 #include "protobuf/qml/oneof_generator.h"
 #include "protobuf/qml/util.h"
 #include "protobuf/qml/compiler_common.h"
+#include "protobuf/qml/field_generator.h"
 
 namespace protobuf {
 namespace qml {
@@ -23,6 +24,29 @@ OneofGenerator::OneofGenerator(const google::protobuf::OneofDescriptor* t)
   };
 }
 
+void OneofGenerator::generateMerge(google::protobuf::io::Printer& p,
+                                   const std::string& arg) {
+  auto v = variables_;
+  v.insert(std::make_pair("arg", arg));
+  p.Print(v, "    switch ($arg$[ONEOF][$index$]) {\n");
+
+  for (int i = 0; i < t_->field_count(); ++i) {
+    p.Print("      case $oneof_number$: {\n", "oneof_number",
+            std::to_string(t_->field(i)->number()));
+    FieldGenerator fg(t_->field(i));
+    fg.generateMerge(p, arg);
+    p.Print(
+        "        break;\n"
+        "      }\n");
+  }
+
+  p.Print(variables_,
+          "      default:\n"
+          "        $type$.prototype.clear$capital_name$();\n"
+          "        break;\n"
+          "    }\n");
+}
+
 void OneofGenerator::generate(io::Printer& p) {
   generateCaseEnum(p);
   generateCase(p);
@@ -33,8 +57,9 @@ void OneofGenerator::generateCaseEnum(io::Printer& p) {
   p.Print(variables_, "  $type$.$capital_name$Case = {\n");
   for (int i = 0; i < t_->field_count(); ++i) {
     auto f = t_->field(i);
-    p.Print("    get $capital_name$() { return $number$;},\n", "capital_name",
-            capitalize(f->name()), "number", std::to_string(f->number()));
+    p.Print("    get $all_capital_name$() { return $number$;},\n",
+            "all_capital_name", capitalizeAll(f->name()), "number",
+            std::to_string(f->number()));
   }
   p.Print(variables_,
           "    get $all_capital_name$_NOT_SET() { return 0; },\n"
@@ -58,13 +83,14 @@ void OneofGenerator::generateClear(google::protobuf::io::Printer& p) {
     switch (f->cpp_type()) {
       case FieldDescriptor::CPPTYPE_STRING:
       case FieldDescriptor::CPPTYPE_MESSAGE:
-        p.Print("      case $type$.$capital_name$Case.$name$: {\n", "name",
-                capitalize(f->name()), "capital_name", capital_name_, "type",
-                containing_type);
-        p.Print("        this.clear$name$();\n", "name", capitalize(f->name()));
         p.Print(
+            "      case $type$.$capital_name$Case.$all_capital_name$: {\n"
+            "        this.clear$name$();\n"
             "        break;\n"
-            "      }\n");
+            "      }\n",
+            "name", capitalize(f->name()), "all_capital_name",
+            capitalizeAll(f->name()), "capital_name", capital_name_, "type",
+            containing_type);
         break;
       case FieldDescriptor::CPPTYPE_INT32:
       case FieldDescriptor::CPPTYPE_INT64:

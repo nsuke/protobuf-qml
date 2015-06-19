@@ -24,12 +24,22 @@ bool packToMessage(QVariant value, Message& msg) {
     return false;
   }
   auto vlist = value.value<QVariantList>();
-  if (vlist.size() < 2 || !vlist[0].canConvert(QMetaType::QVariantList) ||
-      !vlist[1].canConvert(QMetaType::QVariantList)) {
+  if (vlist.size() < 2 || !vlist[0].canConvert(QMetaType::QVariantList)) {
     return false;
   }
-  return packToMessage(vlist[0].value<QVariantList>(),
-                       vlist[1].value<QList<int>>(), msg);
+
+  QList<int> oneof_numbers;
+  if (vlist[1].canConvert(QMetaType::QVariantList)) {
+    for (auto& v : vlist[1].value<QVariantList>()) {
+      if (!v.canConvert(QMetaType::Int)) {
+        qWarning() << "Invalid type found in oneof numbers.";
+        return false;
+      }
+      oneof_numbers << v.value<int>();
+    }
+  }
+
+  return packToMessage(vlist[0].value<QVariantList>(), oneof_numbers, msg);
 }
 
 QVariant unpackFromMessage(const Message& msg);
@@ -238,37 +248,42 @@ QVariant unpackFromMessage(const Message& msg) {
   QVariantList result;
   bool parsed = false;
   auto reflection = msg.GetReflection();
-  auto descriptor = msg.GetDescriptor();
-  QVector<int> oneofs(descriptor->oneof_decl_count(), -1);
-  for (int i = 0; i < descriptor->field_count(); ++i) {
-    auto desc = descriptor->field(i);
-    auto oneof = desc->containing_oneof();
+  auto message = msg.GetDescriptor();
+  // Storing selected oneof number for each oneof declarations
+  QVector<int> oneof_numbers(message->oneof_decl_count(), -1);
+
+  for (int i = 0; i < message->field_count(); ++i) {
+    auto field = message->field(i);
+    auto oneof = field->containing_oneof();
     if (oneof) {
-      auto oneof_value = &oneofs[oneof->index()];
-      if (*oneof_value < 0) {
-        auto d = reflection->GetOneofFieldDescriptor(msg, oneof);
-        *oneof_value = d ? d->number() : 0;
-        if (*oneof_value > 0) {
+      auto oneof_number = &oneof_numbers[oneof->index()];
+      if (*oneof_number < 0) {
+        // Store actual oneof number when looking up for the first time.
+        auto oneof_field = reflection->GetOneofFieldDescriptor(msg, oneof);
+        *oneof_number = oneof_field ? oneof_field->number() : 0;
+        if (*oneof_number > 0) {
           parsed = true;
         }
       }
-      if (*oneof_value != desc->number()) {
+      if (*oneof_number != field->number()) {
+        // Ignore any value for not-current oneof fields.
         result.append(QVariant());
         continue;
       }
     }
-    if (desc->is_repeated()) {
-      auto size = reflection->FieldSize(msg, desc);
+    if (field->is_repeated()) {
+      auto size = reflection->FieldSize(msg, field);
       if (size > 0) {
         parsed = true;
-        result.append(
-            QVariant(getReflectionRepeatedValue(*reflection, msg, desc, size)));
+        result.append(QVariant(
+            getReflectionRepeatedValue(*reflection, msg, field, size)));
       } else {
+        // Repeated field with no element.
         result.append(QVariant());
       }
-    } else if (reflection->HasField(msg, desc)) {
+    } else if (reflection->HasField(msg, field)) {
       parsed = true;
-      result.append(getReflectionValue(*reflection, msg, desc));
+      result.append(getReflectionValue(*reflection, msg, field));
     } else {
       result.append(QVariant());
     }
@@ -279,38 +294,40 @@ QVariant unpackFromMessage(const Message& msg) {
   if (parsed) {
     QVariantList ret;
     ret.append(QVariant::fromValue(result));
-    ret.append(QVariant::fromValue(oneofs.toList()));
+    ret.append(QVariant::fromValue(oneof_numbers.toList()));
     return std::move(ret);
   }
   return QVariant();
 }
 
-bool packToMessage(const QVariantList& fields,
-                   const QList<int>& oneofs,
+bool packToMessage(const QVariantList& raw_fields,
+                   const QList<int>& oneof_numbers,
                    Message& msg) {
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
   auto field_count = descriptor->field_count();
-  for (int i = 0; i < field_count && i < fields.size(); ++i) {
-    auto field = fields[i];
-    auto desc = descriptor->field(i);
-    if ((!desc->containing_oneof() && field.isValid()) ||
-        (desc->containing_oneof() && oneofs.size() > desc->index_in_oneof() &&
-         oneofs[desc->index_in_oneof()] == desc->number())) {
-      if (desc->is_repeated()) {
-        if (!field.canConvert(QMetaType::QVariantList)) {
+  for (int i = 0; i < field_count && i < raw_fields.size(); ++i) {
+    auto raw_field = raw_fields[i];
+    auto field = descriptor->field(i);
+    auto oneof = field->containing_oneof();
+    if (oneof) {
+    }
+    if ((!field->containing_oneof() && raw_field.isValid()) ||
+        (oneof && oneof_numbers.size() > oneof->index() &&
+         oneof_numbers[oneof->index()] == field->number())) {
+      if (field->is_repeated()) {
+        if (!raw_field.canConvert(QMetaType::QVariantList)) {
           qWarning() << "Invalid type for repeated field: "
-                     << QString::fromStdString(desc->name());
+                     << QString::fromStdString(field->name());
         } else {
-          auto list = field.value<QVariantList>();
+          auto list = raw_field.value<QVariantList>();
           auto size = list.size();
           if (size > 0) {
-            setReflectionRepeatedValue(*reflection, msg, desc, list, size);
+            setReflectionRepeatedValue(*reflection, msg, field, list, size);
           }
         }
       } else {
-        // qDebug() << "field : " << field;
-        setReflectionValue(*reflection, msg, desc, field);
+        setReflectionValue(*reflection, msg, field, raw_field);
       }
     }
   }

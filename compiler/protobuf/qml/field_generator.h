@@ -18,6 +18,7 @@ public:
   void generateInit(google::protobuf::io::Printer&);
   void generateMerge(google::protobuf::io::Printer&, const std::string& arg);
   void generateProperty(google::protobuf::io::Printer&);
+  bool is_oneof() const { return t_->containing_oneof(); }
 
 private:
   std::string defaultValue();

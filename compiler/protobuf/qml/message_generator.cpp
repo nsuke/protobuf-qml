@@ -11,21 +11,33 @@ MessageGenerator::MessageGenerator(const Descriptor* t)
   if (!t) {
     throw std::invalid_argument("Null descriptor");
   }
+
+  message_generators_.reserve(t_->nested_type_count());
   for (int i = 0; i < t_->nested_type_count(); i++) {
     message_generators_.emplace_back(t_->nested_type(i));
   }
+
+  enum_generators_.reserve(t_->enum_type_count());
   for (int i = 0; i < t_->enum_type_count(); i++) {
     enum_generators_.emplace_back(t_->enum_type(i));
   }
+
+  field_generators_.reserve(t_->field_count());
   for (int i = 0; i < t_->field_count(); ++i) {
     field_generators_.emplace_back(t_->field(i));
-  }
-  for (int i = 0; i < t_->oneof_decl_count(); ++i) {
-    oneof_generators_.emplace_back(t_->oneof_decl(i));
   }
 }
 
 void MessageGenerator::generateMessageConstructor(io::Printer& p) {
+  // For some reason, oneof_decl_count sometimes reports wrong value in the
+  // constructor. So we initialize it here as a dirty work around.
+  if (oneof_generators_.empty() && t_->oneof_decl_count() > 0) {
+    oneof_generators_.reserve(t_->oneof_decl_count());
+    for (int i = 0; i < t_->oneof_decl_count(); ++i) {
+      oneof_generators_.emplace_back(t_->oneof_decl(i));
+    }
+  }
+
   p.Print(
       "var $message_name$ = (function() {\n"
       "  var FIELD = 0;\n"
@@ -36,8 +48,13 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "    this._mergeFromRawArray = function(rawArray) {\n"
       "      if (rawArray && rawArray instanceof Array) {\n",
       "message_name", name_, "field_count", std::to_string(t_->field_count()),
-      "oneof_count", std::to_string(t_->oneof_decl_count() + 1));
+      "oneof_count", std::to_string(t_->oneof_decl_count()));
   for (auto& g : field_generators_) {
+    if (!g.is_oneof()) {
+      g.generateMerge(p, "rawArray");
+    }
+  }
+  for (auto& g : oneof_generators_) {
     g.generateMerge(p, "rawArray");
   }
   p.Print(
