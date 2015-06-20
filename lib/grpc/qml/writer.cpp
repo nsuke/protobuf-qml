@@ -219,6 +219,7 @@ bool WriterCall::writesDone() {
   } else {
     doWritesDone();
   }
+  return true;
 }
 
 void WriterCall::set_timeout(int timeout) {
