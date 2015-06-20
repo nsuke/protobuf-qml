@@ -2,6 +2,7 @@
 #define PROTOBUF_QML_BASE64_H
 
 #include "protobuf/qml/compiler_common.h"
+#include <string>
 
 #if PBQML_COMPILER_HAS_QT
 
@@ -27,7 +28,7 @@ inline std::string toBase64(QByteArray& buf) {
 
 #else  // PBQML_COMPILER_HAS_QT
 
-#include <string>
+#include <vector>
 
 namespace protobuf {
 namespace qml {
