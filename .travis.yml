@@ -34,7 +34,7 @@ before_install:
 
 script:
   - . tools/setup_env.sh
-  - tools/build_dependencies.py -j4
+  - tools/build_dependencies.py -j4 --shared
   - tools/bootstrap.py
   - ninja -j4 -C out
   - tools/run_test.py

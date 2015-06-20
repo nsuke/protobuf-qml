@@ -15,7 +15,7 @@ def main(argv):
   p.add_argument('--clang', action='store_true', help='use clang')
   p.add_argument('--out', '-o', default=buildenv.DEFAULT_OUT, help='build directory path')
   # p.add_argument('--qt5dir', '-Q', default='/usr/lib/qt5', help='Qt5 directory path')
-  args = p.parse_args(argv)
+  args, other_args = p.parse_known_args(argv)
   deps_dir = buildenv.DEFAULT_DEPS
   buildenv.setup_env(deps_dir)
 
@@ -44,6 +44,7 @@ def main(argv):
       '-DCMAKE_C_COMPILER=clang',
       '-DCMAKE_CXX_COMPILER=clang++',
     ])
+  cmd.extend(other_args)
   cmd.append(buildenv.ROOT_DIR)
 
   return subprocess.call(cmd, cwd=args.out)

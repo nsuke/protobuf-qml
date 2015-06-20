@@ -26,9 +26,9 @@ public:
   void onEvent(bool ok, bool*) final {
     qDebug() << __PRETTY_FUNCTION__;
     if (!ok) {
-      std::cerr << status.details() << std::endl;
+      std::cerr << status.error_message() << std::endl;
 
-      method_->error(tag_, QString::fromStdString(status.details()));
+      method_->error(tag_, QString::fromStdString(status.error_message()));
     } else {
       // TODO: check status
       auto data = read_desc_->dataFromMessage(*message_);

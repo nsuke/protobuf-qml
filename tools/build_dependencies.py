@@ -24,7 +24,7 @@ def concurrency():
 
 def execute(cmd, **kwargs):
   cmdstr = ' '.join(cmd)
-  print('Executing %s' % cmdstr)
+  print('Executing: %s' % cmdstr)
   res = subprocess.call(cmd, **kwargs)
   if res != 0:
     print('[%s] failed with exitcode %d.' % (cmdstr, res))
@@ -64,34 +64,28 @@ def disable_werror(warns):
     prepend_env('CPPFLAGS', '-Wno-error=%s' % w, ' ')
 
 
+def prepend_libdir(libdir):
+  prepend_env('LD_LIBRARY_PATH', libdir)
+  prepend_env('LIBRARY_PATH', libdir)
+  prepend_env('LDFLAGS', '-L%s' % libdir, ' ')
+
+
+def prepend_include_dir(include):
+  prepend_env('C_INCLUDE_PATH', include)
+  prepend_env('CPLUS_INCLUDE_PATH', include)
+
+
 def prepend_common_envpaths(installdir):
   prepend_env('PATH', os.path.join(installdir, 'bin'))
-  prepend_env('LD_LIBRARY_PATH', os.path.join(installdir, 'lib'))
-  prepend_env('LIBRARY_PATH', os.path.join(installdir, 'lib'))
-  prepend_env('LDFLAGS', '-L%s' % os.path.join(installdir, 'lib'), ' ')
-  prepend_env('C_INCLUDE_PATH', os.path.join(installdir, 'include'))
-  prepend_env('CPLUS_INCLUDE_PATH', os.path.join(installdir, 'include'))
+  prepend_libdir(os.path.join(installdir, 'lib'))
+  prepend_include_dir(os.path.join(installdir, 'include'))
 
 
-def prepare_repo(repodir, repourl, refspec):
-  if not os.path.exists(repodir):
-    os.makedirs(repodir)
-  workflow = []
-  if not os.path.exists(os.path.join(repodir, '.git')):
-    workflow.extend([
-      (['git', 'init'], {'cwd': repodir}),
-      (['git', 'remote', 'add', 'origin', repourl], {'cwd': repodir}),
-    ])
-  workflow.append((['git', 'fetch', '--depth=1', 'origin', refspec], {'cwd': repodir}))
-  workflow.append((['git', 'checkout', '-f', 'origin/%s' % refspec], {'cwd': repodir}))
-  execute_tasks(workflow)
-
-
-def download_from_github(cwd, user, proj, commit, path=None):
-  path = path or os.path.join(cwd, '%s-%s' % (proj, commit))
-  arc = path + '.tar.gz'
-  if not os.path.exists(arc):
-    url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (user, proj, commit)
+def download_source_archive(url, arc, path, check_path=None):
+  check_path = check_path or path
+  if os.path.exists(arc):
+    print('Skip downloading: %s exists.' % arc)
+  else:
     print('Downloading source archive from [%s].' % url)
     try:
       rsp = urllib2.urlopen(url)
@@ -101,38 +95,104 @@ def download_from_github(cwd, user, proj, commit, path=None):
     with open(arc, 'wb+') as fp:
       fp.write(rsp.read())
     print('Successfully downloaded soruce archive to [%s].' % arc)
-  if not os.path.exists(path):
+  if os.path.exists(check_path):
+    print('Skip extracting: %s exists.' % check_path)
+  else:
     print('Extracting archive.')
     tf = tarfile.open(arc, mode='r|*')
-    tf.extractall(os.path.dirname(path))
+    tf.extractall(path)
     print('Successfully extracted to [%s].' % path)
-  return path
 
 
-def build_protobuf3(wd, installdir, jobs):
-  # repodir = os.path.join(wd, 'protobuf')
-  # installdir = os.path.join(wd, 'deps', 'protobuf3')
-  # prepare_repo(repodir, 'https://github.com/google/protobuf.git', 'master')
-  repodir = os.path.join(wd, 'protobuf-3.0.0-alpha-3')
-  repodir = download_from_github(wd, 'google', 'protobuf', 'v3.0.0-alpha-3', repodir)
-  workflow = [
-    (['./autogen.sh'], {'cwd': repodir}),
-    (['./configure', '--disable-static', '-prefix', installdir], {'cwd': repodir}),
-    (['make', '-j%d' % jobs, '-C', repodir], {}),
-    (['make', '-C', repodir, 'install'], {}),
+def download_from_github(cwd, user, proj, commit, check_path=None):
+  url = 'https://github.com/%s/%s/archive/%s.tar.gz' % (user, proj, commit)
+  check_path = check_path or os.path.join(cwd, '%s-%s' % (proj, commit))
+  arc = os.path.join(cwd, '%s-%s.tar.gz' % (proj, commit))
+  download_source_archive(url, arc, os.path.dirname(arc), check_path)
+
+
+def build_protobuf3(wd, installdir, jobs, shared):
+  # version = 'v3.0.0-alpha-3'
+  # repodir = os.path.join(wd, 'protobuf-%s' % version)
+  # # archive for protobuf tag does not have 'v' prefix
+  # download_from_github(wd, 'google', 'protobuf', version, 'protobuf-3.0.0-alpha-3')
+
+  version = 'd3d66d79760f7f233c404c10528fca22f99843b2'
+  repodir = os.path.join(wd, 'protobuf-%s' % version)
+  download_from_github(wd, 'google', 'protobuf', version)
+
+  shared_on = 'ON' if shared else 'OFF'
+  cmake_cmd = [
+    'cmake',
+    '-GNinja',
+    '-DBUILD_TESTING=OFF',
+    '-DBUILD_SHARED_LIBS=%s' % shared_on,
+    # '-DCMAKE_C_COMPILER=clang',
+    # '-DCMAKE_CXX_COMPILER=clang++',
+    # '-DCMAKE_CXX_FLAGS=-fPIC -fno-omit-frame-pointer -fsanitize=memory',
+    '-DCMAKE_CXX_FLAGS=-fPIC',
+    '-DCMAKE_BUILD_TYPE=Debug',
+    'cmake'
   ]
-  res = execute_tasks(workflow)
-  delete_files([], [os.path.join(installdir, 'lib', 'libprotobuf-lite.*')])
-  shutil.copy2(os.path.join(repodir, 'LICENSE'), os.path.join(installdir, 'LICENSE-protobuf'))
-  prepend_common_envpaths(installdir)
-  return res
+  workflow = [
+    (cmake_cmd, {'cwd': repodir}),
+    # (['ninja', '-C%s' % repodir, 'clean'], {}),
+    (['ninja', '-j%s' % jobs, '-C%s' % repodir], {}),
+  ]
+  if execute_tasks(workflow):
+    shutil.copy(os.path.join(repodir, 'LICENSE'), os.path.join(installdir, 'LICENSE-protobuf'))
+    src_include_dir = os.path.join(repodir, 'src', 'google')
+    dst_include_dir = os.path.join(installdir, 'include', 'google')
+    if os.path.exists(dst_include_dir):
+      shutil.rmtree(dst_include_dir)
+    shutil.copytree(src_include_dir, dst_include_dir)
+    shutil.copy(os.path.join(repodir, 'protoc'), os.path.join(installdir, 'bin'))
+    libext = '.so' if shared else '.a'
+    shutil.copy(os.path.join(repodir, 'libprotoc%s' % libext), os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'libprotobuf%s' % libext), os.path.join(installdir, 'lib'))
+    return True
+
+
+def build_boringssl(wd, installdir, jobs, shared):
+  version = 2357
+  repodir = os.path.join(wd, str(version))
+  archive = repodir + '.tar.gz'
+  url = 'https://boringssl.googlesource.com/boringssl/+archive/%s.tar.gz' % version
+  download_source_archive(url, archive, repodir)
+
+  shared_on = 'ON' if shared else 'OFF'
+  cmake_cmd = [
+    'cmake',
+    '-GNinja',
+    '-DBUILD_SHARED_LIBS=%s' % shared_on,
+    # '-DCMAKE_C_COMPILER=clang',
+    # '-DCMAKE_CXX_COMPILER=clang++',
+    # '-DCMAKE_C_FLAGS=-fPIC -fno-omit-frame-pointer -fsanitize=memory',
+    # '-DCMAKE_BUILD_TYPE=Debug',
+    '-DCMAKE_C_FLAGS=-fPIC',
+    '.'
+  ]
+  workflow = [
+    (cmake_cmd, {'cwd': repodir}),
+    # (['ninja', '-C%s' % repodir, 'clean'], {}),
+    (['ninja', '-j%s' % jobs, '-C%s' % repodir], {}),
+  ]
+  if execute_tasks(workflow):
+    src_include_dir = os.path.join(repodir, 'include', 'openssl')
+    dst_include_dir = os.path.join(installdir, 'include', 'openssl')
+    if os.path.exists(dst_include_dir):
+      shutil.rmtree(dst_include_dir)
+    shutil.copytree(src_include_dir, dst_include_dir)
+    libext = '.so' if shared else '.a'
+    shutil.copy(os.path.join(repodir, 'ssl', 'libssl%s' % libext), os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'crypto', 'libcrypto%s' % libext), os.path.join(installdir, 'lib'))
+    return True
 
 
 def build_grpc(wd, installdir, jobs):
-  # repodir = os.path.join(wd, 'grpc')
-  # installdir = os.path.join(wd, 'deps', 'grpc')
-  # prepare_repo(repodir, 'https://github.com/grpc/grpc.git', 'master')
-  repodir = download_from_github(wd, 'grpc', 'grpc', '0ee84dc10feb0eeddc304d18638bbcf3faff8f04')
+  version = '096b77dcdf151e9e79ce993430346c0c2c2a9862'
+  repodir = os.path.join(wd, 'grpc-%s' % version)
+  download_from_github(wd, 'grpc', 'grpc', version)
 
   buildjson = os.path.join(repodir, 'build.json')
   buildjson_orig = os.path.join(repodir, 'build.json.orig')
@@ -152,64 +212,63 @@ def build_grpc(wd, installdir, jobs):
   with open(buildjson, 'w') as o:
     json.dump(dic, o)
 
-  # openssl_url = 'https://github.com/openssl/openssl.git'
-  # openssl_refspec = 'OpenSSL_1_0_2-stable'
-  # prepare_repo(os.path.join(repodir, 'third_party', 'openssl'), openssl_url, openssl_refspec)
-  dlpath = download_from_github(wd, 'openssl', 'openssl', 'OpenSSL_1_0_2-stable')
-  gitpath = os.path.join(repodir, 'third_party', 'openssl')
-  gitparent = os.path.dirname(gitpath)
-  if os.path.exists(gitparent):
-    shutil.rmtree(gitparent)
-  if not os.path.exists(gitpath):
-    shutil.copytree(dlpath, gitpath)
   vsdir = os.path.join(repodir, 'templates', 'vsprojects')
   if os.path.exists(vsdir):
     shutil.rmtree(vsdir)
+  env = os.environ
+  env['CPPFLAGS'] = env.get('CPPFlags', '') + ' -fPIC'
+  env['CFLAGS'] = env.get('CFlags', '') + ' -fPIC'
+  env['CXXFLAGS'] = env.get('CXXFlags', '') + ' -fPIC'
   workflow = [
-    # (['git', 'submodule', 'update', '--init', '--depth=1', 'third_party/zlib'], {'cwd': repodir}),
-    # (['git', 'submodule', 'init', 'third_party/openssl'], {'cwd': repodir}),
-    # (['git', 'clone', '--depth=1', '-b', openssl_refspec, '--separate-git-dir', os.path.join(repodir, '.git', 'modules', 'openssl'), openssl_url], {'cwd': repodir}),
     ([os.path.join(repodir, 'tools', 'buildgen', 'generate_projects.sh')], {'cwd': repodir}),
     (['make', 'clean', '-C', repodir], {}),
     (['make', 'run_dep_checks', '-C', repodir], {}),
     (['make', '-j%d' % jobs, '-C', repodir], {}),
     (['make', '-C', repodir, 'install', 'prefix=%s' % installdir], {}),
   ]
-  res = execute_tasks(workflow)
-  delete_files([
-    os.path.join(installdir, 'bin', 'grpc_csharp_plugin'),
-    os.path.join(installdir, 'bin', 'grpc_objective_c_plugin'),
-    os.path.join(installdir, 'bin', 'grpc_python_plugin'),
-    os.path.join(installdir, 'bin', 'grpc_ruby_plugin'),
-  ], [
-    os.path.join(installdir, 'lib', '*_unsecure*'),
-    os.path.join(installdir, 'lib', '*.a'),
-  ])
-  shutil.copy2(os.path.join(repodir, 'LICENSE'), os.path.join(installdir, 'LICENSE-grpc'))
-  shutil.copy2(os.path.join(repodir, 'third_party', 'openssl', 'LICENSE'), os.path.join(installdir, 'LICENSE-openssl'))
-
-  prepend_common_envpaths(installdir)
-  return res
+  if execute_tasks(workflow):
+    delete_files([
+      os.path.join(installdir, 'bin', 'grpc_csharp_plugin'),
+      os.path.join(installdir, 'bin', 'grpc_objective_c_plugin'),
+      os.path.join(installdir, 'bin', 'grpc_python_plugin'),
+      os.path.join(installdir, 'bin', 'grpc_ruby_plugin'),
+    ], [
+      os.path.join(installdir, 'lib', '*_unsecure*'),
+      # os.path.join(installdir, 'lib', '*.a'),
+    ])
+    shutil.copy2(os.path.join(repodir, 'LICENSE'), os.path.join(installdir, 'LICENSE-grpc'))
+    return True
 
 
 def main(argv):
   p = argparse.ArgumentParser()
+  p.add_argument('--shared', action='store_true')
   p.add_argument('--jobs', '-j', type=int, default=concurrency())
   p.add_argument('--out', '-o', default=buildenv.DEFAULT_DEPS,
                  help='installation root path for dependencies')
   args = p.parse_args(argv)
   buildenv.setup_env(args.out)
+  installdir = args.out
+  if not os.path.exists(installdir):
+    os.makedirs(installdir)
+    os.makedirs(os.path.join(installdir, 'bin'))
+    os.makedirs(os.path.join(installdir, 'lib'))
+    os.makedirs(os.path.join(installdir, 'include'))
   try:
     disable_werror([
       'missing-field-initializers',
       'old-style-declaration',
     ])
     wd = os.path.join(buildenv.ROOT_DIR, 'build', 'tmp')
-    installdir = args.out
     if not os.path.exists(wd):
       os.makedirs(wd)
-    build_protobuf3(wd, installdir, args.jobs)
-    build_grpc(wd, installdir, args.jobs)
+    prepend_common_envpaths(installdir)
+    if not build_protobuf3(wd, installdir, args.jobs, args.shared):
+      return -1
+    if not build_boringssl(wd, installdir, args.jobs, args.shared):
+      return -1
+    if not build_grpc(wd, installdir, args.jobs):
+      return -1
     return 0
   except:
     print('ERROR')
