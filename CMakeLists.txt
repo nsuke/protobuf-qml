@@ -75,8 +75,10 @@ if(GRPC++_FOUND)
   add_subdirectory(lib/grpc)
 endif()
 
-set(protoc-gen-qml_SOURCES
-  compiler/protobuf/qml/main.cpp
+#
+# protobuf compiler plugin for QML/JS
+#
+set(protoc-gen-qml-core_SOURCES
   compiler/protobuf/qml/util.cpp
   compiler/protobuf/qml/enum_generator.cpp
   compiler/protobuf/qml/field_generator.cpp
@@ -84,10 +86,22 @@ set(protoc-gen-qml_SOURCES
   compiler/protobuf/qml/oneof_generator.cpp
   compiler/protobuf/qml/qml_generator.cpp
   compiler/protobuf/qml/compiler_util.cpp)
+add_library(protoc-gen-qml-core
+  ${protoc-gen-qml-core_SOURCES})
+target_compile_definitions(protoc-gen-qml-core PRIVATE PBQML_COMPILER_HAS_QT)
+target_link_libraries(protoc-gen-qml-core
+  protobuf-qml
+  ${PROTOBUF_PROTOC_LIBRARIES}
+  ${PROTOBUF_LIBRARIES}
+  Qt5::Core)
+
+set(protoc-gen-qml_SOURCES
+  compiler/protobuf/qml/main.cpp)
 add_executable(protoc-gen-qml ${protoc-gen-qml_SOURCES})
 protobuf_qml_target(protoc-gen-qml)
 target_compile_definitions(protoc-gen-qml PRIVATE PBQML_COMPILER_HAS_QT)
 target_link_libraries(protoc-gen-qml
+  protoc-gen-qml-core
   protobuf-qml
   ${PROTOBUF_PROTOC_LIBRARIES}
   ${PROTOBUF_LIBRARIES}
@@ -96,6 +110,18 @@ if(GRPC++_FOUND)
   target_link_libraries(protoc-gen-qml ${GRPC++_LIBRARIES})
 endif()
 
+#
+# protobuf compiler sample (to run with valgrind)
+#
+add_executable(test-protoc-gen-qml
+  compiler/protobuf/qml/qml_generator_test.cpp)
+protobuf_qml_target(test-protoc-gen-qml)
+target_link_libraries(test-protoc-gen-qml
+  protoc-gen-qml-core)
+
+#
+# QML tests
+#
 copy(protobuf-qml-test
   ${CMAKE_CURRENT_BINARY_DIR}/test
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_jsobject.qml
