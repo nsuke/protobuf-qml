@@ -96,11 +96,11 @@ void MethodGenerator::generateMethodElement(google::protobuf::io::Printer& p) {
 
 void MethodGenerator::generateUnaryMethod(google::protobuf::io::Printer& p) {
   p.Print(variables,
-          "  function $camel_name$(data, callback, timeout) {\n"
+          "  function $camel_name$(data, callback) {\n"
           "    return $camel_name$Method.call(new $input_type$(data)._raw, "
           "function(data, err) {\n"
           "      callback(new $output_type$(data), err);\n"
-          "    }, timeout);\n"
+          "    });\n"
           "  }\n");
 }
 
