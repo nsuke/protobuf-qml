@@ -43,23 +43,23 @@ Item {
     function test_message() {
       // when initialized with JS object
       var msg1 = new Msg.Foo({
-        messageOneof2: {
+        oneof3: {
           baz: 'baz!',
         },
       });
 
       // oneof virtual field should return case enum
-      compare(msg1.msgCase(), Msg.Foo.MsgCase.MESSAGE_ONEOF2);
+      compare(msg1.simpleCase(), Msg.Foo.SimpleCase.ONEOF3);
 
       // value should be available
-      compare(msg1.messageOneof2().baz(), 'baz!');
+      compare(msg1.oneof3().baz(), 'baz!');
 
       // serialize -> parse
       var called = {};
       msg1.serializeTo(buffer.output, function() {
         Msg.Foo.parseFrom(buffer.input, function(msg2) {
-          compare(msg2.msgCase(), Msg.Foo.MsgCase.MESSAGE_ONEOF2);
-          compare(msg2.messageOneof2().baz(), 'baz!');
+          compare(msg2.simpleCase(), Msg.Foo.SimpleCase.ONEOF3);
+          compare(msg2.oneof3().baz(), 'baz!');
           called.called = true;
         });
       });
@@ -97,16 +97,26 @@ Item {
       tryCompare(called, 'called', true, 100);
     }
 
-    // TODO: Fix initial case and cleared field values
-
     function test_init() {
-      skip();
-      var foo = new Msg.Foo({});
+      var foo = new Msg.Foo();
 
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.SIMPLE_NOT_SET);
       compare(foo.oneof1(), undefined);
       compare(foo.oneof2(), undefined);
       compare(foo.oneof3(), undefined);
+
+      // then serialize -> parse
+      var called = {};
+      foo.serializeTo(buffer.output, function() {
+        Msg.Foo.parseFrom(buffer.input, function(msg2) {
+          compare(msg2.simpleCase(), Msg.Foo.SimpleCase.SIMPLE_NOT_SET);
+          compare(msg2.oneof1(), undefined);
+          compare(msg2.oneof2(), undefined);
+          compare(msg2.oneof3(), undefined);
+          called.called = true;
+        });
+      });
+      tryCompare(called, 'called', true, 100);
     }
 
     function test_clear() {
@@ -135,11 +145,13 @@ Item {
       compare(foo.oneof2(), 'Hello.');
       compare(foo.oneof3(), undefined);
 
-      foo.oneof3(-20);
+      foo.oneof3({
+        barStr4: -20,
+      });
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.ONEOF3);
       compare(foo.oneof1(), undefined);
       compare(foo.oneof2(), undefined);
-      compare(foo.oneof3(), -20);
+      compare(foo.oneof3().barStr4(), -20);
 
       foo.oneof2('Hello again.');
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.ONEOF2);

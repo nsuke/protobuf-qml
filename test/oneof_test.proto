@@ -19,15 +19,9 @@ message Foo {
   oneof simple {
     uint32 oneof1 = 600000;
     string oneof2 = 1;
-    fixed32 oneof3 = 11;
+    Bar oneof3 = 11;
     // TODO: Warn below because it breaks generated code
     // uint32 simple_not_set = 5;
-  }
-
-  oneof msg {
-    Bar message_oneof1 = 2;
-    Bar message_oneof2 = 3;
-    uint64 oneof4 = 4;
   }
 
   message Baz {

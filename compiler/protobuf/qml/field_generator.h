@@ -22,13 +22,17 @@ public:
 
 private:
   std::string defaultValue();
-  void generateRepeatedProperty(google::protobuf::io::Printer&,
-                                bool is_message);
-  void generateOptionalMessageProperty(google::protobuf::io::Printer&);
+  void generateRepeatedProperty(google::protobuf::io::Printer&);
   void generateOptionalProperty(google::protobuf::io::Printer&);
   void messageAssertLength(google::protobuf::io::Printer& p);
 
+  void genSet(google::protobuf::io::Printer& p, std::string indent);
+  void genGet(google::protobuf::io::Printer& p, std::string indent);
+  void genClear(google::protobuf::io::Printer& p, std::string indent);
+
   const google::protobuf::FieldDescriptor* t_;
+  bool is_message_;
+  const google::protobuf::OneofDescriptor* oneof_;
   std::string camel_name_;
   std::string capital_name_;
   std::map<std::string, std::string> variables_;

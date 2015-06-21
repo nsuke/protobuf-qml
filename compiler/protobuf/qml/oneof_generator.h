@@ -11,6 +11,7 @@ class OneofGenerator {
 public:
   OneofGenerator(const google::protobuf::OneofDescriptor* t);
   void generateMerge(google::protobuf::io::Printer&, const std::string& arg);
+  void generateInit(google::protobuf::io::Printer&);
   void generate(google::protobuf::io::Printer&);
 
 private:

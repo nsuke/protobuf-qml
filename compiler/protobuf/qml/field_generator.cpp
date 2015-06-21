@@ -10,7 +10,10 @@ namespace qml {
 using namespace google::protobuf;
 
 FieldGenerator::FieldGenerator(const FieldDescriptor* t)
-    : t_(t), camel_name_(t_ ? camelize(t_->name()) : "") {
+    : t_(t),
+      is_message_(t_ ? t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE : false),
+      oneof_(t_ ? t_->containing_oneof() : nullptr),
+      camel_name_(t_ ? camelize(t_->name()) : "") {
   capital_name_ = capitalizeFirstLetter(camel_name_);
   if (t_) {
     variables_ = {
@@ -29,16 +32,16 @@ FieldGenerator::FieldGenerator(const FieldDescriptor* t)
       variables_.insert(
           std::make_pair("message_type", generateLongName(t_->message_type())));
     }
-    if (auto oneof = t_->containing_oneof()) {
-      auto oneof_camel = camelize(oneof->name());
+    if (oneof_) {
+      auto oneof_camel = camelize(oneof_->name());
       auto oneof_capital = capitalizeFirstLetter(oneof_camel);
       variables_.insert(std::make_pair("oneof_camel", std::move(oneof_camel)));
       variables_.insert(
           std::make_pair("oneof_capital", std::move(oneof_capital)));
       variables_.insert(
-          std::make_pair("oneof_all_capital", capitalizeAll(oneof->name())));
+          std::make_pair("oneof_all_capital", capitalizeAll(oneof_->name())));
       variables_.insert(
-          std::make_pair("oneof_index", std::to_string(oneof->index())));
+          std::make_pair("oneof_index", std::to_string(oneof_->index())));
     }
   }
 }
@@ -136,8 +139,8 @@ void FieldGenerator::messageAssertLength(google::protobuf::io::Printer& p) {
           "this._raw[FIELD][$index$].length);\n");
 }
 
-void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
-                                              bool is_message) {
+void FieldGenerator::generateRepeatedProperty(
+    google::protobuf::io::Printer& p) {
   p.Print(variables_,
           "  $type$.prototype.$name$ = function(indexOrValues, value) {\n"
           "    if (typeof indexOrValues == 'undefined') {\n"
@@ -146,7 +149,7 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "    if (indexOrValues instanceof Array) {\n"
           "      this._raw[FIELD][$index$].length = indexOrValues.length;\n");
 
-  if (is_message) {
+  if (is_message_) {
     p.Print(variables_,
             "      this._$name$.length = indexOrValues.length;\n"
             "      for (var i in indexOrValues) {\n"
@@ -169,7 +172,7 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "    }\n"
           "    if (typeof value == 'undefined') {\n");
 
-  if (is_message) {
+  if (is_message_) {
     p.Print(variables_,
             "      return this._$name$[indexOrValues];\n"
             "    } else {\n"
@@ -188,7 +191,7 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "  };\n"
           "  $type$.prototype.$name$Count = function() {\n");
 
-  if (is_message) {
+  if (is_message_) {
     messageAssertLength(p);
   }
 
@@ -201,7 +204,7 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "      throw new TypeError('Cannot add undefined.');\n"
           "    }\n");
 
-  if (is_message) {
+  if (is_message_) {
     p.Print(variables_,
             "    var msg = new $message_scope$$message_type$(value);\n"
             "    this._$name$.push(msg);\n"
@@ -219,7 +222,7 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "    }\n"
           "    this._raw[FIELD][$index$].splice(index, 1);\n");
 
-  if (is_message) {
+  if (is_message_) {
     p.Print(variables_, "    this._$name$.splice(index, 1);\n");
     messageAssertLength(p);
   }
@@ -229,7 +232,7 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "  $type$.prototype.clear$capital_name$ = function() {\n"
           "    this._raw[FIELD][$index$].length = 0;\n");
 
-  if (is_message) {
+  if (is_message_) {
     p.Print(variables_, "    this._$name$.length = 0;\n");
     messageAssertLength(p);
   }
@@ -237,83 +240,74 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
   p.Print(variables_, "  };\n");
 }
 
-void FieldGenerator::generateOptionalMessageProperty(
-    google::protobuf::io::Printer& p) {
-  auto oneof = t_->containing_oneof();
-  p.Print(variables_,
-          "  $type$.prototype.$name$ = function(value) {\n"
-          "    if (typeof value == 'undefined') {\n");
-
-  if (oneof) {
-    p.Print(variables_,
-            "      if (this.$oneof_camel$Case() != "
-            "type.$oneof_capital$Case.$all_capital_name$) {\n"
-            "        return undefined;\n"
-            "      } else {\n"
-            "        return this._$name$;\n"
-            "      }\n"
-            "    } else {\n"
-            "      this.clear$oneof_capital$();\n"
-            "      this._raw[ONEOF][$oneof_index$] = "
-            "type.$oneof_capital$Case.$all_capital_name$;\n");
+void FieldGenerator::genGet(google::protobuf::io::Printer& p,
+                            std::string indent) {
+  auto v = variables_;
+  v.insert(std::make_pair("indent", indent));
+  if (is_message_) {
+    p.Print(v, "$indent$return this._$name$;\n");
   } else {
-    p.Print(variables_,
-            "      return this._$name$;\n"
-            "    } else {\n");
+    p.Print(v, "$indent$return this._raw[FIELD][$index$];\n");
   }
+}
 
-  p.Print(variables_,
-          "      var msg = new $message_scope$$message_type$(value);\n"
-          "      this._$name$ = msg;\n"
-          "      this._raw[FIELD][$index$] = msg._raw;\n"
-          "    }\n"
-          "  };\n"
-          "  $type$.prototype.clear$capital_name$ = function() {\n"
-          "    this._raw[FIELD][$index$] = undefined;\n"
-          "    this._$name$ = undefined;\n");
-
-  if (oneof) {
-    p.Print(variables_,
-            "    if (this.$oneof_camel$Case() == "
-            "type.$oneof_capital$Case.$all_capital_name$) {\n"
-            "      this._raw[ONEOF][$oneof_index$] = "
-            "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
-            "    }\n");
+void FieldGenerator::genSet(google::protobuf::io::Printer& p,
+                               std::string indent) {
+  auto v = variables_;
+  v.insert(std::make_pair("indent", indent));
+  if (is_message_) {
+    p.Print(v,
+            "$indent$var msg = new $message_scope$$message_type$(value);\n"
+            "$indent$this._$name$ = msg;\n"
+            "$indent$this._raw[FIELD][$index$] = msg._raw;\n");
+  } else {
+    p.Print(v, "$indent$this._raw[FIELD][$index$] = value;\n");
   }
+}
 
-  p.Print(variables_, "  };\n");
+void FieldGenerator::genClear(google::protobuf::io::Printer& p,
+                              std::string indent) {
+  auto v = variables_;
+  v.insert(std::make_pair("indent", indent));
+  if (is_message_) {
+    p.Print(v,
+          "$indent$this._raw[FIELD][$index$] = undefined;\n"
+          "$indent$this._$name$ = undefined;\n");
+  } else {
+    p.Print(v, "$indent$this._raw[FIELD][$index$] = $default$;\n");
+  }
 }
 
 void FieldGenerator::generateOptionalProperty(
     google::protobuf::io::Printer& p) {
-  auto oneof = t_->containing_oneof();
   p.Print(variables_,
           "  $type$.prototype.$name$ = function(value) {\n"
           "    if (typeof value == 'undefined') {\n");
 
-  if (oneof) {
+  if (oneof_) {
     p.Print(variables_,
             "      if (this.$oneof_camel$Case() != "
             "type.$oneof_capital$Case.$all_capital_name$) {\n"
             "        return undefined;\n"
-            "      } else {\n"
-            "        return this._raw[FIELD][$index$];\n"
+            "      } else {\n");
+    genGet(p, "        ");
+    p.Print(variables_,
             "      }\n"
             "    } else {\n"
             "      this.clear$oneof_capital$();\n"
             "      this._raw[ONEOF][$oneof_index$] = "
             "type.$oneof_capital$Case.$all_capital_name$;\n");
   } else {
-    p.Print(variables_,
-            "      return this._raw[FIELD][$index$];\n"
-            "    } else {\n");
+    genGet(p, "      ");
+    p.Print(variables_, "    } else {\n");
   }
+  genSet(p, "      ");
   p.Print(variables_,
-          "      this._raw[FIELD][$index$] = value;\n"
           "    }\n"
           "  };\n"
           "  $type$.prototype.clear$capital_name$ = function() {\n");
-  if (oneof) {
+  genClear(p, "    ");
+  if (oneof_) {
     p.Print(variables_,
             "    if (this.$oneof_camel$Case() == "
             "type.$oneof_capital$Case.$all_capital_name$) {\n"
@@ -321,17 +315,12 @@ void FieldGenerator::generateOptionalProperty(
             "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
             "    }\n");
   }
-  p.Print(variables_,
-          "    this._raw[FIELD][$index$] = $default$;\n"
-          "  };\n");
+  p.Print(variables_, "  };\n");
 }
 
 void FieldGenerator::generateProperty(google::protobuf::io::Printer& p) {
-  auto is_message = t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE;
   if (t_->is_repeated()) {
-    generateRepeatedProperty(p, is_message);
-  } else if (is_message) {
-    generateOptionalMessageProperty(p);
+    generateRepeatedProperty(p);
   } else {
     generateOptionalProperty(p);
   }

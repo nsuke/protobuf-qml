@@ -63,6 +63,9 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   for (auto& g : field_generators_) {
     g.generateInit(p);
   }
+  for (auto& g : oneof_generators_) {
+    g.generateInit(p);
+  }
   p.Print(
       "    Object.seal(this);\n"
       "    if (values instanceof $message_name$) {\n"
