@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+message SimpleRecurse {
+  SimpleRecurse next = 1;
+  int32 value = 2;
+}
+
+message RepeatedRecurse {
+  repeated RepeatedRecurse children = 1;
+  int32 value = 2;
+}
+
+message CyclicA {
+  CyclicB peer = 1;
+  int32 value = 2;
+}
+
+message CyclicB {
+  CyclicA peer = 1;
+  int32 value = 2;
+}

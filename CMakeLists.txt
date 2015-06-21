@@ -127,6 +127,7 @@ copy(protobuf-qml-test
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_jsobject.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_message.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_nesting.qml
+  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_recursive.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_oneof.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_parse_error.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_primitive.qml
@@ -146,6 +147,7 @@ add_test(NAME protobuf-qml-test
   -input ${CMAKE_CURRENT_BINARY_DIR}/test)
 
 protobuf_generate_qml(${CMAKE_CURRENT_BINARY_DIR}/test
+  ${CMAKE_CURRENT_SOURCE_DIR}/test/recursive_test.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/test/oneof_test.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/test/ProtobufQmlTest.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/test/ProtobufQmlTest2.proto)
