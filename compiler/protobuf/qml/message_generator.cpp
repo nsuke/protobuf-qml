@@ -85,15 +85,6 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "  Protobuf.Message.createMessageType(type, "
       "_file.descriptor.messageType($message_index$));\n\n",
       "message_name", name_, "message_index", std::to_string(t_->index()));
-  // p.Print("  type.prototype.clear = function() {\n");
-  // for (int i = 0; i < t_->field_count(); ++i) {
-  //   auto f = t_->field(i);
-  //   if (f->is_repeated() || f->cpp_type() == FieldDescriptor::CPPTYPE_STRING ||
-  //       f->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE) {
-  //     p.Print("    this.clear$name$();\n", "name", capitalize(f->name()));
-  //   }
-  // }
-  // p.Print("  }\n");
   for (auto& g : oneof_generators_) {
     g.generate(p);
   }
