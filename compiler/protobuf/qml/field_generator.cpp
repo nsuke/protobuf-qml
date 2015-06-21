@@ -142,17 +142,7 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "  $type$.prototype.$name$ = function(indexOrValues, value) {\n"
           "    if (typeof indexOrValues == 'undefined') {\n"
           "      return;\n"
-          "    }\n");
-
-  auto oneof = t_->containing_oneof();
-  if (oneof) {
-    p.Print(variables_,
-            "      this.clear$oneof_capital$();\n"
-            "      this._raw[ONEOF][$oneof_index$] = "
-            "type.$oneof_capital$Case.$all_capital_name$;\n");
-  }
-
-  p.Print(variables_,
+          "    }\n"
           "    if (indexOrValues instanceof Array) {\n"
           "      this._raw[FIELD][$index$].length = indexOrValues.length;\n");
 
@@ -238,15 +228,6 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
           "  };\n"
           "  $type$.prototype.clear$capital_name$ = function() {\n"
           "    this._raw[FIELD][$index$].length = 0;\n");
-
-  if (oneof) {
-    p.Print(variables_,
-            "    if (this.$oneof_camel$Case() == "
-            "type.$oneof_capital$Case.$all_capital_name$) {\n"
-            "      this._raw[ONEOF][$oneof_index$] = "
-            "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
-            "    }\n");
-  }
 
   if (is_message) {
     p.Print(variables_, "    this._$name$.length = 0;\n");
