@@ -2,4 +2,4 @@
 out/
 *_out/
 tmp
-build/deps
+build/
