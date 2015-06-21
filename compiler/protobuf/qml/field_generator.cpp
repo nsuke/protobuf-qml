@@ -239,18 +239,27 @@ void FieldGenerator::generateRepeatedProperty(google::protobuf::io::Printer& p,
 
 void FieldGenerator::generateOptionalMessageProperty(
     google::protobuf::io::Printer& p) {
+  auto oneof = t_->containing_oneof();
   p.Print(variables_,
           "  $type$.prototype.$name$ = function(value) {\n"
-          "    if (typeof value == 'undefined') {\n"
-          "      return this._$name$;\n"
-          "    } else {\n");
+          "    if (typeof value == 'undefined') {\n");
 
-  auto oneof = t_->containing_oneof();
   if (oneof) {
     p.Print(variables_,
+            "      if (this.$oneof_camel$Case() != "
+            "type.$oneof_capital$Case.$all_capital_name$) {\n"
+            "        return undefined;\n"
+            "      } else {\n"
+            "        return this._$name$;\n"
+            "      }\n"
+            "    } else {\n"
             "      this.clear$oneof_capital$();\n"
             "      this._raw[ONEOF][$oneof_index$] = "
             "type.$oneof_capital$Case.$all_capital_name$;\n");
+  } else {
+    p.Print(variables_,
+            "      return this._$name$;\n"
+            "    } else {\n");
   }
 
   p.Print(variables_,
@@ -277,17 +286,27 @@ void FieldGenerator::generateOptionalMessageProperty(
 
 void FieldGenerator::generateOptionalProperty(
     google::protobuf::io::Printer& p) {
+  auto oneof = t_->containing_oneof();
   p.Print(variables_,
           "  $type$.prototype.$name$ = function(value) {\n"
-          "    if (typeof value == 'undefined') {\n"
-          "      return this._raw[FIELD][$index$];\n"
-          "    } else {\n");
-  auto oneof = t_->containing_oneof();
+          "    if (typeof value == 'undefined') {\n");
+
   if (oneof) {
     p.Print(variables_,
+            "      if (this.$oneof_camel$Case() != "
+            "type.$oneof_capital$Case.$all_capital_name$) {\n"
+            "        return undefined;\n"
+            "      } else {\n"
+            "        return this._raw[FIELD][$index$];\n"
+            "      }\n"
+            "    } else {\n"
             "      this.clear$oneof_capital$();\n"
             "      this._raw[ONEOF][$oneof_index$] = "
             "type.$oneof_capital$Case.$all_capital_name$;\n");
+  } else {
+    p.Print(variables_,
+            "      return this._raw[FIELD][$index$];\n"
+            "    } else {\n");
   }
   p.Print(variables_,
           "      this._raw[FIELD][$index$] = value;\n"

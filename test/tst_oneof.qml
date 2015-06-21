@@ -110,7 +110,6 @@ Item {
     }
 
     function test_clear() {
-      skip();
       var foo = new Msg.Foo({});
 
       foo.clearSimple();
@@ -122,7 +121,6 @@ Item {
     }
 
     function test_overwrite() {
-      skip();
       var foo = new Msg.Foo({});
 
       foo.oneof1(60);
@@ -151,7 +149,7 @@ Item {
 
       // then serialize -> parse
       var called = {};
-      msg1.serializeTo(buffer.output, function() {
+      foo.serializeTo(buffer.output, function() {
         Msg.Foo.parseFrom(buffer.input, function(msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.ONEOF2);
           compare(msg2.oneof1(), undefined);
