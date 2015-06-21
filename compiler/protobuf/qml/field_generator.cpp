@@ -278,7 +278,7 @@ void FieldGenerator::generateOptionalMessageProperty(
           "      this._raw[FIELD][$index$] = msg._raw;\n"
           "    }\n"
           "  };\n"
-          "  $type$.prototype.clear$capital_name$ = function(value) {\n"
+          "  $type$.prototype.clear$capital_name$ = function() {\n"
           "    this._raw[FIELD][$index$] = undefined;\n"
           "    this._$name$ = undefined;\n");
 
@@ -312,7 +312,7 @@ void FieldGenerator::generateOptionalProperty(
           "      this._raw[FIELD][$index$] = value;\n"
           "    }\n"
           "  };\n"
-          "  $type$.prototype.clear$capital_name$ = function(value) {\n");
+          "  $type$.prototype.clear$capital_name$ = function() {\n");
   if (oneof) {
     p.Print(variables_,
             "    if (this.$oneof_camel$Case() == "
