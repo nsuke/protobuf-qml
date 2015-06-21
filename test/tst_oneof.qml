@@ -76,7 +76,7 @@ Item {
         },
       });
 
-      compare(msg1.baz().bazXCase(), Msg.Foo_Baz.BazXCase.BAZ2);
+      compare(msg1.baz().bazXCase(), Msg.Foo.Baz.BazXCase.BAZ2);
       compare(msg1.baz().baz2().bar1Case(), Msg.Bar.Bar1Case.BAR_STR2);
       compare(msg1.baz().baz2().bar2Case(), Msg.Bar.Bar2Case.BAR_STR3);
       compare(msg1.baz().baz2().barStr2(), 'foo');
@@ -86,7 +86,7 @@ Item {
       var called = {};
       msg1.serializeTo(buffer.output, function() {
         Msg.Foo.parseFrom(buffer.input, function(msg2) {
-          compare(msg2.baz().bazXCase(), Msg.Foo_Baz.BazXCase.BAZ2);
+          compare(msg2.baz().bazXCase(), Msg.Foo.Baz.BazXCase.BAZ2);
           compare(msg2.baz().baz2().bar1Case(), Msg.Bar.Bar1Case.BAR_STR2);
           compare(msg2.baz().baz2().bar2Case(), Msg.Bar.Bar2Case.BAR_STR3);
           compare(msg2.baz().baz2().barStr2(), 'foo');

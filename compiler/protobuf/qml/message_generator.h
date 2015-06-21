@@ -35,6 +35,7 @@ private:
   void generateMessageConstructor(google::protobuf::io::Printer& p);
   void generateMessagePrototype(google::protobuf::io::Printer& p);
   void generateMessageProperties(google::protobuf::io::Printer& p);
+  void generateNestedAlias(google::protobuf::io::Printer& p);
 
   std::string name_;
   const google::protobuf::Descriptor* t_;

@@ -25,7 +25,7 @@ void appendLongName(std::ostream& o, Descriptor* t) {
   o << names.top();
   names.pop();
   while (!names.empty()) {
-    o << "_" << names.top();
+    o << "." << names.top();
     names.pop();
   }
 }

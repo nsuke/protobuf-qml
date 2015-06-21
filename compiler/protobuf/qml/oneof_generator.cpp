@@ -48,7 +48,7 @@ void OneofGenerator::generateMerge(google::protobuf::io::Printer& p,
 }
 
 void OneofGenerator::generateInit(google::protobuf::io::Printer& p) {
-  p.Print(variables_, "        this.clear$capital_name$();\n");
+  p.Print(variables_, "    this.clear$capital_name$();\n");
 }
 
 void OneofGenerator::generate(io::Printer& p) {

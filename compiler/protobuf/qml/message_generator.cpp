@@ -7,7 +7,7 @@ namespace qml {
 using namespace google::protobuf;
 
 MessageGenerator::MessageGenerator(const Descriptor* t)
-    : t_(t), name_(t ? generateLongName(t) : "") {
+    : t_(t), name_(t ? t->name() : "") {
   if (!t) {
     throw std::invalid_argument("Null descriptor");
   }
@@ -66,6 +66,7 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   for (auto& g : oneof_generators_) {
     g.generateInit(p);
   }
+
   p.Print(
       "    Object.seal(this);\n"
       "    if (values instanceof $message_name$) {\n"
@@ -81,7 +82,19 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "        this[k](values[k]);\n"
       "      }\n"
       "    }\n"
-      "  };\n\n"
+      "  };\n\n",
+      "message_name", name_, "message_index", std::to_string(t_->index()));
+
+  for (auto& g : enum_generators_) {
+    g.generateEnum(p);
+    g.generateNestedAlias(p);
+  }
+  for (auto& g : message_generators_) {
+    g.generateMessage(p);
+    g.generateNestedAlias(p);
+  }
+
+  p.Print(
       "  Protobuf.Message.createMessageType(type, "
       "_file.descriptor.messageType($message_index$));\n\n",
       "message_name", name_, "message_index", std::to_string(t_->index()));
@@ -104,12 +117,10 @@ void MessageGenerator::generateMessagePrototype(io::Printer& p) {
 }
 
 void MessageGenerator::generateMessageProperties(io::Printer& p) {
-  for (auto& g : enum_generators_) {
-    g.generateEnum(p);
-  }
-  for (auto& g : message_generators_) {
-    g.generateMessage(p);
-  }
+}
+
+void MessageGenerator::generateNestedAlias(google::protobuf::io::Printer& p) {
+  p.Print("    type.$name$ = $name$;\n", "name", t_->name());
 }
 }
 }
