@@ -175,8 +175,18 @@ public:
     return impl_->writesDone(tag);
   }
 
-  Q_INVOKABLE int timeout(int tag) const { return impl_->timeout(tag); }
+  Q_INVOKABLE int timeout(int tag) {
+    if (!ensureInit()) {
+      qWarning() << "Failed to initialize unary method implementation.";
+      return -1;
+    }
+    return impl_->timeout(tag);
+  }
   Q_INVOKABLE void set_timeout(int tag, int milliseconds) {
+    if (!ensureInit()) {
+      qWarning() << "Failed to initialize unary method implementation.";
+      return;
+    }
     impl_->set_timeout(tag, milliseconds);
   }
 

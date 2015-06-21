@@ -99,12 +99,12 @@ Item {
     p.addCallback(t, callback);
     return {
       get timeout() {
-        return impl.timeout(tag);
+        return impl.timeout(t);
       },
       set timeout(val) {
-        return impl.set_timeout(tag, val);
+        return impl.set_timeout(t, val);
       },
-      write: function(data) {
+      _write: function(data) {
         return p.write(t, data);
       },
       writeEnd: function() {

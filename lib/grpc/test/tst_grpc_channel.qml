@@ -3,7 +3,6 @@
 import QtQuick 2.2
 import QtTest 1.0
 import Grpc 1.0 as G
-import Protobuf 1.0 as P
 import 'hello.pb.js' as Hello
 
 Item {
@@ -13,47 +12,9 @@ Item {
     credentials: G.InsecureCredentials {}
   }
 
-  // TODO: Implement code generator for this
-  Item {
+  HelloClient {
     id: helloClient
-
-    P.UnaryMethod {
-      id: sayHelloMethod
-      channel: channel
-      methodName: '/Hello/SayHello'
-      readDescriptor: Hello.HelloResponse.descriptor
-      writeDescriptor: Hello.HelloRequest.descriptor
-    }
-
-    function sayHello(data, callback, timeout) {
-      return sayHelloMethod.call(
-        new Hello.HelloRequest(data)._raw,
-        function(data, err) {
-          callback(new Hello.HelloResponse(data), err);
-        },
-        timeout);
-    }
-
-    P.WriterMethod {
-      id: batchHelloMethod
-      channel: channel
-      methodName: '/Hello/BatchHello'
-      readDescriptor: Hello.HelloResponse.descriptor
-      writeDescriptor: Hello.HelloRequest.descriptor
-    }
-
-    function batchHello(callback) {
-      var call = batchHelloMethod.call(
-        function(data, err) {
-          callback(new Hello.HelloResponse(data), err);
-        });
-      return {
-        write: function(data, timeout) {
-          return call.write(new Hello.HelloRequest(data)._raw, timeout);
-        },
-        writeEnd: call.writeEnd,
-      };
-    }
+    channel: channel
   }
 
   TestCase {

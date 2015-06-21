@@ -17,12 +17,23 @@ bool QmlGenerator::Generate(const FileDescriptor* file,
                             compiler::GeneratorContext* generator_context,
                             std::string* error) const {
   try {
-    auto path = generateFilePath(file);
-    std::unique_ptr<io::ZeroCopyOutputStream> out(
-        generator_context->Open(path));
-    io::Printer p(out.get(), '$');
-    FileGenerator g(file);
-    g.generateJsFile(p);
+    {
+      auto path = generateFilePath(file);
+      std::unique_ptr<io::ZeroCopyOutputStream> out(
+          generator_context->Open(path));
+      io::Printer p(out.get(), '$');
+      FileGenerator g(file);
+      g.generateJsFile(p);
+    }
+
+    for (int i = 0; i < file->service_count(); ++i) {
+      std::unique_ptr<io::ZeroCopyOutputStream> out(
+          generator_context->Open(file->service(i)->name() + "Client.qml"));
+      io::Printer p(out.get(), '$');
+      ServiceGenerator g(file->service(i));
+      g.generateQmlFile(p);
+    }
+
     return true;
   } catch (std::exception& ex) {
     *error = ex.what();
@@ -47,17 +58,13 @@ void FileGenerator::generateJsFile(io::Printer& p) {
   p.Print(
       ".pragma library\n"
       ".import Protobuf $protobuf_qml_version$ as Protobuf\n",
-      "protobuf_qml_version",
-      "1.0");
+      "protobuf_qml_version", "1.0");
   std::vector<std::string> deps_;
   for (int i = 0; i < file_->dependency_count(); i++) {
     auto d = file_->dependency(i);
     auto path = generateFilePath(d);
     auto import_name = generateImportName(d);
-    p.Print(".import '$path$' as $import_name$\n",
-            "path",
-            path,
-            "import_name",
+    p.Print(".import '$path$' as $import_name$\n", "path", path, "import_name",
             import_name);
     deps_.emplace_back(std::move(import_name));
   }
@@ -82,12 +89,8 @@ void FileGenerator::generateJsFile(io::Printer& p) {
       "  },\n"
       "};\n"
       "\n",
-      "file_descriptor_size",
-      std::to_string(file_desc_size),
-      "file_descriptor",
-      file_desc_str,
-      "file_name",
-      file_->name());
+      "file_descriptor_size", std::to_string(file_desc_size), "file_descriptor",
+      file_desc_str, "file_name", file_->name());
 
   for (auto& g : enum_generators_) {
     g.generateEnum(p);

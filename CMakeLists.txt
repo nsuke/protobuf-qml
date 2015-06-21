@@ -84,6 +84,7 @@ set(protoc-gen-qml-core_SOURCES
   compiler/protobuf/qml/field_generator.cpp
   compiler/protobuf/qml/message_generator.cpp
   compiler/protobuf/qml/oneof_generator.cpp
+  compiler/protobuf/qml/service_generator.cpp
   compiler/protobuf/qml/qml_generator.cpp
   compiler/protobuf/qml/compiler_util.cpp)
 add_library(protoc-gen-qml-core

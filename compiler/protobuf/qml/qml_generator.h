@@ -2,6 +2,7 @@
 #define PROTOBUF_QML_QML_GENERATOR_H
 
 #include "protobuf/qml/message_generator.h"
+#include "protobuf/qml/service_generator.h"
 #include "protobuf/qml/enum_generator.h"
 #include <google/protobuf/compiler/code_generator.h>
 #include <google/protobuf/io/printer.h>

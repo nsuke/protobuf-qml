@@ -16,6 +16,9 @@ std::string generateLongName(const google::protobuf::EnumDescriptor* t);
 std::string generateFilePath(const google::protobuf::FileDescriptor* t);
 
 std::string generateImportName(const google::protobuf::FileDescriptor* t);
+
+std::string strip_proto(const std::string& fullname);
+
 }
 }
 #endif  // PROTOBUF_QML_COMPILER_UTIL_H
