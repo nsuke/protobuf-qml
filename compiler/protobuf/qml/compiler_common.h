@@ -12,7 +12,8 @@
 
 #include <QtGlobal>
 
-#define PBQML_ASSERT Q_ASSERT_X
+#define PBQML_ASSERT_X Q_ASSERT_X
+#define PBQML_ASSERT Q_ASSERT
 
 #else  // PBQML_COMPILER_HAS_QT
 
@@ -21,7 +22,14 @@
 #include <exception>
 #include <iostream>
 
-#define PBQML_ASSERT(cond, where, what)                                  \
+#define PBQML_ASSERT(cond)                   \
+  do {                                         \
+    if (!cond) {                               \
+      std::cerr << "ASSERT failure: " << cond; \
+    }                                          \
+  } while (false)
+
+#define PBQML_ASSERT_X(cond, where, what)                                \
   do {                                                                   \
     if (!cond) {                                                         \
       std::cerr << "ASSERT failure in " << where << ": " << what << " (" \
@@ -32,9 +40,11 @@
 
 #else  // _DEBUG
 
-#define PBQML_ASSERT(cond, where, msg) \
-  do {                                 \
+#define PBQML_ASSERT(cond) \
+  do {                     \
   } while (false)
+
+#define PBQML_ASSERT_X(cond, where, msg) PBQML_ASSERT(cond)
 
 #endif  // _DEBUG
 

@@ -102,7 +102,7 @@ void OneofGenerator::generateClear(google::protobuf::io::Printer& p) {
       case FieldDescriptor::CPPTYPE_ENUM:
         break;
       default:
-        PBQML_ASSERT(false, "generateClear", "Unknown cpp type");
+        PBQML_ASSERT_X(false, "generateClear", "Unknown cpp type");
         break;
     }
   }

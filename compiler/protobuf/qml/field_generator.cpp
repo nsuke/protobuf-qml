@@ -67,7 +67,7 @@ std::string FieldGenerator::defaultValue() {
     case FieldDescriptor::CPPTYPE_MESSAGE:
       return "{}";
     default:
-      PBQML_ASSERT(false, "boolToString", "ASSERT ERROR: Unknown type: ");
+      PBQML_ASSERT_X(false, "boolToString", "ASSERT ERROR: Unknown type: ");
       break;
   }
 }
