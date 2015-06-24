@@ -5,8 +5,9 @@ set(protobuf-qml-core_SOURCES
   qml/descriptors.cpp
   qml/file.cpp
   qml/memory.cpp
+  qml/buffer.cpp
   qml/method.cpp
-  qml/processor.cpp)
+  )
 
 add_library(protobuf-qml-core SHARED ${protobuf-qml-core_SOURCES})
 protobuf_qml_target(protobuf-qml-core)
@@ -44,7 +45,6 @@ target_link_libraries(protobuf-qml
 copy(protobuf-qml
   ${CMAKE_BINARY_DIR}/plugins/Protobuf
   imports/qmldir
-  imports/call.js
   imports/message.js
   imports/UnaryMethod.qml
   imports/WriterMethod.qml

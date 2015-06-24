@@ -1,7 +1,7 @@
 #ifndef PROTOBUF_QML_FILE_H
 #define PROTOBUF_QML_FILE_H
 
-#include "protobuf/qml/processor.h"
+#include "protobuf/qml/buffer.h"
 #include "protobuf/qml/common.h"
 #include <QObject>
 
@@ -29,7 +29,6 @@ public:
   Q_INVOKABLE bool exists();
   Q_INVOKABLE void clear();
 
-protected:
   google::protobuf::io::ZeroCopyInputStream* openInput(int tag) override;
 
   void closeInput(int tag,

@@ -1,7 +1,7 @@
 #ifndef PROTOBUF_QML_MEMORY_H
 #define PROTOBUF_QML_MEMORY_H
 
-#include "protobuf/qml/processor.h"
+#include "protobuf/qml/buffer.h"
 #include "protobuf/qml/common.h"
 
 #include <QByteArray>

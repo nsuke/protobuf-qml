@@ -2,7 +2,6 @@
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/memory.h"
 #include "protobuf/qml/file.h"
-#include "protobuf/qml/processor.h"
 #include "protobuf/qml/method.h"
 #include <QObject>
 #include <QtQml>
@@ -18,10 +17,7 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
       uri, 1, 0, "FileDescriptor", "");
   qmlRegisterUncreatableType<protobuf::qml::DescriptorWrapper>(
       uri, 1, 0, "Descriptor", "");
-  qmlRegisterType<protobuf::qml::Channel>(uri, 1, 0, "Channel");
-  qmlRegisterType<protobuf::qml::Method>(uri, 1, 0, "Method");
 
-  qmlRegisterType<protobuf::qml::BufferChannel>(uri, 1, 0, "BufferChannel");
   qmlRegisterType<protobuf::qml::MemoryBufferChannel>(uri, 1, 0, "MemoryBufferChannel");
   qmlRegisterType<protobuf::qml::FileChannel>(uri, 1, 0, "FileChannel");
 

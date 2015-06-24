@@ -3,7 +3,6 @@
 
 #include "grpc/qml/credentials.h"
 #include "protobuf/qml/method.h"
-#include "protobuf/qml/processor.h"
 #include <grpc++/config.h>
 #include <grpc++/stream.h>
 #include <grpc++/channel_arguments.h>
