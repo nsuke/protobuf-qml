@@ -6,7 +6,7 @@
 namespace protobuf {
 namespace qml {
 
-constexpr auto containing_type = "type";
+const char* containing_type = "type";
 
 using namespace google::protobuf;
 

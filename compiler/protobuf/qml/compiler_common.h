@@ -1,13 +1,6 @@
 #ifndef PROTOBUF_QML_COMPILER_H
 #define PROTOBUF_QML_COMPILER_H
 
-#if defined(_MSC_VER) && (_MSC_VER < 1900)
-#ifndef conxtexpr
-// We only use simple enough cases where merely stripping it can work
-#define constexpr
-#endif
-#endif
-
 #if PBQML_COMPILER_HAS_QT
 
 #include <QtGlobal>
