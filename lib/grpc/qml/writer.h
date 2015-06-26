@@ -3,6 +3,8 @@
 
 #include "protobuf/qml/method.h"
 #include "grpc/qml/base.h"
+
+#include <grpc++/impl/proto_utils.h>
 #include <mutex>
 #include <queue>
 #include <unordered_map>

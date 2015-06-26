@@ -117,7 +117,7 @@ def build_protobuf3(wd, installdir, jobs, shared):
   # # archive for protobuf tag does not have 'v' prefix
   # download_from_github(wd, 'google', 'protobuf', version, 'protobuf-3.0.0-alpha-3')
 
-  version = 'd3d66d79760f7f233c404c10528fca22f99843b2'
+  version = 'd40a0db202433ba002a3e104165d4414e8929432'
   repodir = os.path.join(wd, 'protobuf-%s' % version)
   download_from_github(wd, 'google', 'protobuf', version)
 
@@ -190,7 +190,7 @@ def build_boringssl(wd, installdir, jobs, shared):
 
 
 def build_grpc(wd, installdir, jobs):
-  version = '096b77dcdf151e9e79ce993430346c0c2c2a9862'
+  version = 'a7661b59d81584740556d8214c66cdc9eae23759'
   repodir = os.path.join(wd, 'grpc-%s' % version)
   download_from_github(wd, 'grpc', 'grpc', version)
 
