@@ -177,6 +177,7 @@ bool WriterCall::doWrite(std::unique_ptr<google::protobuf::Message> request) {
   if (!request) {
     // Someone enqueued nullptr to signal us we should be done here.
     doWritesDone();
+    return true;
   }
   std::unique_ptr<WriterWriteOp> op(
       new WriterWriteOp(this, std::move(request)));
