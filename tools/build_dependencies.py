@@ -111,7 +111,7 @@ def download_from_github(cwd, user, proj, commit, check_path=None):
   download_source_archive(url, arc, os.path.dirname(arc), check_path)
 
 
-def build_protobuf3(wd, installdir, jobs, shared):
+def build_protobuf3(wd, installdir, jobs, shared, debug):
   # version = 'v3.0.0-alpha-3'
   # repodir = os.path.join(wd, 'protobuf-%s' % version)
   # # archive for protobuf tag does not have 'v' prefix
@@ -122,18 +122,25 @@ def build_protobuf3(wd, installdir, jobs, shared):
   download_from_github(wd, 'google', 'protobuf', version)
 
   shared_on = 'ON' if shared else 'OFF'
+  build_type = 'Debug' if debug else 'Release'
   cmake_cmd = [
     'cmake',
     '-GNinja',
     '-DBUILD_TESTING=OFF',
-    '-DBUILD_SHARED_LIBS=%s' % shared_on,
-    # '-DCMAKE_C_COMPILER=clang',
-    # '-DCMAKE_CXX_COMPILER=clang++',
-    # '-DCMAKE_CXX_FLAGS=-fPIC -fno-omit-frame-pointer -fsanitize=memory',
-    '-DCMAKE_CXX_FLAGS=-fPIC',
-    '-DCMAKE_BUILD_TYPE=Debug',
-    'cmake'
+    '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11 -DLANG_CXX11',
+    '-DBUILD_SHARED_LIBS=' + shared_on,
+    '-DCMAKE_BUILD_TYPE=' + build_type,
   ]
+
+  cc = os.environ.get('CC')
+  cxx = os.environ.get('CXX')
+  if cc:
+    cmake_cmd.append('-DCMAKE_C_COMPILER=%s' % cc)
+  if cxx:
+    cmake_cmd.append('-DCMAKE_CXX_COMPILER=%s' % cxx)
+
+  cmake_cmd.append('cmake')
+
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
     # (['ninja', '-C%s' % repodir, 'clean'], {}),
@@ -153,7 +160,7 @@ def build_protobuf3(wd, installdir, jobs, shared):
     return True
 
 
-def build_boringssl(wd, installdir, jobs, shared):
+def build_boringssl(wd, installdir, jobs, shared, debug):
   version = 2357
   repodir = os.path.join(wd, str(version))
   archive = repodir + '.tar.gz'
@@ -161,17 +168,22 @@ def build_boringssl(wd, installdir, jobs, shared):
   download_source_archive(url, archive, repodir)
 
   shared_on = 'ON' if shared else 'OFF'
+  build_type = 'Debug' if debug else 'Release'
   cmake_cmd = [
     'cmake',
     '-GNinja',
-    '-DBUILD_SHARED_LIBS=%s' % shared_on,
-    # '-DCMAKE_C_COMPILER=clang',
-    # '-DCMAKE_CXX_COMPILER=clang++',
-    # '-DCMAKE_C_FLAGS=-fPIC -fno-omit-frame-pointer -fsanitize=memory',
-    # '-DCMAKE_BUILD_TYPE=Debug',
     '-DCMAKE_C_FLAGS=-fPIC',
-    '.'
+    '-DBUILD_SHARED_LIBS=' + shared_on,
+    '-DCMAKE_BUILD_TYPE=' + build_type,
   ]
+
+  # boring ssl fails with Werror on clang 3.6.1
+  if os.environ.get('CC', '') == 'clang':
+    cmake_cmd.append('-DCMAKE_C_COMPILER=gcc')
+    cmake_cmd.append('-DCMAKE_CXX_COMPILER=g++')
+
+  cmake_cmd.append('.')
+
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
     # (['ninja', '-C%s' % repodir, 'clean'], {}),
@@ -242,7 +254,9 @@ def build_grpc(wd, installdir, jobs):
 
 def main(argv):
   p = argparse.ArgumentParser()
-  p.add_argument('--shared', action='store_true')
+  p.add_argument('--debug', action='store_true', help='build with debug symbols')
+  p.add_argument('--shared', action='store_true', help='build shared libraries')
+  p.add_argument('--clean', action='store_true', help='cleanup intermediate directory')
   p.add_argument('--jobs', '-j', type=int, default=concurrency())
   p.add_argument('--out', '-o', default=buildenv.DEFAULT_DEPS,
                  help='installation root path for dependencies')
@@ -255,17 +269,22 @@ def main(argv):
     os.makedirs(os.path.join(installdir, 'lib'))
     os.makedirs(os.path.join(installdir, 'include'))
   try:
-    disable_werror([
-      'missing-field-initializers',
-      'old-style-declaration',
-    ])
     wd = os.path.join(buildenv.ROOT_DIR, 'build', 'tmp')
     if not os.path.exists(wd):
       os.makedirs(wd)
+
+    if args.clean:
+      for e in os.listdir(wd):
+        p = os.path.join(wd, e)
+        if os.path.isdir(p):
+          print('Removing temporary directory: ' + p)
+          shutil.rmtree(p)
+      return
+
     prepend_common_envpaths(installdir)
-    if not build_protobuf3(wd, installdir, args.jobs, args.shared):
+    if not build_protobuf3(wd, installdir, args.jobs, args.shared, args.debug):
       return -1
-    if not build_boringssl(wd, installdir, args.jobs, args.shared):
+    if not build_boringssl(wd, installdir, args.jobs, args.shared, args.debug):
       return -1
     if not build_grpc(wd, installdir, args.jobs):
       return -1
