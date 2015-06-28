@@ -17,10 +17,9 @@ bool UnaryMethodHolder::ensureInit() {
 }
 
 bool WriterMethodHolder::ensureInit() {
-  qDebug() << __PRETTY_FUNCTION__;
   if (!impl_ && readyForInit()) {
-    impl_.reset(channel()->registerWriterMethod(method_name(), read_descriptor(),
-                                               write_descriptor()));
+    impl_.reset(channel()->registerWriterMethod(
+        method_name(), read_descriptor(), write_descriptor()));
     if (impl_) {
       connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
       connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);

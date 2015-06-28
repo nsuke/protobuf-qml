@@ -26,8 +26,6 @@ protected:
 class PROTOBUF_QML_DLLEXPORT MethodHolder : public QObject {
   Q_OBJECT
 
-  Q_PROPERTY(protobuf::qml::Channel2* channel READ channel WRITE set_channel
-                 NOTIFY channelChanged)
   Q_PROPERTY(QString methodName READ method_name WRITE set_method_name NOTIFY
                  methodNameChanged)
 
@@ -43,7 +41,6 @@ signals:
   void error(int tag, const QString& message);
   void closed(int tag);
 
-  void channelChanged();
   void methodNameChanged();
   void readDescriptorChanged();
   void writeDescriptorChanged();
@@ -52,15 +49,6 @@ signals:
 public:
   explicit MethodHolder(QObject* p = nullptr) : QObject(p) {}
   virtual ~MethodHolder() {}
-
-  Channel2* channel() const { return channel_; }
-  void set_channel(Channel2* channel) {
-    if (channel != channel_) {
-      deinit();
-      channel_ = channel;
-      channelChanged();
-    }
-  }
 
   const QString& method_name() const { return method_name_; }
   void set_method_name(const QString& method_name) {
@@ -91,15 +79,42 @@ public:
 
 protected:
   virtual void deinit() {}
+
+// private:
+  QString method_name_;
+  DescriptorWrapper* read_desc_ = nullptr;
+  DescriptorWrapper* write_desc_ = nullptr;
+};
+
+class ClientMethodHolder : public MethodHolder {
+  Q_OBJECT
+
+  Q_PROPERTY(protobuf::qml::Channel2* channel READ channel WRITE set_channel
+                 NOTIFY channelChanged)
+
+signals:
+  void channelChanged();
+
+public:
+  explicit ClientMethodHolder(QObject* p = nullptr) : MethodHolder(p) {}
+  virtual ~ClientMethodHolder() {}
+
+  Channel2* channel() const { return channel_; }
+  void set_channel(Channel2* channel) {
+    if (channel != channel_) {
+      deinit();
+      channel_ = channel;
+      channelChanged();
+    }
+  }
+
+protected:
   bool readyForInit() {
     return channel_ && !method_name_.isEmpty() && read_desc_ && write_desc_;
   }
 
 private:
   Channel2* channel_ = nullptr;
-  QString method_name_;
-  DescriptorWrapper* read_desc_ = nullptr;
-  DescriptorWrapper* write_desc_ = nullptr;
 };
 
 class PROTOBUF_QML_DLLEXPORT UnaryMethod : public MethodBase {
@@ -113,11 +128,11 @@ public:
   }
 };
 
-class PROTOBUF_QML_DLLEXPORT UnaryMethodHolder : public MethodHolder {
+class PROTOBUF_QML_DLLEXPORT UnaryMethodHolder : public ClientMethodHolder {
   Q_OBJECT
 
 public:
-  explicit UnaryMethodHolder(QObject* p = nullptr) : MethodHolder(p) {}
+  explicit UnaryMethodHolder(QObject* p = nullptr) : ClientMethodHolder(p) {}
   ~UnaryMethodHolder() {}
 
   Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {
@@ -152,11 +167,11 @@ public:
   virtual void set_timeout(int tag, int milliseconds) {}
 };
 
-class PROTOBUF_QML_DLLEXPORT WriterMethodHolder : public MethodHolder {
+class PROTOBUF_QML_DLLEXPORT WriterMethodHolder : public ClientMethodHolder {
   Q_OBJECT
 
 public:
-  explicit WriterMethodHolder(QObject* p = nullptr) : MethodHolder(p) {}
+  explicit WriterMethodHolder(QObject* p = nullptr) : ClientMethodHolder(p) {}
   ~WriterMethodHolder() {}
 
   Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {

@@ -7,6 +7,7 @@ set(protobuf-qml-core_SOURCES
   qml/memory.cpp
   qml/buffer.cpp
   qml/method.cpp
+  qml/server_method.cpp
   )
 
 add_library(protobuf-qml-core SHARED ${protobuf-qml-core_SOURCES})
@@ -19,7 +20,7 @@ set_target_properties(
 
 target_link_libraries(protobuf-qml-core
   ${PROTOBUF_LIBRARIES}
-  Qt5::Qml)
+  Qt5::Quick)
 
 #
 # QML plugin

@@ -10,7 +10,6 @@ SerializeMethod::SerializeMethod(BufferChannel* channel,
 }
 
 bool SerializeMethod::write(int tag, const QVariant& v, int timeout) {
-  qWarning() << __PRETTY_FUNCTION__;
   auto msg = descriptor_->dataToMessage(v);
   if (!msg) {
     // TODO:
@@ -38,7 +37,6 @@ ParseMethod::ParseMethod(BufferChannel* channel, DescriptorWrapper* descriptor)
 }
 
 bool ParseMethod::write(int tag, const QVariant& v, int timeout) {
-  qWarning() << __PRETTY_FUNCTION__;
   if (v.isValid()) {
     // qWarning() << "Received unexpected non-empty value.";
   }

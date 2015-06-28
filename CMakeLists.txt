@@ -15,6 +15,7 @@ endif()
 find_package(Protobuf REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Qml REQUIRED)
+find_package(Qt5Quick REQUIRED)
 
 include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIRS})
 include_directories(compiler)
