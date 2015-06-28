@@ -57,7 +57,7 @@ MethodGenerator::MethodGenerator(const google::protobuf::MethodDescriptor* t,
   variables = {
       {"camel_name", camel_name},
       {"capital_name", capital_name},
-      {"service_name", t_->service()->name()},
+      {"service_name", t_->service()->full_name()},
       {"input_type", input_type_name},
       {"output_type", output_type_name},
   };

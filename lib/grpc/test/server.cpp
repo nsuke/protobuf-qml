@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sstream>
 
+using namespace hello;
+
 class HelloServiceImpl : public Hello::Service {
   ::grpc::Status SayHello(::grpc::ServerContext* context,
                           const ::HelloRequest* request,

@@ -10,9 +10,19 @@
 #include <iostream>
 #include <sstream>
 
+using namespace hello;
+
 class CallData {
 public:
+  virtual ~CallData() {}
   virtual void process(bool ok) = 0;
+
+protected:
+  CallData() {}
+
+private:
+  CallData(const CallData&) = delete;
+  CallData& operator=(const CallData&) = delete;
 };
 
 class SayHelloCallData : public CallData {
