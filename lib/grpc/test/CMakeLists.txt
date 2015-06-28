@@ -4,6 +4,7 @@
 copy(grpc-qml-test
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/tst_grpc_channel.qml
+  ${CMAKE_CURRENT_SOURCE_DIR}/tst_grpc_server.qml
   )
 
 protobuf_generate_qml(${CMAKE_CURRENT_BINARY_DIR}

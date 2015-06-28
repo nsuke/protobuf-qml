@@ -2,6 +2,8 @@
 # gRPC QML plugin
 #
 set(grpc-qml_SOURCES
+  qml/server.cpp
+  qml/server_credentials.cpp
   qml/credentials.cpp
   qml/grpc_plugin.cpp
   qml/base.cpp
