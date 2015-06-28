@@ -10,7 +10,7 @@ import buildenv
 
 def run_test_server(outdir):
   cmd = [
-    os.path.join(outdir, 'lib', 'grpc', 'test', 'hello-server'),
+    os.path.join(outdir, 'lib', 'grpc', 'test', 'hello-async-server'),
   ]
   return subprocess.Popen(cmd, cwd=outdir)
 
