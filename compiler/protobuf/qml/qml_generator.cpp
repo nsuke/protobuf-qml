@@ -27,11 +27,17 @@ bool QmlGenerator::Generate(const FileDescriptor* file,
     }
 
     for (int i = 0; i < file->service_count(); ++i) {
-      std::unique_ptr<io::ZeroCopyOutputStream> out(
-          generator_context->Open(file->service(i)->name() + "Client.qml"));
-      io::Printer p(out.get(), '$');
       ServiceGenerator g(file->service(i));
-      g.generateQmlFile(p);
+
+      std::unique_ptr<io::ZeroCopyOutputStream> client_out(
+          generator_context->Open(file->service(i)->name() + "Client.qml"));
+      io::Printer p(client_out.get(), '$');
+      g.generateClientQmlFile(p);
+
+      std::unique_ptr<io::ZeroCopyOutputStream> server_out(
+          generator_context->Open(file->service(i)->name() + ".qml"));
+      io::Printer p2(server_out.get(), '$');
+      g.generateServerQmlFile(p2);
     }
 
     return true;

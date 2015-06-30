@@ -32,5 +32,5 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
   qmlRegisterType<protobuf::qml::RpcServer>(uri, 1, 0, "RpcServer");
   qmlRegisterType<protobuf::qml::RpcService>(uri, 1, 0, "RpcService");
   qmlRegisterType<protobuf::qml::ServerUnaryMethodHolder>(
-      uri, 1, 0, "ServerUnaryMethodHolder");
+      uri, 1, 0, "ServerUnaryMethod");
 }

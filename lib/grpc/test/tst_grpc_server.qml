@@ -1,5 +1,3 @@
-// To run this test, you need to run hello-server program beforehand
-
 import QtQuick 2.2
 import QtTest 1.0
 import Grpc 1.0 as G
@@ -7,6 +5,7 @@ import Protobuf 1.0 as PB
 import 'hello.pb.js' as Hello
 
 Item {
+  // Client settings
   G.GrpcChannel {
     id: channel
     target: 'localhost:41387'
@@ -18,38 +17,20 @@ Item {
     channel: channel
   }
 
+  // Server settings
   G.GrpcServer {
     id: server
     address: '0.0.0.0:41387'
     credentials: G.InsecureServerCredentials {}
   }
 
-  PB.RpcService {
+  Hello {
     id: service
     server: server
-    methods: [
-      sayHelloMethod
-    ]
-
-    signal sayHello(var call, var callback)
-
-    PB.ServerUnaryMethodHolder {
-      id: sayHelloMethod
-      methodName: '/hello.Hello/SayHello'
-      index: 0
-      readDescriptor: Hello.HelloRequest.descriptor
-      writeDescriptor: Hello.HelloRequest.descriptor
-
-      onData: {
-        console.log('onData')
-        service.sayHello(new Hello.HelloRequest(data), function(err, data2) {
-          sayHelloMethod.respond(tag, new Hello.HelloResponse(data2)._raw);
-        });
-      }
-    }
-
-    onSayHello: {
-      console.log('onSayHello')
+    // For Qt 5.2.1 (or earlier I guess), we cannot use signals for this
+    // because it removes some properties from inccomming messages.
+    // So we generate function property to be assigned like this.
+    sayHello: function(call, callback) {
       callback(null, {
         greet: 'Hello ' + call.name(),
       });
@@ -57,10 +38,9 @@ Item {
   }
 
   TestCase {
-    name: 'GrpcMethodTest'
+    name: 'GrpcServerMethodTest'
 
     function initTestCase() {
-      skip('Wait for upstream change for graceful shutdown of server.');
       server.start();
     }
 
@@ -69,7 +49,6 @@ Item {
     }
 
     function test_unary() {
-      skip('Wait for upstream change for graceful shutdown of server.');
       var val = {};
       // when invoked service
       var ok = helloClient.sayHello({name: 'Foo'}, function(rsp, err) {

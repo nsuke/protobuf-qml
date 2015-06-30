@@ -18,8 +18,7 @@ ServiceGenerator::ServiceGenerator(const google::protobuf::ServiceDescriptor* t)
   }
 }
 
-void ServiceGenerator::generateQmlFile(google::protobuf::io::Printer& p) {
-  if (!t_) throw std::logic_error("Cannot generate for null descriptor.");
+void ServiceGenerator::generateImports(google::protobuf::io::Printer& p) {
   p.Print(
       "import QtQuick 2.2\n"
       "import Protobuf 1.0 as PB\n"
@@ -29,6 +28,11 @@ void ServiceGenerator::generateQmlFile(google::protobuf::io::Printer& p) {
     p.Print("import '$file_name$' as $capital_name$\n", "file_name",
             import.file_path, "capital_name", import.import_name);
   }
+}
+
+void ServiceGenerator::generateClientQmlFile(google::protobuf::io::Printer& p) {
+  if (!t_) throw std::logic_error("Cannot generate for null descriptor.");
+  generateImports(p);
 
   p.Print(
       "\n"
@@ -39,6 +43,29 @@ void ServiceGenerator::generateQmlFile(google::protobuf::io::Printer& p) {
   for (auto& g : method_generators_) {
     p.Print("\n");
     g.generateMethod(p);
+  }
+
+  p.Print("}\n");
+}
+
+void ServiceGenerator::generateServerQmlFile(google::protobuf::io::Printer& p) {
+  if (!t_) throw std::logic_error("Cannot generate for null descriptor.");
+  generateImports(p);
+
+  p.Print(
+      "\n"
+      "PB.RpcService {\n"
+      "  id: root\n"
+      "  methods: [\n");
+  for (auto& g : method_generators_) {
+    if (g.is_unary()) {
+      p.Print("    $method_name$Method,\n", "method_name", g.name());
+    }
+  }
+  p.Print("  ]\n");
+  for (auto& g : method_generators_) {
+    p.Print("\n");
+    g.generateServerMethod(p);
   }
 
   p.Print("}\n");
@@ -60,6 +87,7 @@ MethodGenerator::MethodGenerator(const google::protobuf::MethodDescriptor* t,
       {"service_name", t_->service()->full_name()},
       {"input_type", input_type_name},
       {"output_type", output_type_name},
+      {"index", std::to_string(t_->index())},
   };
   if (!w && !r) {
     variables.insert(std::make_pair("method_type", "Unary"));
@@ -83,6 +111,19 @@ void MethodGenerator::generateMethod(google::protobuf::io::Printer& p) {
   generateMethodElement(p);
 }
 
+void MethodGenerator::generateServerMethod(google::protobuf::io::Printer& p) {
+  auto w = t_->client_streaming();
+  auto r = t_->server_streaming();
+  if (!w && !r) {
+    p.Print(variables, "  property var $camel_name$\n");
+    generateServerUnaryMethod(p);
+    // } else if (w && !r) {
+    //   generateWriterMethod(p);
+  } else {
+    // not implemented
+  }
+}
+
 void MethodGenerator::generateMethodElement(google::protobuf::io::Printer& p) {
   p.Print(variables,
           "  PB.$method_type$Method {\n"
@@ -97,6 +138,7 @@ void MethodGenerator::generateMethodElement(google::protobuf::io::Printer& p) {
 void MethodGenerator::generateUnaryMethod(google::protobuf::io::Printer& p) {
   p.Print(variables,
           "  function $camel_name$(data, callback) {\n"
+          "    'use strict';\n"
           "    return $camel_name$Method.call(new $input_type$(data)._raw, "
           "function(data, err) {\n"
           "      callback(new $output_type$(data), err);\n"
@@ -104,9 +146,35 @@ void MethodGenerator::generateUnaryMethod(google::protobuf::io::Printer& p) {
           "  }\n");
 }
 
+void MethodGenerator::generateServerUnaryMethod(
+    google::protobuf::io::Printer& p) {
+  p.Print(variables,
+          "  PB.Server$method_type$Method {\n"
+          "    id: $camel_name$Method\n"
+          "    methodName: '/$service_name$/$capital_name$'\n"
+          "    readDescriptor: $input_type$.descriptor\n"
+          "    writeDescriptor: $output_type$.descriptor\n"
+          "    index: $index$\n"
+          "\n"
+          "    onData: {\n"
+          "      'use strict';\n"
+          "      if (typeof root.$camel_name$ !== 'function') {\n"
+          "        callback('Service method not available.');\n"
+          "        return;\n"
+          "      }\n"
+          "      root.$camel_name$(new $input_type$(data), function(err, "
+          "response) {\n"
+          "        $camel_name$Method.respond(tag, new "
+          "$output_type$(response)._raw);\n"
+          "      });\n"
+          "    }\n"
+          "  }\n");
+}
+
 void MethodGenerator::generateWriterMethod(google::protobuf::io::Printer& p) {
   p.Print(variables,
           "  function $camel_name$(callback, timeout) {\n"
+          "    'use strict';\n"
           "    var call = $camel_name$Method.call(function(data, err) {\n"
           "      callback(new $output_type$(data), err);\n"
           "    }, timeout);\n"

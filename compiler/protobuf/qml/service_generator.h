@@ -50,9 +50,11 @@ class ServiceGenerator {
 public:
   explicit ServiceGenerator(const google::protobuf::ServiceDescriptor* t);
 
-  void generateQmlFile(google::protobuf::io::Printer& p);
+  void generateClientQmlFile(google::protobuf::io::Printer& p);
+  void generateServerQmlFile(google::protobuf::io::Printer& p);
 
 private:
+  void generateImports(google::protobuf::io::Printer& p);
   const google::protobuf::ServiceDescriptor* t_;
   std::unordered_set<IOType> imports_;
   std::vector<MethodGenerator> method_generators_;
@@ -65,11 +67,20 @@ public:
                   const std::string& output_type_name);
 
   void generateMethod(google::protobuf::io::Printer& p);
+  void generateServerMethod(google::protobuf::io::Printer& p);
+  std::string& name() { return variables["camel_name"]; }
+  bool is_unary() {
+    auto w = t_->client_streaming();
+    auto r = t_->server_streaming();
+    return !w && !r;
+  }
 
 private:
   void generateMethodElement(google::protobuf::io::Printer& p);
   void generateUnaryMethod(google::protobuf::io::Printer& p);
   void generateWriterMethod(google::protobuf::io::Printer& p);
+
+  void generateServerUnaryMethod(google::protobuf::io::Printer& p);
 
   const google::protobuf::MethodDescriptor* t_;
   std::map<std::string, std::string> variables;
