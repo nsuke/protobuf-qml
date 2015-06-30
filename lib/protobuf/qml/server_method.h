@@ -10,7 +10,7 @@
 namespace protobuf {
 namespace qml {
 
-class ServerMethodHolder : public MethodHolder {
+class PROTOBUF_QML_DLLEXPORT ServerMethodHolder : public MethodHolder {
   Q_OBJECT
 
   Q_PROPERTY(int index READ index WRITE set_index NOTIFY indexChanged)

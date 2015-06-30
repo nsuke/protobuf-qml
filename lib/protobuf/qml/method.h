@@ -86,7 +86,7 @@ protected:
   DescriptorWrapper* write_desc_ = nullptr;
 };
 
-class ClientMethodHolder : public MethodHolder {
+class PROTOBUF_QML_DLLEXPORT ClientMethodHolder : public MethodHolder {
   Q_OBJECT
 
   Q_PROPERTY(protobuf::qml::Channel2* channel READ channel WRITE set_channel
