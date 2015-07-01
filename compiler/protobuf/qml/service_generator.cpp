@@ -57,9 +57,13 @@ void ServiceGenerator::generateServerQmlFile(google::protobuf::io::Printer& p) {
       "PB.RpcService {\n"
       "  id: root\n"
       "  methods: [\n");
-  for (auto& g : method_generators_) {
-    if (g.is_unary()) {
-      p.Print("    $method_name$Method,\n", "method_name", g.name());
+  for (int i = 0; i < t_->method_count(); ++i) {
+    auto method = t_->method(i);
+    auto w = method->client_streaming();
+    auto r = method->server_streaming();
+    if (!r) {
+      p.Print("    $method_name$Method,\n", "method_name",
+              uncapitalizeFirstLetter(method->name()));
     }
   }
   p.Print("  ]\n");
@@ -91,8 +95,10 @@ MethodGenerator::MethodGenerator(const google::protobuf::MethodDescriptor* t,
   };
   if (!w && !r) {
     variables.insert(std::make_pair("method_type", "Unary"));
+    variables.insert(std::make_pair("server_method_type", "Unary"));
   } else if (w && !r) {
     variables.insert(std::make_pair("method_type", "Writer"));
+    variables.insert(std::make_pair("server_method_type", "Reader"));
   } else {
     // not implemented
   }
@@ -112,13 +118,9 @@ void MethodGenerator::generateMethod(google::protobuf::io::Printer& p) {
 }
 
 void MethodGenerator::generateServerMethod(google::protobuf::io::Printer& p) {
-  auto w = t_->client_streaming();
-  auto r = t_->server_streaming();
-  if (!w && !r) {
+  if (!t_->server_streaming()) {
     p.Print(variables, "  property var $camel_name$\n");
     generateServerUnaryMethod(p);
-    // } else if (w && !r) {
-    //   generateWriterMethod(p);
   } else {
     // not implemented
   }
@@ -149,25 +151,13 @@ void MethodGenerator::generateUnaryMethod(google::protobuf::io::Printer& p) {
 void MethodGenerator::generateServerUnaryMethod(
     google::protobuf::io::Printer& p) {
   p.Print(variables,
-          "  PB.Server$method_type$Method {\n"
+          "  PB.Server$server_method_type$Method {\n"
           "    id: $camel_name$Method\n"
           "    methodName: '/$service_name$/$capital_name$'\n"
-          "    readDescriptor: $input_type$.descriptor\n"
-          "    writeDescriptor: $output_type$.descriptor\n"
+          "    readType: $input_type$\n"
+          "    writeType: $output_type$\n"
           "    index: $index$\n"
-          "\n"
-          "    onData: {\n"
-          "      'use strict';\n"
-          "      if (typeof root.$camel_name$ !== 'function') {\n"
-          "        callback('Service method not available.');\n"
-          "        return;\n"
-          "      }\n"
-          "      root.$camel_name$(new $input_type$(data), function(err, "
-          "response) {\n"
-          "        $camel_name$Method.respond(tag, new "
-          "$output_type$(response)._raw);\n"
-          "      });\n"
-          "    }\n"
+          "    handler: $camel_name$\n"
           "  }\n");
 }
 

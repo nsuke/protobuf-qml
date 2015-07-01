@@ -2,6 +2,8 @@
 #define GRPC_QML_SERVER_H
 
 #include "grpc/qml/server_credentials.h"
+#include "grpc/qml/server_unary.h"
+#include "grpc/qml/server_reader.h"
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/server_method.h"
 
@@ -20,108 +22,9 @@
 #include <deque>
 #include <memory>
 #include <thread>
-#include <unordered_map>
 
 namespace grpc {
 namespace qml {
-
-class CallData {
-public:
-  virtual ~CallData() {}
-  virtual void process(bool ok) = 0;
-
-protected:
-  CallData() {}
-
-private:
-  CallData(const CallData&) = delete;
-  CallData& operator=(const CallData&) = delete;
-};
-
-class GrpcService;
-
-class ServerUnaryCallData;
-
-class ServerUnaryMethod : public ::protobuf::qml::ServerUnaryMethod {
-  Q_OBJECT
-
-public:
-  ServerUnaryMethod(GrpcService* service,
-                    int index,
-                    ::grpc::ServerCompletionQueue* cq,
-                    ::protobuf::qml::DescriptorWrapper* read,
-                    ::protobuf::qml::DescriptorWrapper* write);
-
-  // To be called from IO thread
-  void onRequest(ServerUnaryCallData* cdata);
-
-  void startProcessing() final;
-  bool respond(int tag, const QVariant& data) final;
-
-private:
-  int store(ServerUnaryCallData* cdata) {
-    auto res = cdata_.insert(std::make_pair(++tag_, cdata));
-    if (res.second) {
-      return res.first->first;
-    } else {
-      return store(cdata);
-    }
-  }
-  ServerUnaryCallData* remove(int tag) {
-    // TODO: erase
-    auto it = cdata_.find(tag);
-    if (it == cdata_.end()) {
-      return nullptr;
-    }
-    return it->second;
-  }
-
-  int tag_ = 1;
-  std::unordered_map<int, ServerUnaryCallData*> cdata_;
-  ::protobuf::qml::DescriptorWrapper* read_;
-  ::protobuf::qml::DescriptorWrapper* write_;
-  ::grpc::ServerCompletionQueue* cq_;
-  int index_;
-  GrpcService* service_;
-};
-
-class ServerUnaryCallData : public CallData {
-public:
-  ServerUnaryCallData(
-      ServerUnaryMethod*
-      method, GrpcService* service,
-                      int index,
-                      ::grpc::ServerCompletionQueue* cq,
-                      ::protobuf::qml::DescriptorWrapper* read,
-                      ::protobuf::qml::DescriptorWrapper* write);
-
-  void process(bool ok) final;
-  void resume(const QVariant& data);
-  const QVariant& data() const { return data_; }
-
-private:
-  enum class Status {
-    INIT,
-    READ,
-    FROZEN,
-    WRITE,
-    DONE,
-  };
-
-  Status status_ = Status::INIT;
-  ::grpc::ServerContext context_;
-  ::protobuf::qml::DescriptorWrapper* read_;
-  ::protobuf::qml::DescriptorWrapper* write_;
-  std::unique_ptr<google::protobuf::Message> request_;
-  std::unique_ptr<google::protobuf::Message> response_;
-  QVariant data_;
-  ServerUnaryMethod* method_;
-  ::grpc::ServerAsyncWriter<google::protobuf::Message> writer_;
-  ::grpc::ServerCompletionQueue* cq_;
-  int index_;
-  int tag_;
-  GrpcService* service_;
-};
 
 class RawGrpcService : public ::grpc::AsynchronousService {
 public:
@@ -130,6 +33,7 @@ public:
 
 private:
   friend class ServerUnaryCallData;
+  friend class ServerReaderCallData;
 };
 
 class GrpcService {
@@ -191,7 +95,6 @@ public:
   bool registerService(::protobuf::qml::RpcService*) final;
 
   Q_INVOKABLE void shutdown() {
-    qDebug() << "SHUTDOWN";
     if (cq_) {
     qDebug() << "SHUTDOWN";
       cq_->Shutdown();

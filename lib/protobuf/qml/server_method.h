@@ -86,9 +86,67 @@ protected:
   }
 
 private:
-  bool ensureInit();
-
   std::unique_ptr<ServerUnaryMethod> impl_;
+};
+
+class PROTOBUF_QML_DLLEXPORT ServerReaderMethod : public MethodBase {
+  Q_OBJECT
+
+signals:
+  void dataEnd(int tag);
+
+public:
+  explicit ServerReaderMethod(QObject* p = nullptr) : MethodBase(p) {}
+  virtual ~ServerReaderMethod() {}
+  virtual bool respond(int tag, const QVariant& data) { return false; }
+  virtual void startProcessing() {}
+};
+
+class PROTOBUF_QML_DLLEXPORT ServerReaderMethodHolder
+    : public ServerMethodHolder {
+  Q_OBJECT
+
+signals:
+  void dataEnd(int tag);
+
+public:
+  explicit ServerReaderMethodHolder(QObject* p = nullptr)
+      : ServerMethodHolder(p) {}
+  ~ServerReaderMethodHolder() {}
+
+  void startProcessing() final {
+    Q_ASSERT(impl_);
+    impl_->startProcessing();
+  }
+
+  bool inject(ServerReaderMethod* impl) {
+    if (impl_) {
+      qWarning() << "Server reader method is already initialized";
+    }
+    impl_.reset(impl);
+    if (impl_) {
+      connect(impl_.get(), &ServerReaderMethod::dataEnd, this,
+              &ServerReaderMethodHolder::dataEnd);
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
+      connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
+    }
+    return true;
+  }
+
+  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
+    if (!impl_) {
+      qWarning() << "Server reader method is not initialized.";
+      return false;
+    }
+    return impl_->respond(tag, data);
+  }
+
+protected:
+  void deinit() final {}
+
+private:
+  std::unique_ptr<ServerReaderMethod> impl_;
 };
 
 class RpcServer;
