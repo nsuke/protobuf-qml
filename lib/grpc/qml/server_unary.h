@@ -6,18 +6,9 @@
 #include "protobuf/qml/server_method.h"
 
 #include <grpc++/stream.h>
-#include <grpc++/server.h>
-#include <grpc++/server_builder.h>
 #include <grpc++/server_context.h>
-#include <grpc++/impl/service_type.h>
 #include <grpc++/impl/proto_utils.h>
 #include <google/protobuf/message.h>
-
-#include <QDebug>
-#include <QString>
-#include <QStringList>
-
-#include <unordered_map>
 
 namespace grpc {
 namespace qml {
@@ -25,7 +16,8 @@ namespace qml {
 class GrpcService;
 class ServerUnaryCallData;
 
-class ServerUnaryMethod : public ::protobuf::qml::ServerUnaryMethod {
+class ServerUnaryMethod : public ::protobuf::qml::ServerUnaryMethod,
+                          private CallDataStore<ServerUnaryCallData> {
   Q_OBJECT
 
 public:
@@ -42,25 +34,6 @@ public:
   bool respond(int tag, const QVariant& data) final;
 
 private:
-  int store(ServerUnaryCallData* cdata) {
-    auto res = cdata_.insert(std::make_pair(++tag_, cdata));
-    if (res.second) {
-      return res.first->first;
-    } else {
-      return store(cdata);
-    }
-  }
-  ServerUnaryCallData* remove(int tag) {
-    // TODO: erase
-    auto it = cdata_.find(tag);
-    if (it == cdata_.end()) {
-      return nullptr;
-    }
-    return it->second;
-  }
-
-  int tag_ = 1;
-  std::unordered_map<int, ServerUnaryCallData*> cdata_;
   ::protobuf::qml::DescriptorWrapper* read_;
   ::protobuf::qml::DescriptorWrapper* write_;
   ::grpc::ServerCompletionQueue* cq_;
