@@ -17,7 +17,7 @@ PB.ServerUnaryMethodHolder {
       return;
     }
     handler(new root.readType(data), function(err, response) {
-      sayHelloMethod.respond(tag, new root.writeType(response)._raw);
+      root.respond(tag, new root.writeType(response)._raw);
     });
   }
 }
