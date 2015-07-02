@@ -1,8 +1,6 @@
 #ifndef GRPC_QML_GRPC_PLUGIN_H
 #define GRPC_QML_GRPC_PLUGIN_H
 
-#include "protobuf/qml/common.h"
-
 #include <QQmlExtensionPlugin>
 
 class GrpcQmlPlugin : public QQmlExtensionPlugin {

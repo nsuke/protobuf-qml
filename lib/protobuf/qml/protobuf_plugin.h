@@ -1,7 +1,6 @@
 #ifndef PROTOBUF_QML_PROTOBUF_PLUGIN_H
 #define PROTOBUF_QML_PROTOBUF_PLUGIN_H
 
-#include "protobuf/qml/common.h"
 #include <QQmlExtensionPlugin>
 
 class ProtobufQmlPlugin : public QQmlExtensionPlugin {
