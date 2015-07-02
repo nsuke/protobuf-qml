@@ -173,7 +173,6 @@ QVariant getReflectionRepeatedValue(const Reflection& ref,
                                     const Message& msg,
                                     const FieldDescriptor* field,
                                     int size) {
-  qDebug() << "getReflectionRepeatedValue";
   QVariantList result;
   switch (field->cpp_type()) {
 #define PROTOBUF_QML_GET_REPEATED(TYPE_ENUM, TYPE, QT_TYPE)            \
