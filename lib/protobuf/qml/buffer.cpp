@@ -1,4 +1,8 @@
 #include "protobuf/qml/buffer.h"
+
+#include <functional>
+#include <memory>
+
 namespace protobuf {
 namespace qml {
 
