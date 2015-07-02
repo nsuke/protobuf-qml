@@ -1,0 +1,61 @@
+cmake_minimum_required(VERSION 2.8.12)
+project(grpc)
+
+find_package(Protobuf REQUIRED)
+
+include_directories(. include ${'${PROTOBUF_INCLUDE_DIRS}'} ../${boringssl_dir}/include)
+
+<%!
+def get_deps(target):
+  deps = []
+  if target.secure:
+    deps.extend(['ssl', 'crypto'])
+  if target.build == 'protoc':
+    deps.append('${PROTOBUF_PROTOC_LIBRARIES}')
+    deps.append('${PROTOBUF_LIBRARIES}')
+  if target.name == 'grpc++':
+    deps.append('${PROTOBUF_LIBRARIES}')
+  for d in target.deps:
+    deps.append(d)
+  return deps
+%>
+
+
+% for lib in libs.values():
+${cc_library(lib)}
+% endfor
+
+% for tgt in targets.values():
+${cc_binary(tgt)}
+% endfor
+
+if(${"${CMAKE_C_COMPILER_ID}"} STREQUAL "Clang")
+  set(CMAKE_C_FLAGS "${'${CMAKE_C_FLAGS}'} -Wno-tautological-compare -Wno-unused-value")
+endif()
+add_subdirectory(../${boringssl_dir} openssl)
+
+<%def name='cc_library(lib)'>
+add_library(${lib.name}
+% for src in lib.src:
+  ${src}
+% endfor
+)
+target_link_libraries(${lib.name}
+% for dep in get_deps(lib):
+  ${dep}
+% endfor
+)
+</%def>
+
+<%def name='cc_binary(tgt)'>
+add_executable(${tgt.name}
+% for src in tgt.src:
+  ${src}
+% endfor
+)
+target_link_libraries(${tgt.name}
+% for dep in get_deps(tgt):
+  ${dep}
+% endfor
+)
+</%def>

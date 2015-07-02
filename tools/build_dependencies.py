@@ -3,6 +3,7 @@
 import argparse
 import glob
 import json
+import mako.template
 import multiprocessing
 import os
 import shutil
@@ -117,7 +118,7 @@ def build_protobuf3(wd, installdir, jobs, shared, debug):
   # # archive for protobuf tag does not have 'v' prefix
   # download_from_github(wd, 'google', 'protobuf', version, 'protobuf-3.0.0-alpha-3')
 
-  version = 'd40a0db202433ba002a3e104165d4414e8929432'
+  version = '43dcbbfec7e906ede3d383a0139a05ff8a03481f'
   repodir = os.path.join(wd, 'protobuf-%s' % version)
   download_from_github(wd, 'google', 'protobuf', version)
 
@@ -131,13 +132,6 @@ def build_protobuf3(wd, installdir, jobs, shared, debug):
     '-DBUILD_SHARED_LIBS=' + shared_on,
     '-DCMAKE_BUILD_TYPE=' + build_type,
   ]
-
-  cc = os.environ.get('CC')
-  cxx = os.environ.get('CXX')
-  if cc:
-    cmake_cmd.append('-DCMAKE_C_COMPILER=%s' % cc)
-  if cxx:
-    cmake_cmd.append('-DCMAKE_CXX_COMPILER=%s' % cxx)
 
   cmake_cmd.append('cmake')
 
@@ -160,13 +154,20 @@ def build_protobuf3(wd, installdir, jobs, shared, debug):
     return True
 
 
-def build_boringssl(wd, installdir, jobs, shared, debug):
-  version = 2357
-  repodir = os.path.join(wd, str(version))
+def prepare_boringssl(wd):
+  version = '2357'
+  repodir = os.path.join(wd, version)
   archive = repodir + '.tar.gz'
   url = 'https://boringssl.googlesource.com/boringssl/+archive/%s.tar.gz' % version
   download_source_archive(url, archive, repodir)
+  # Ignore harmless warning for clang
+  subprocess.call(['sed', '-i', 's/-Werror//g', os.path.join(repodir, 'CMakeLists.txt')])
+  return version
 
+
+def build_boringssl(wd, installdir, jobs, shared, debug):
+  version = prepare_boringssl(wd)
+  repodir = os.path.join(wd, str(version))
   shared_on = 'ON' if shared else 'OFF'
   build_type = 'Debug' if debug else 'Release'
   cmake_cmd = [
@@ -175,14 +176,8 @@ def build_boringssl(wd, installdir, jobs, shared, debug):
     '-DCMAKE_C_FLAGS=-fPIC',
     '-DBUILD_SHARED_LIBS=' + shared_on,
     '-DCMAKE_BUILD_TYPE=' + build_type,
+    '.',
   ]
-
-  # boring ssl fails with Werror on clang 3.6.1
-  if os.environ.get('CC', '') == 'clang':
-    cmake_cmd.append('-DCMAKE_C_COMPILER=gcc')
-    cmake_cmd.append('-DCMAKE_CXX_COMPILER=g++')
-
-  cmake_cmd.append('.')
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
@@ -201,54 +196,99 @@ def build_boringssl(wd, installdir, jobs, shared, debug):
     return True
 
 
-def build_grpc(wd, installdir, jobs):
-  version = 'a7661b59d81584740556d8214c66cdc9eae23759'
+class GrpcTarget(object):
+  def __init__(self, name, src, deps, build, secure):
+    self.name = name
+    self.src = src
+    self.deps = deps
+    self.build = build
+    self.secure = secure
+
+
+def build_grpc(wd, installdir, jobs, shared, debug):
+  def find_in_json(arr, name):
+    for elem in arr:
+      if elem['name'] == name:
+        return elem
+
+  def collect_grpc_targets(acc, dic, name, executable=False):
+    key = 'libs' if not executable else 'targets'
+    if name in acc[key]:
+      return
+    target = find_in_json(dic[key], name)
+    if not target:
+      print('Not found "%s" in %s' % (name, key))
+    src = target['src']
+    for fg in target.get('filegroups', []):
+      src.extend(find_in_json(dic['filegroups'], fg)['src'])
+    deps = target.get('deps', [])
+    acc[key][name] = GrpcTarget(
+        name, src, deps, target['build'], target['secure'] == 'yes')
+    for dep in deps:
+      collect_grpc_targets(acc, dic, dep)
+
+  version = '05c97690630640ab41df37858ea23ffce870a509'
   repodir = os.path.join(wd, 'grpc-%s' % version)
   download_from_github(wd, 'grpc', 'grpc', version)
 
   buildjson = os.path.join(repodir, 'build.json')
-  buildjson_orig = os.path.join(repodir, 'build.json.orig')
-  if not os.path.exists(buildjson_orig):
-    shutil.move(buildjson, buildjson_orig)
-  with open(buildjson_orig, 'r') as orig:
-    dic = json.load(orig)
-  targets = []
-  targets_orig = dic['targets']
-  nobuild = ['test', 'benchmark', 'do_not_build']
-  nobuild_langs = ['csharp', 'python', 'ruby', 'objective_c']
-  for t in targets_orig:
-    if t['build'] not in nobuild and t['language'] not in nobuild_langs and all([l not in t['name'] for l in nobuild_langs]):
-      targets.append(t)
-  dic['targets'] = targets
 
-  with open(buildjson, 'w') as o:
-    json.dump(dic, o)
+  with open(buildjson, 'r') as fp:
+    dic = json.load(fp)
+  acc = {
+    'targets': {},
+    'libs': {},
+  }
+  collect_grpc_targets(acc, dic, 'grpc++')
+  collect_grpc_targets(acc, dic, 'grpc_cpp_plugin', True)
 
-  vsdir = os.path.join(repodir, 'templates', 'vsprojects')
-  if os.path.exists(vsdir):
-    shutil.rmtree(vsdir)
-  env = os.environ
-  env['CPPFLAGS'] = env.get('CPPFlags', '') + ' -fPIC'
-  env['CFLAGS'] = env.get('CFlags', '') + ' -fPIC'
-  env['CXXFLAGS'] = env.get('CXXFlags', '') + ' -fPIC'
+  boringssl_dir = prepare_boringssl(wd)
+
+  cmake_template = os.path.join(buildenv.ROOT_DIR, 'tools', 'CMakeLists.txt.grpc.template')
+  cmake_out = os.path.join(repodir, 'CMakeLists.txt')
+  with open(cmake_out, 'w+') as fp:
+    fp.write(mako.template.Template(filename=cmake_template).render(boringssl_dir=boringssl_dir, **acc))
+
+  shared_on = 'ON' if shared else 'OFF'
+  build_type = 'Debug' if debug else 'Release'
+  cmake_cmd = [
+    'cmake',
+    '-GNinja',
+    '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11',
+    '-DBUILD_SHARED_LIBS=' + shared_on,
+    '-DCMAKE_BUILD_TYPE=' + build_type,
+    '-DCMAKE_PREFIX_PATH=%s' % installdir,
+    '.',
+  ]
+
   workflow = [
-    ([os.path.join(repodir, 'tools', 'buildgen', 'generate_projects.sh')], {'cwd': repodir}),
-    (['make', 'clean', '-C', repodir], {}),
-    (['make', 'run_dep_checks', '-C', repodir], {}),
-    (['make', '-j%d' % jobs, '-C', repodir], {}),
-    (['make', '-C', repodir, 'install', 'prefix=%s' % installdir], {}),
+    (cmake_cmd, {'cwd': repodir}),
+    # (['ninja', '-C%s' % repodir, 'clean'], {}),
+    (['ninja', '-j%s' % jobs, '-C%s' % repodir], {}),
   ]
   if execute_tasks(workflow):
-    delete_files([
-      os.path.join(installdir, 'bin', 'grpc_csharp_plugin'),
-      os.path.join(installdir, 'bin', 'grpc_objective_c_plugin'),
-      os.path.join(installdir, 'bin', 'grpc_python_plugin'),
-      os.path.join(installdir, 'bin', 'grpc_ruby_plugin'),
-    ], [
-      os.path.join(installdir, 'lib', '*_unsecure*'),
-      # os.path.join(installdir, 'lib', '*.a'),
-    ])
-    shutil.copy2(os.path.join(repodir, 'LICENSE'), os.path.join(installdir, 'LICENSE-grpc'))
+    include_dirs = [
+      (os.path.join(wd, boringssl_dir), 'openssl'),
+      (repodir, 'grpc'),
+      (repodir, 'grpc++'),
+    ]
+    for repo, include in include_dirs:
+      src_include_dir = os.path.join(repo, 'include', include)
+      dst_include_dir = os.path.join(installdir, 'include', include)
+      if os.path.exists(dst_include_dir):
+        shutil.rmtree(dst_include_dir)
+      shutil.copytree(src_include_dir, dst_include_dir)
+    libext = '.so' if shared else '.a'
+    libs = [
+      os.path.join('openssl', 'ssl', 'libssl%s' % libext),
+      os.path.join('openssl', 'crypto', 'libcrypto%s' % libext),
+      'libgpr%s' % libext,
+      'libgrpc%s' % libext,
+      'libgrpc++%s' % libext,
+    ]
+    for lib in libs:
+      shutil.copy(os.path.join(repodir, lib), os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'grpc_cpp_plugin'), os.path.join(installdir, 'bin'))
     return True
 
 
@@ -284,9 +324,7 @@ def main(argv):
     prepend_common_envpaths(installdir)
     if not build_protobuf3(wd, installdir, args.jobs, args.shared, args.debug):
       return -1
-    if not build_boringssl(wd, installdir, args.jobs, args.shared, args.debug):
-      return -1
-    if not build_grpc(wd, installdir, args.jobs):
+    if not build_grpc(wd, installdir, args.jobs, args.shared, args.debug):
       return -1
     return 0
   except:
