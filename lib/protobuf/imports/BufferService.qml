@@ -21,23 +21,25 @@ Item {
     channel: root.channel
   }
 
-  function serialize(descriptor, data, callback) {
+  function serialize(type, data, callback) {
     if (!channel) {
+      console.warn('Buffer implementation is not available');
       return false;
     }
-    serializeMethod.writeDescriptor = descriptor;
-    serializeMethod.readDescriptor = descriptor;
+    serializeMethod.writeType = type;
+    serializeMethod.readType = type;
     return serializeMethod.call(data, function (ignore, err) {
       callback(err);
     });
   }
 
-  function parse(descriptor, callback) {
+  function parse(type, callback) {
     if (!channel) {
+      console.warn('Buffer implementation is not available');
       return false;
     }
-    parseMethod.writeDescriptor = descriptor;
-    parseMethod.readDescriptor = descriptor;
-    return parseMethod.call(data, callback);
+    parseMethod.writeType = type;
+    parseMethod.readType = type;
+    return parseMethod.call(undefined, callback);
   }
 }

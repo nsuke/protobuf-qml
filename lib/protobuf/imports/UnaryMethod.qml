@@ -4,11 +4,13 @@ import Protobuf 1.0 as P
 Item {
   property alias channel: impl.channel
   property alias methodName: impl.methodName
-  property alias readDescriptor: impl.readDescriptor
-  property alias writeDescriptor: impl.writeDescriptor
+  property var readType
+  property var writeType
 
   P.UnaryMethodHolder {
     id: impl
+    readDescriptor: readType && readType.descriptor
+    writeDescriptor: writeType && writeType.descriptor
     onData: p.handleData(tag, data)
     onError: p.handleError(tag, message)
     onClosed: p.handleClosed(tag)
@@ -20,10 +22,12 @@ Item {
     property var callbackStorage: []
 
     function handleClosed(tag) {
+      'use strict';
       // TODO: find the call and delete
     }
 
     function addCallback(tag, callback) {
+      'use strict';
       callbackStorage[tag] = {
         timestamp: Date.now(),
         callback: callback,
@@ -31,6 +35,7 @@ Item {
     }
 
     function handleData(tag, data) {
+      'use strict';
       var call = callbackStorage[tag];
       if (!call) {
         console.warn('Received data for unknown tag: ' + tag);
@@ -44,6 +49,7 @@ Item {
     }
 
     function handleError(tag, err) {
+      'use strict';
       console.log('Error for tag ' + tag + ': ' + err);
       var call = callbackStorage[tag];
       if (call) {
@@ -57,17 +63,21 @@ Item {
     property int tag: 0
 
     function removeCallback(tag) {
+      'use strict';
       // TODO:
     }
   }
 
   function call(data, callback, timeout) {
+    'use strict';
     if (typeof timeout == 'undefined') {
       timeout = -1;
     }
     var t = ++p.tag;
-    p.addCallback(t, callback);
-    var ok = impl.write(t, data, timeout);
+    p.addCallback(t, function(data, err) {
+      callback && callback(new readType(data), err);
+    });
+    var ok = impl.write(t, new writeType(data)._raw, timeout);
     if (!ok) {
       console.log('Discarding stored callback.');
       p.removeCallback(t);

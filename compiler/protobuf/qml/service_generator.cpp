@@ -132,8 +132,8 @@ void MethodGenerator::generateMethodElement(google::protobuf::io::Printer& p) {
           "    id: $camel_name$Method\n"
           "    methodName: '/$service_name$/$capital_name$'\n"
           "    channel: root.channel || null\n"
-          "    readDescriptor: $output_type$.descriptor\n"
-          "    writeDescriptor: $input_type$.descriptor\n"
+          "    readType: $output_type$\n"
+          "    writeType: $input_type$\n"
           "  }\n");
 }
 
@@ -141,10 +141,7 @@ void MethodGenerator::generateUnaryMethod(google::protobuf::io::Printer& p) {
   p.Print(variables,
           "  function $camel_name$(data, callback) {\n"
           "    'use strict';\n"
-          "    return $camel_name$Method.call(new $input_type$(data)._raw, "
-          "function(data, err) {\n"
-          "      callback && callback(new $output_type$(data), err);\n"
-          "    });\n"
+          "    return $camel_name$Method.call(data, callback);\n"
           "  }\n");
 }
 
@@ -163,15 +160,9 @@ void MethodGenerator::generateServerUnaryMethod(
 
 void MethodGenerator::generateWriterMethod(google::protobuf::io::Printer& p) {
   p.Print(variables,
-          "  function $camel_name$(callback, timeout) {\n"
+          "  function $camel_name$(callback) {\n"
           "    'use strict';\n"
-          "    var call = $camel_name$Method.call(function(data, err) {\n"
-          "      callback && callback(new $output_type$(data), err);\n"
-          "    }, timeout);\n"
-          "    call.write = function(data, callback) {\n"
-          "      return call._write(new $input_type$(data)._raw);\n"
-          "    };\n"
-          "    return call;\n"
+          "    return $camel_name$Method.call(callback);\n"
           "  }\n");
 }
 }
