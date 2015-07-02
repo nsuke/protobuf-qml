@@ -143,7 +143,7 @@ void MethodGenerator::generateUnaryMethod(google::protobuf::io::Printer& p) {
           "    'use strict';\n"
           "    return $camel_name$Method.call(new $input_type$(data)._raw, "
           "function(data, err) {\n"
-          "      callback(new $output_type$(data), err);\n"
+          "      callback && callback(new $output_type$(data), err);\n"
           "    });\n"
           "  }\n");
 }
@@ -166,7 +166,7 @@ void MethodGenerator::generateWriterMethod(google::protobuf::io::Printer& p) {
           "  function $camel_name$(callback, timeout) {\n"
           "    'use strict';\n"
           "    var call = $camel_name$Method.call(function(data, err) {\n"
-          "      callback(new $output_type$(data), err);\n"
+          "      callback && callback(new $output_type$(data), err);\n"
           "    }, timeout);\n"
           "    call.write = function(data, callback) {\n"
           "      return call._write(new $input_type$(data)._raw);\n"
