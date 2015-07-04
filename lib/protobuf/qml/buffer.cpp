@@ -16,7 +16,8 @@ SerializeMethod::SerializeMethod(BufferChannel* channel,
 bool SerializeMethod::write(int tag, const QVariant& v, int timeout) {
   auto msg = descriptor_->dataToMessage(v);
   if (!msg) {
-    // TODO:
+    qWarning() << "Failed to create message object to write";
+    return false;
   }
   auto close = std::bind(&BufferChannel::closeOutput, channel_, tag,
                          std::placeholders::_1);
