@@ -1,3 +1,4 @@
+#include "grpc/qml/server_calldata.h"
 #include "grpc/qml/base.h"
 #include "grpc/qml/unary.h"
 #include "grpc/qml/writer.h"
@@ -38,12 +39,10 @@ void Channel::startThread() {
         cq_.reset();
         return;
       }
-      std::unique_ptr<CallOp> op(reinterpret_cast<CallOp*>(tag));
+      auto cdata = static_cast<CallData*>(tag);
       tag = nullptr;
-      handled = true;
-      op->onEvent(ok, &handled);
-      if (!handled) {
-        op.release();
+      if (cdata) {
+        cdata->process(ok);
       }
     }
   }));

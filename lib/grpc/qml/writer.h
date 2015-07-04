@@ -3,6 +3,7 @@
 
 #include "protobuf/qml/method.h"
 #include "grpc/qml/base.h"
+#include "grpc/qml/server_calldata.h"
 
 #include <grpc++/impl/proto_utils.h>
 #include <mutex>
@@ -14,61 +15,45 @@ namespace qml {
 
 class WriterMethod;
 
-class WriterCall {
+class WriterCallData : public CallData {
 public:
-  WriterCall(int tag,
-             grpc::ChannelInterface* channel,
-             grpc::CompletionQueue* cq,
-             WriterMethod* method,
-             ::protobuf::qml::DescriptorWrapper* read_desc)
-      : tag_(tag),
-        channel_(channel),
-        cq_(cq),
-        method_(method),
-        read_desc_(read_desc),
-        response_(read_desc->newMessage()) {}
+  WriterCallData(int tag,
+                 grpc::ChannelInterface* channel,
+                 ::grpc::CompletionQueue* cq,
+                 WriterMethod* method,
+                 ::protobuf::qml::DescriptorWrapper* read);
 
-  ~WriterCall();
+  void process(bool ok) final;
 
   bool write(std::unique_ptr<google::protobuf::Message> request);
-
   bool writesDone();
-
   int timeout() const { return timeout_; }
   void set_timeout(int timeout);
 
-  void finish();
-
-  int tag() const { return tag_; }
-  WriterMethod* method() { return method_; }
-
-  ::protobuf::qml::DescriptorWrapper* read_descriptor() { return read_desc_; }
-
-  google::protobuf::Message* response() { return response_.get(); }
-
 private:
-  void handleWriteComplete();
+  enum class Status {
+    INIT,
+    FROZEN,
+    WRITE,
+    DONE,
+    FINISH,
+  };
+  void handleQueuedRequests();
 
-  bool doWrite(std::unique_ptr<google::protobuf::Message> request);
-  bool doWritesDone();
-  void ensureInit();
-
-  std::mutex write_mutex_;
-  bool writing_ = false;
-  bool done_ = false;
   int timeout_ = -1;
+  std::mutex mutex_;
+  Status status_ = Status::INIT;
+  ::grpc::CompletionQueue* cq_;
+  ::grpc::ClientContext context_;
   int tag_;
-  grpc::ChannelInterface* channel_;
-  grpc::CompletionQueue* cq_;
   WriterMethod* method_;
-  grpc::ClientContext context_;
-  ::protobuf::qml::DescriptorWrapper* read_desc_;
-  std::unique_ptr<google::protobuf::Message> response_;
   std::queue<std::unique_ptr<google::protobuf::Message>> requests_;
-  std::unique_ptr<grpc::ClientAsyncWriter<google::protobuf::Message>> writer_;
-
-  // For handleWriteComplete()
-  friend class WriterWriteOp;
+  grpc::ChannelInterface* channel_;
+  ::protobuf::qml::DescriptorWrapper* read_;
+  std::unique_ptr<google::protobuf::Message> request_;
+  std::unique_ptr<google::protobuf::Message> response_;
+  grpc::Status grpc_status_;
+  grpc::ClientAsyncWriter<google::protobuf::Message> writer_;
 };
 
 class WriterMethod : public ::protobuf::qml::WriterMethod {
@@ -95,8 +80,7 @@ public:
 
   bool writesDone(int tag) final;
 
-  void deleteCall(int tag) {  // TODO:
-  }
+  void deleteCall(int tag);
 
   int timeout(int tag) const final;
   void set_timeout(int tag, int milliseconds) final;
@@ -104,6 +88,8 @@ public:
   const grpc::RpcMethod& raw() const { return raw_; }
 
 private:
+  WriterCallData* ensureCallData(int tag);
+
   std::string name_;
   ::protobuf::qml::DescriptorWrapper* read_;
   ::protobuf::qml::DescriptorWrapper* write_;
@@ -111,7 +97,7 @@ private:
   std::shared_ptr<grpc::ChannelInterface> channel_;
   grpc::RpcMethod raw_;
   mutable std::mutex calls_mutex_;
-  std::unordered_map<int, WriterCall> calls_;
+  std::unordered_map<int, WriterCallData> calls_;
 };
 }
 }

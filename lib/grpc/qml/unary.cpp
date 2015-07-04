@@ -1,79 +1,49 @@
 #include "grpc/qml/unary.h"
-#include <grpc++/async_unary_call.h>
 #include <iostream>
 #include <chrono>
 
 namespace grpc {
 namespace qml {
 
-class UnaryOp : public CallOp {
-public:
-  UnaryOp(UnaryMethod* method,
-          UnaryCall* call,
-          int tag,
-          ::protobuf::qml::DescriptorWrapper* read_desc)
-      : method_(method),
-        call_(call),
-        tag_(tag),
-        read_desc_(read_desc),
-        message_(read_desc->newMessage()) {}
-
-  ~UnaryOp() {
-    qDebug() << __PRETTY_FUNCTION__;
-    method_->deleteCall(tag_);
-  }
-
-  void onEvent(bool ok, bool*) final {
-    qDebug() << __PRETTY_FUNCTION__;
-    if (!ok) {
-      std::cerr << status.error_message() << std::endl;
-
-      method_->error(tag_, QString::fromStdString(status.error_message()));
-    } else {
-      // TODO: check status
-      auto data = read_desc_->dataFromMessage(*message_);
-      method_->data(tag_, data);
-    }
-  }
-
-  google::protobuf::Message* response() { return message_.get(); }
-
-private:
-  UnaryMethod* method_;
-  UnaryCall* call_;
-  int tag_;
-  ::protobuf::qml::DescriptorWrapper* read_desc_;
-  std::unique_ptr<google::protobuf::Message> message_;
-};
-
-UnaryCall::UnaryCall(int tag,
-                     UnaryMethod* method,
-                     grpc::ChannelInterface* channel,
-                     grpc::CompletionQueue* cq,
-                     std::unique_ptr<google::protobuf::Message> request,
-                     int timeout)
-    : tag_(tag),
-      channel_(channel),
-      cq_(cq),
+UnaryCallData::UnaryCallData(int tag,
+                             UnaryMethod* method,
+                             grpc::ChannelInterface* channel,
+                             ::grpc::CompletionQueue* cq,
+                             ::protobuf::qml::DescriptorWrapper* read,
+                             std::unique_ptr<google::protobuf::Message> request,
+                             int timeout)
+    : cq_(cq),
+      tag_(tag),
       method_(method),
-      request_(std::move(request)) {
-  if (timeout >= 0) {
-    context_.set_deadline(std::chrono::system_clock::now() +
-                          std::chrono::milliseconds(timeout));
+      channel_(channel),
+      read_(read),
+      request_(std::move(request)),
+      response_(read_->newMessage()),
+      reader_(channel_, cq_, method_->raw(), &context_, *request_) {
+  context_.set_deadline(std::chrono::system_clock::now() +
+                        std::chrono::milliseconds(timeout));
+  process(true);
+}
+
+void UnaryCallData::process(bool ok) {
+  if (status_ == Status::INIT) {
+    status_ = Status::DONE;
+    reader_.Finish(response_.get(), &grpc_status_, this);
+  } else if (status_ == Status::DONE) {
+    if (ok) {
+      // TODO: check status
+      auto data = read_->dataFromMessage(*response_);
+      method_->data(tag_, data);
+    } else {
+      std::cerr << grpc_status_.error_message() << std::endl;
+      method_->error(tag_,
+                     QString::fromStdString(grpc_status_.error_message()));
+    }
+    method_->closed(tag_);
+    delete this;
+  } else {
+    Q_ASSERT(false);
   }
-}
-
-UnaryCall::~UnaryCall() {
-}
-
-void UnaryCall::write() {
-  reader_.reset(new grpc::ClientAsyncResponseReader<google::protobuf::Message>(
-      channel_, cq_, method_->raw(), &context_, *request_));
-  std::unique_ptr<UnaryOp> op(
-      new UnaryOp(method_, this, tag_, method_->readDescriptor()));
-  auto rsp = op->response();
-  auto st = &op->status;
-  reader_->Finish(rsp, st, op.release());
 }
 
 UnaryMethod::UnaryMethod(const std::string& name,
@@ -103,41 +73,9 @@ bool UnaryMethod::write(int tag, const QVariant& data, int timeout) {
     error(tag, "Failed to convert to message object.");
     return false;
   }
-  UnaryCall* call = nullptr;
-  {
-    std::lock_guard<std::mutex> lock(calls_mutex_);
-    auto it = calls_.find(tag);
-    if (it != calls_.end()) {
-      // Since tag is used by another call, we should not emit the error to
-      // tag.
-      // error(tag, "Tag already in use");
-      qWarning() << "Tag already in use: " << tag;
-      return false;
-    }
-    auto res =
-        calls_.emplace(std::piecewise_construct, std::forward_as_tuple(tag),
-                       std::forward_as_tuple(tag, this, channel_.get(), cq_,
-                                             std::move(request), timeout));
-    if (!res.second) {
-      error(tag, "Failed to create call object");
-      return false;
-    }
-    call = &res.first->second;
-  }
-  Q_ASSERT(call);
-  call->write();
+  new UnaryCallData(tag, this, channel_.get(), cq_, read_, std::move(request),
+                    timeout);
   return true;
-}
-
-void UnaryMethod::deleteCall(int tag) {
-  std::lock_guard<std::mutex> lock(calls_mutex_);
-  auto it = calls_.find(tag);
-  if (it == calls_.end()) {
-    qWarning() << "Invalid call tag: " << tag;
-    return;
-  }
-  calls_.erase(it);
-  closed(tag);
 }
 }
 }
