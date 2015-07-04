@@ -4,6 +4,7 @@
 #include "grpc/qml/server_credentials.h"
 #include "grpc/qml/server_unary.h"
 #include "grpc/qml/server_reader.h"
+#include "grpc/qml/server_writer.h"
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/server_method.h"
 
@@ -34,6 +35,7 @@ public:
 private:
   friend class ServerUnaryCallData;
   friend class ServerReaderCallData;
+  friend class ServerWriterCallData;
 };
 
 class GrpcService {

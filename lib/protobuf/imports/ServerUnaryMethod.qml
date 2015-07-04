@@ -13,7 +13,7 @@ PB.ServerUnaryMethodHolder {
   onData: {
     'use strict';
     if (typeof handler !== 'function') {
-      console.warn('Service method not available: ' + root.methodName);
+      console.warn('[' + root.methodName + ']: Service handler is not available. Please provide handler implementation.');
       return;
     }
     handler(new root.readType(data), function(err, response) {

@@ -48,6 +48,18 @@ protected:
     return ptr;
   }
 
+  std::unique_lock<std::mutex> lock() {
+    return std::unique_lock<std::mutex>(cdata_mutex_);
+  }
+
+  CallData* getUnsafe(int tag) {
+    auto it = cdata_.find(tag);
+    if (it == cdata_.end()) {
+      return nullptr;
+    }
+    return it->second;
+  }
+
   int tag_ = 1;
 
 private:

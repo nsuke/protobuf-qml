@@ -16,7 +16,6 @@ void ServerUnaryMethod::startProcessing() {
 }
 
 void ServerUnaryMethod::onRequest(ServerUnaryCallData* cdata) {
-  qDebug() << " ON REQ";
   auto tag = store(cdata);
   data(tag, cdata->data());
 }
@@ -51,12 +50,10 @@ ServerUnaryCallData::ServerUnaryCallData(
 void ServerUnaryCallData::process(bool ok) {
   if (status_ == Status::INIT) {
     request_.reset(read_->newMessage());
-    qDebug() << "REQUESTING";
     service_->raw()->RequestAsyncUnary(index_, &context_, request_.get(),
                                        &writer_, cq_, cq_, this);
     status_ = Status::READ;
   } else if (status_ == Status::READ) {
-    qDebug() << "READ";
     if (!ok) {
       // init called after shutdown ?
       // TODO: handle shutdown more explicitly
@@ -68,7 +65,6 @@ void ServerUnaryCallData::process(bool ok) {
     status_ = Status::FROZEN;
     method_->onRequest(this);
   } else if (status_ == Status::WRITE) {
-    qDebug() << "WRITE";
     if (!ok) {
       // notify
     }

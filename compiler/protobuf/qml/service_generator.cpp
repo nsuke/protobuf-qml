@@ -61,7 +61,7 @@ void ServiceGenerator::generateServerQmlFile(google::protobuf::io::Printer& p) {
     auto method = t_->method(i);
     auto w = method->client_streaming();
     auto r = method->server_streaming();
-    if (!r) {
+    if (!(r && w)) {
       p.Print("    $method_name$Method,\n", "method_name",
               uncapitalizeFirstLetter(method->name()));
     }
@@ -122,6 +122,9 @@ void MethodGenerator::generateMethod(google::protobuf::io::Printer& p) {
 
 void MethodGenerator::generateServerMethod(google::protobuf::io::Printer& p) {
   if (!t_->server_streaming()) {
+    p.Print(variables, "  property var $camel_name$\n");
+    generateServerUnaryMethod(p);
+  } else if (!t_->client_streaming()) {
     p.Print(variables, "  property var $camel_name$\n");
     generateServerUnaryMethod(p);
   } else {

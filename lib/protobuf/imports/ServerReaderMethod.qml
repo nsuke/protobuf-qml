@@ -8,13 +8,13 @@ PB.ServerReaderMethodHolder {
   property var writeType
   property var handlers: ({})
 
-  readDescriptor: readType && readType.descriptor
-  writeDescriptor: writeType && writeType.descriptor
+  readDescriptor: (readType && readType.descriptor) || null
+  writeDescriptor: (writeType && writeType.descriptor) || null
 
   function getHandler(tag) {
     if (!root.handlers[tag]) {
       if (typeof root.handler !== 'function') {
-        callback('Service method not available.');
+        console.warn('[' + root.methodName + ']: Service handler is not available. Please provide handler implementation.');
         return;
       }
       var call = {

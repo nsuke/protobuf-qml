@@ -1,4 +1,5 @@
 #include "grpc/qml/server.h"
+
 namespace grpc {
 namespace qml {
 
@@ -16,7 +17,7 @@ bool GrpcServer::registerService(::protobuf::qml::RpcService* service) {
   auto& srv = services_.back();
   if (!srv.raw()) {
     services_.pop_back();
-    qDebug() << "FAIL";
+    qDebug() << "Failed to create service object.";
     return false;
   }
   return true;
@@ -42,6 +43,12 @@ bool GrpcServer::doStart() {
         reader->inject(new ServerReaderMethod(&srv, m->index(), cq_.get(),
                                               m->read_descriptor(),
                                               m->write_descriptor()));
+      } else if (auto writer =
+                     qobject_cast<::protobuf::qml::ServerWriterMethodHolder*>(
+                         m)) {
+        writer->inject(new ServerWriterMethod(&srv, m->index(), cq_.get(),
+                                              m->read_descriptor(),
+                                              m->write_descriptor()));
       } else {
         qWarning() << "Currently, server streaming method is not supported.";
       }
@@ -63,7 +70,6 @@ void GrpcServer::handle() {
   void* tag = nullptr;
   bool ok = false;
   while (true) {
-    qDebug() << "LOOP";
     if (!cq_->Next(&tag, &ok)) {
       cq_.reset();
       return;

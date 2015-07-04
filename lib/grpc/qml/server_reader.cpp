@@ -21,7 +21,6 @@ void ServerReaderMethod::onData(
     ServerReaderCallData* cdata
     //, std::unique_ptr<google::protobuf::Message> data
     ) {
-  qDebug() << " ON DATA";
   Q_ASSERT(cdata);
   if (!cdata->tag) {
     cdata->tag = store(cdata);
@@ -32,7 +31,6 @@ void ServerReaderMethod::onData(
 void ServerReaderMethod::onDataEnd(ServerReaderCallData* cdata) {
   Q_ASSERT(cdata);
   if (cdata->tag) {
-    qDebug() << " ON DATA END";
     dataEnd(cdata->tag);
   }
 }
@@ -67,27 +65,22 @@ ServerReaderCallData::ServerReaderCallData(
 void ServerReaderCallData::process(bool ok) {
   if (status_ == Status::INIT) {
     request_.reset(read_->newMessage());
-    qDebug() << "REQUESTING";
     service_->raw()->RequestClientStreaming(index_, &context_, &reader_, cq_,
                                             cq_, this);
     status_ = Status::FIRST_READ;
   } else if (status_ == Status::FIRST_READ && ok) {
-    qDebug() << "FIRST READ";
     reader_.Read(request_.get(), this);
     status_ = Status::READ;
   } else if (status_ == Status::FIRST_READ) {
     // init called after shutdown ?
     // TODO: handle shutdown more explicitly
-    qDebug() << "FIRST READ SHUTDOWN";
     delete this;
   } else if (status_ == Status::READ && ok) {
-    qDebug() << "READ";
     data_ = read_->dataFromMessage(*request_);
     method_->onData(this);
     reader_.Read(request_.get(), this);
   } else if (status_ == Status::READ) {
     // client streaming completed
-    qDebug() << "READ END";
     status_ = Status::FROZEN;
     method_->onDataEnd(this);
   } else if (status_ == Status::DONE) {

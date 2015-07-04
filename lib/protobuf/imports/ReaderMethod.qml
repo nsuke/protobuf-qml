@@ -46,7 +46,6 @@ Item {
     }
 
     function handleDataEnd(tag) {
-      console.log('DATA END');
       'use strict';
       var call = callbackStorage[tag];
       if (!call) {

@@ -47,6 +47,18 @@ Item {
         }));
       });
     }
+
+    subscribeHello: function(call) {
+      call.on('data', function(data) {
+        for (var i = 0; i < data.requestsCount(); ++i) {
+          var req = data.requests(i);
+          call.write({
+            'greet': 'Hello ' + req.name(),
+          });
+        }
+        call.end();
+      });
+    }
   }
 
   TestCase {
@@ -112,6 +124,39 @@ Item {
 
       // should receive response
       tryCompare(val, 'called', true);
+    }
+
+    function test_server_streaming() {
+      skip('Wait for upstream change for graceful shutdown of server.');
+      var end = {};
+      var received = [];
+
+      var ok = helloClient.subscribeHello({
+        requests: [{
+          name: 'Baz0',
+        } , {
+          name: 'Baz1',
+        } , {
+          name: 'Baz2',
+        } , {
+          name: 'Baz3',
+        }],
+      }, function(err, data, finished) {
+        verify(!err);
+        if (finished) {
+          end.called = true;
+        } else {
+          received.push(data.greet());
+        }
+      });
+      verify(ok);
+
+      tryCompare(end, 'called', true);
+      compare(received.length, 4);
+      compare(received[0], 'Hello Baz0');
+      compare(received[1], 'Hello Baz1');
+      compare(received[2], 'Hello Baz2');
+      compare(received[3], 'Hello Baz3');
     }
   }
 }
