@@ -20,8 +20,10 @@ UnaryCallData::UnaryCallData(int tag,
       request_(std::move(request)),
       response_(read_->newMessage()),
       reader_(channel_, cq_, method_->raw(), &context_, *request_) {
-  context_.set_deadline(std::chrono::system_clock::now() +
-                        std::chrono::milliseconds(timeout));
+  if (timeout >= 0) {
+    context_.set_deadline(std::chrono::system_clock::now() +
+                          std::chrono::milliseconds(timeout));
+  }
   process(true);
 }
 

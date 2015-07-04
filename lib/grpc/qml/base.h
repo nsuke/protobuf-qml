@@ -14,13 +14,6 @@
 namespace grpc {
 namespace qml {
 
-struct CallOp {
-  virtual ~CallOp() {
-  }
-  virtual void onEvent(bool ok, bool* handled) {}
-  grpc::Status status;
-};
-
 class Channel : public ::protobuf::qml::Channel2 {
   Q_OBJECT
 

@@ -10,9 +10,15 @@ message HelloResponse {
   string greet = 1;
 }
 
+message HelloRequests {
+  repeated HelloRequest requests = 1;
+}
+
 service Hello {
   rpc SayHello(HelloRequest) returns(HelloResponse) {
   }
   rpc BatchHello(stream HelloRequest) returns(HelloResponse) {
+  }
+  rpc SubscribeHello(HelloRequests) returns(stream HelloResponse) {
   }
 }

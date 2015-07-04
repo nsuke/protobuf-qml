@@ -49,8 +49,10 @@ copy(protobuf-qml
   imports/message.js
   imports/UnaryMethod.qml
   imports/WriterMethod.qml
+  imports/ReaderMethod.qml
   imports/ServerUnaryMethod.qml
   imports/ServerReaderMethod.qml
+  imports/ServerWriterMethod.qml
   imports/BufferService.qml
   imports/MemoryBuffer.qml
   imports/File.qml)

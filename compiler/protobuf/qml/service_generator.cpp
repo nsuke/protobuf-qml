@@ -96,9 +96,12 @@ MethodGenerator::MethodGenerator(const google::protobuf::MethodDescriptor* t,
   if (!w && !r) {
     variables.insert(std::make_pair("method_type", "Unary"));
     variables.insert(std::make_pair("server_method_type", "Unary"));
-  } else if (w && !r) {
+  } else if (w) {
     variables.insert(std::make_pair("method_type", "Writer"));
     variables.insert(std::make_pair("server_method_type", "Reader"));
+  } else if (r) {
+    variables.insert(std::make_pair("method_type", "Reader"));
+    variables.insert(std::make_pair("server_method_type", "Writer"));
   } else {
     // not implemented
   }
@@ -107,7 +110,7 @@ MethodGenerator::MethodGenerator(const google::protobuf::MethodDescriptor* t,
 void MethodGenerator::generateMethod(google::protobuf::io::Printer& p) {
   auto w = t_->client_streaming();
   auto r = t_->server_streaming();
-  if (!w && !r) {
+  if (!w) {
     generateUnaryMethod(p);
   } else if (w && !r) {
     generateWriterMethod(p);

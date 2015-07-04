@@ -2,8 +2,10 @@ module Protobuf
 Message 1.0 message.js
 UnaryMethod 1.0 UnaryMethod.qml
 WriterMethod 1.0 WriterMethod.qml
+ReaderMethod 1.0 ReaderMethod.qml
 ServerUnaryMethod 1.0 ServerUnaryMethod.qml
 ServerReaderMethod 1.0 ServerReaderMethod.qml
+ServerWriterMethod 1.0 ServerWriterMethod.qml
 BufferService 1.0 BufferService.qml
 MemoryBuffer 1.0 MemoryBuffer.qml
 File 1.0 File.qml

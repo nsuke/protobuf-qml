@@ -28,5 +28,20 @@ bool WriterMethodHolder::ensureInit() {
   }
   return impl_ != nullptr;
 }
+
+bool ReaderMethodHolder::ensureInit() {
+  if (!impl_ && readyForInit()) {
+    impl_.reset(channel()->registerReaderMethod(
+        method_name(), read_descriptor(), write_descriptor()));
+    if (impl_) {
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &ReaderMethod::dataEnd, this,
+              &ReaderMethodHolder::dataEnd);
+      connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
+      connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
+    }
+  }
+  return impl_ != nullptr;
+}
 }
 }

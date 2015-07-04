@@ -149,6 +149,69 @@ private:
   std::unique_ptr<ServerReaderMethod> impl_;
 };
 
+class PROTOBUF_QML_DLLEXPORT ServerWriterMethod : public MethodBase {
+  Q_OBJECT
+
+public:
+  explicit ServerWriterMethod(QObject* p = nullptr) : MethodBase(p) {}
+  virtual ~ServerWriterMethod() {}
+  virtual bool respond(int tag, const QVariant& data) { return false; }
+  virtual bool end(int tag) { return false; }
+  virtual void startProcessing() {}
+};
+
+class PROTOBUF_QML_DLLEXPORT ServerWriterMethodHolder
+    : public ServerMethodHolder {
+  Q_OBJECT
+
+public:
+  explicit ServerWriterMethodHolder(QObject* p = nullptr)
+      : ServerMethodHolder(p) {}
+  ~ServerWriterMethodHolder() {}
+
+  void startProcessing() final {
+    Q_ASSERT(impl_);
+    impl_->startProcessing();
+  }
+
+  bool inject(ServerWriterMethod* impl) {
+    if (impl_) {
+      qWarning() << "Server writer method is already initialized";
+    }
+    impl_.reset(impl);
+    if (impl_) {
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
+      connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
+    }
+    return true;
+  }
+
+  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
+    if (!impl_) {
+      qWarning() << "Server writer method is not initialized.";
+      return false;
+    }
+    return impl_->respond(tag, data);
+  }
+
+  Q_INVOKABLE bool end(int tag) {
+    if (!impl_) {
+      qWarning() << "Server writer method is not initialized.";
+      return false;
+    }
+    return impl_->end(tag);
+  }
+
+protected:
+  void deinit() final {
+    // qWarning() << "Service method cannot be deinitialized.";
+  }
+
+private:
+  std::unique_ptr<ServerWriterMethod> impl_;
+};
+
 class RpcServer;
 
 class PROTOBUF_QML_DLLEXPORT RpcService : public QQuickItem {

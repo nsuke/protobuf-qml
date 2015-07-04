@@ -7,11 +7,12 @@ Item {
   property var readType
   property var writeType
 
-  P.UnaryMethodHolder {
+  P.ReaderMethodHolder {
     id: impl
     readDescriptor: (readType && readType.descriptor) || null
     writeDescriptor: (writeType && writeType.descriptor) || null
     onData: p.handleData(tag, data)
+    onDataEnd: p.handleDataEnd(tag)
     onError: p.handleError(tag, message)
     onClosed: p.handleClosed(tag)
   }
@@ -41,8 +42,19 @@ Item {
         console.warn('Received data for unknown tag: ' + tag);
         return;
       }
+      call.callback(null, data);
+    }
+
+    function handleDataEnd(tag) {
+      console.log('DATA END');
+      'use strict';
+      var call = callbackStorage[tag];
+      if (!call) {
+        console.warn('Received data for unknown tag: ' + tag);
+        return;
+      }
       try {
-        call.callback(data);
+        call.callback(null, null, true);
       } finally {
         delete callbackStorage[tag];
       }
@@ -54,7 +66,7 @@ Item {
       var call = callbackStorage[tag];
       if (call) {
         try {
-          call.callback(undefined, err);
+          call.callback(err);
         } finally {
           delete callbackStorage[tag];
         }
@@ -74,12 +86,11 @@ Item {
       timeout = -1;
     }
     var t = ++p.tag;
-    p.addCallback(t, function(data, err) {
-      callback && callback(new readType(data), err);
+    p.addCallback(t, function(err, data, end) {
+      callback && callback(err, new readType(data), end);
     });
     var ok = impl.write(t, new writeType(data)._raw, timeout);
     if (!ok) {
-      console.log('Discarding stored callback.');
       p.removeCallback(t);
     }
     return ok;

@@ -1,5 +1,4 @@
 #include "grpc/qml/writer.h"
-#include "grpc/qml/simple_handler.h"
 
 #include <iostream>
 

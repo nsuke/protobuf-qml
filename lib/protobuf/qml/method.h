@@ -174,7 +174,7 @@ public:
   explicit WriterMethodHolder(QObject* p = nullptr) : ClientMethodHolder(p) {}
   ~WriterMethodHolder() {}
 
-  Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {
+  Q_INVOKABLE bool write(int tag, const QVariant& data) {
     if (!ensureInit()) {
       qWarning() << "Failed to initialize writer method implementation.";
       return false;
@@ -182,7 +182,7 @@ public:
     return impl_->write(tag, data);
   }
 
-  Q_INVOKABLE bool writesDone(int tag, int timeout) {
+  Q_INVOKABLE bool writesDone(int tag) {
     if (!ensureInit()) {
       qWarning() << "Failed to initialize writer method implementation.";
       return false;
@@ -226,6 +226,40 @@ signals:
 public:
   explicit ReaderMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~ReaderMethod() {}
+
+  virtual bool write(int tag, const QVariant& data, int timeout) {
+    return false;
+  }
+};
+
+class PROTOBUF_QML_DLLEXPORT ReaderMethodHolder : public ClientMethodHolder {
+  Q_OBJECT
+
+signals:
+  void dataEnd(int tag);
+
+public:
+  explicit ReaderMethodHolder(QObject* p = nullptr) : ClientMethodHolder(p) {}
+  ~ReaderMethodHolder() {}
+
+  Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {
+    if (!ensureInit()) {
+      qWarning() << "Failed to initialize unary method implementation.";
+      return false;
+    }
+    return impl_->write(tag, data, timeout);
+  }
+
+protected:
+  void deinit() final {
+    // TODO: Is it safe at any time ??
+    impl_.reset();
+  }
+
+private:
+  bool ensureInit();
+
+  std::unique_ptr<ReaderMethod> impl_;
 };
 
 class PROTOBUF_QML_DLLEXPORT ReaderWriterMethod : public MethodBase {

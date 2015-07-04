@@ -30,6 +30,8 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
                                                     "UnaryMethodHolder");
   qmlRegisterType<protobuf::qml::WriterMethodHolder>(uri, 1, 0,
                                                      "WriterMethodHolder");
+  qmlRegisterType<protobuf::qml::ReaderMethodHolder>(uri, 1, 0,
+                                                     "ReaderMethodHolder");
 
   // server
   qmlRegisterType<protobuf::qml::RpcServer>(uri, 1, 0, "RpcServer");
@@ -38,4 +40,6 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
       uri, 1, 0, "ServerUnaryMethodHolder");
   qmlRegisterType<protobuf::qml::ServerReaderMethodHolder>(
       uri, 1, 0, "ServerReaderMethodHolder");
+  qmlRegisterType<protobuf::qml::ServerWriterMethodHolder>(
+      uri, 1, 0, "ServerWriterMethodHolder");
 }

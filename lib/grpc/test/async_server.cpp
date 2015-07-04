@@ -8,6 +8,7 @@
 #include <grpc++/status.h>
 
 #include <iostream>
+#include <queue>
 #include <sstream>
 
 using namespace hello;
@@ -109,6 +110,72 @@ private:
   std::stringstream ss;
 };
 
+class SubscribeHelloCallData : public CallData {
+public:
+  SubscribeHelloCallData(Hello::AsyncService* service,
+                         grpc::ServerCompletionQueue* cq)
+      : cq_(cq), service_(service), writer_(&context_) {
+    process(true);
+  }
+
+  void process(bool ok) final {
+    if (status_ == Status::INIT) {
+      std::cout << "SubscribeHello: INIT" << std::endl;
+      status_ = Status::READ;
+      service_->RequestSubscribeHello(&context_, &request_, &writer_, cq_, cq_,
+                                      this);
+    } else if (status_ == Status::READ) {
+      std::cout << "SubscribeHello: READ" << std::endl;
+      for (int i = 0; i < request_.requests_size(); ++i) {
+        auto& req = request_.requests(i);
+        names_.push(req.name());
+      }
+      respond();
+    } else if (status_ == Status::WRITE) {
+      std::cout << "SubscribeHello: WRITE" << std::endl;
+      respond();
+    } else if (status_ == Status::DONE) {
+      std::cout << "SubscribeHello: DONE" << std::endl;
+      new SubscribeHelloCallData(service_, cq_);
+      delete this;
+    } else {
+      throw std::logic_error("Unhandled state enum.");
+    }
+  }
+
+private:
+  enum class Status {
+    INIT,
+    READ,
+    WRITE,
+    DONE,
+  };
+
+  void respond() {
+    if (names_.empty()) {
+      status_ = Status::DONE;
+      writer_.Finish(grpc::Status::OK, this);
+    } else {
+      auto& name = names_.front();
+      response_.Clear();
+      response_.set_greet("Hello " + name);
+      std::cout << "Responding " << name;
+      names_.pop();
+      status_ = Status::WRITE;
+      writer_.Write(response_, this);
+    }
+  }
+
+  Status status_ = Status::INIT;
+  grpc::ServerContext context_;
+  grpc::ServerCompletionQueue* cq_;
+  Hello::AsyncService* service_;
+  HelloRequests request_;
+  std::queue<std::string> names_;
+  HelloResponse response_;
+  grpc::ServerAsyncWriter<HelloResponse> writer_;
+};
+
 void handle(grpc::ServerCompletionQueue* cq) {
   void* tag = nullptr;
   bool ok = false;
@@ -136,6 +203,7 @@ int main(int, char**) {
   std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
   new SayHelloCallData(&service, cq.get());
   new BatchHelloCallData(&service, cq.get());
+  new SubscribeHelloCallData(&service, cq.get());
   handle(cq.get());
   return 0;
 }
