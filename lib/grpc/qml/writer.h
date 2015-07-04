@@ -97,7 +97,7 @@ private:
   std::shared_ptr<grpc::ChannelInterface> channel_;
   grpc::RpcMethod raw_;
   mutable std::mutex calls_mutex_;
-  std::unordered_map<int, WriterCallData> calls_;
+  std::unordered_map<int, WriterCallData*> calls_;
 };
 }
 }

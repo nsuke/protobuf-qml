@@ -44,9 +44,10 @@ void WriterCallData::process(bool ok) {
     } else {
       method_->error(tag_, "Failed to complete writer call.");
     }
+    method_->deleteCall(tag_);
     // Release member mutex before deleting itself.
     lock.unlock();
-    method_->deleteCall(tag_);
+    delete this;
   } else {
     qWarning() << "Unexpected status : " << static_cast<int>(status_);
     Q_ASSERT(false);
@@ -119,16 +120,15 @@ WriterCallData* WriterMethod::ensureCallData(int tag) {
   WriterCallData* call = nullptr;
   auto it = calls_.find(tag);
   if (it == calls_.end()) {
-    auto res = calls_.emplace(
-        std::piecewise_construct, std::forward_as_tuple(tag),
-        std::forward_as_tuple(tag, channel_.get(), cq_, this, read_));
+    auto res = calls_.insert(std::make_pair(
+        tag, new WriterCallData(tag, channel_.get(), cq_, this, read_)));
     if (!res.second) {
       error(tag, "Failed to create call object");
       return nullptr;
     }
-    call = &res.first->second;
+    call = res.first->second;
   } else {
-    call = &it->second;
+    call = it->second;
   }
   return call;
 }
@@ -153,7 +153,7 @@ bool WriterMethod::writesDone(int tag) {
     qWarning() << "Tag not found for writesDone " << tag;
     return false;
   }
-  return it->second.writesDone();
+  return it->second->writesDone();
 }
 
 int WriterMethod::timeout(int tag) const {
@@ -163,7 +163,7 @@ int WriterMethod::timeout(int tag) const {
     qWarning() << "Tag not found for timeout " << tag;
     return false;
   }
-  return it->second.timeout();
+  return it->second->timeout();
 }
 
 void WriterMethod::set_timeout(int tag, int milliseconds) {
