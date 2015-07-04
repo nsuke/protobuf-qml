@@ -28,7 +28,7 @@ Item {
     }
     serializeMethod.writeType = type;
     serializeMethod.readType = type;
-    return serializeMethod.call(data, function (ignore, err) {
+    return serializeMethod.call(data, function (err) {
       callback(err);
     });
   }

@@ -19,7 +19,7 @@ Item {
 
     function test_parse_undefined() {
       var called = {};
-      Test1.Msg1.parseFrom(undefined, function(msg, err) {
+      Test1.Msg1.parseFrom(undefined, function(err, msg) {
         if (!err) {
           console.log('msg ' + msg._raw);
           fail();
@@ -32,7 +32,7 @@ Item {
 
     function test_parse_empty() {
       var called = {};
-      Test1.Msg1.parseFrom(buffer.input, function(msg, err) {
+      Test1.Msg1.parseFrom(buffer.input, function(err, msg) {
         if (!err) {
           console.log('msg ' + msg._raw);
           fail();
@@ -49,7 +49,7 @@ Item {
       var msg1 = new Test1.Msg1({field1: -42});
       msg1.serializeTo(buffer.output, function() {
         buffer.size = 0;
-        Test1.Msg1.parseFrom(buffer.input, function(msg, err) {
+        Test1.Msg1.parseFrom(buffer.input, function(err, msg) {
           if (!err) {
             console.log('msg ' + msg._raw);
             fail();

@@ -28,7 +28,7 @@ Item {
         ],
       });
       msg1.serializeTo(buffer.output, function() {
-        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
+        Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.repeatedField);
           compare(msg2.repeatedFieldCount(), 3);
@@ -51,7 +51,7 @@ Item {
         ],
       });
       msg1.serializeTo(buffer.output, function() {
-        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
+        Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.repeatedStringField);
           compare(msg2.repeatedStringFieldCount(), 2);
@@ -75,7 +75,7 @@ Item {
         ],
       });
       msg1.serializeTo(buffer.output, function() {
-        Test1.Msg1.parseFrom(buffer.input, function(msg2) {
+        Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.repeatedEnumField);
           compare(msg2.repeatedEnumFieldCount(), 4);
@@ -105,7 +105,7 @@ Item {
         ],
       });
       msg1.serializeTo(buffer.output, function() {
-        Test2.Msg2.parseFrom(buffer.input, function(msg2) {
+        Test2.Msg2.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.msgs1);
           compare(msg2.msgs1Count(), 2);

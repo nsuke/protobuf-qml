@@ -42,7 +42,7 @@ Item {
         return;
       }
       try {
-        call.callback(data);
+        call.callback(null, data);
       } finally {
         delete callbackStorage[tag];
       }
@@ -54,7 +54,7 @@ Item {
       var call = callbackStorage[tag];
       if (call) {
         try {
-          call.callback(undefined, err);
+          call.callback(err);
         } finally {
           delete callbackStorage[tag];
         }
@@ -105,8 +105,8 @@ Item {
   function call(callback) {
     'use strict';
     var t = ++p.tag;
-    p.addCallback(t, function(data, err) {
-      callback && callback(new readType(data), err);
+    p.addCallback(t, function(err, data) {
+      callback && callback(err, new readType(data));
     });
     return {
       get timeout() {

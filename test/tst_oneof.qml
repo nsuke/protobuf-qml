@@ -31,7 +31,7 @@ Item {
       // serialize -> parse
       var called = {};
       msg1.serializeTo(buffer.output, function() {
-        Msg.Foo.parseFrom(buffer.input, function(msg2) {
+        Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.ONEOF2);
           compare(msg2.oneof2(), 'foo');
           called.called = true;
@@ -57,7 +57,7 @@ Item {
       // serialize -> parse
       var called = {};
       msg1.serializeTo(buffer.output, function() {
-        Msg.Foo.parseFrom(buffer.input, function(msg2) {
+        Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.ONEOF3);
           compare(msg2.oneof3().baz(), 'baz!');
           called.called = true;
@@ -85,7 +85,7 @@ Item {
       // serialize -> parse
       var called = {};
       msg1.serializeTo(buffer.output, function() {
-        Msg.Foo.parseFrom(buffer.input, function(msg2) {
+        Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.baz().bazXCase(), Msg.Foo.Baz.BazXCase.BAZ2);
           compare(msg2.baz().baz2().bar1Case(), Msg.Bar.Bar1Case.BAR_STR2);
           compare(msg2.baz().baz2().bar2Case(), Msg.Bar.Bar2Case.BAR_STR3);
@@ -108,7 +108,7 @@ Item {
       // then serialize -> parse
       var called = {};
       foo.serializeTo(buffer.output, function() {
-        Msg.Foo.parseFrom(buffer.input, function(msg2) {
+        Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.SIMPLE_NOT_SET);
           compare(msg2.oneof1(), undefined);
           compare(msg2.oneof2(), undefined);
@@ -162,7 +162,7 @@ Item {
       // then serialize -> parse
       var called = {};
       foo.serializeTo(buffer.output, function() {
-        Msg.Foo.parseFrom(buffer.input, function(msg2) {
+        Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.ONEOF2);
           compare(msg2.oneof1(), undefined);
           compare(msg2.oneof2(), 'Hello again.');

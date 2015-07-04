@@ -23,7 +23,7 @@ Item {
     function test_unary() {
       var val = {};
       // when invoked service
-      var ok = helloClient.sayHello({name: 'Foo'}, function(rsp, err) {
+      var ok = helloClient.sayHello({name: 'Foo'}, function(err, rsp) {
         // should not receive errror
         verify(!err);
 
@@ -42,7 +42,7 @@ Item {
     function test_client_streaming() {
       var val = {};
       // when start calling service
-      var call = helloClient.batchHello(function(rsp, err) {
+      var call = helloClient.batchHello(function(err, rsp) {
         // should not receive errror
         verify(!err);
 

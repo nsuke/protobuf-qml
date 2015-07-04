@@ -23,7 +23,7 @@ Item {
       var msg1 = new Test1.Msg1({field1: -42});
       msg1.serializeTo(buffer.output, function(err) {
         verify(!err);
-        Test1.Msg1.parseFrom(buffer.input, function(msg2, err) {
+        Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           console.log(msg2);
           verify(!err);
           compare(msg2.field1(), -42);
