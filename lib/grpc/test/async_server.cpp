@@ -176,6 +176,83 @@ private:
   grpc::ServerAsyncWriter<HelloResponse> writer_;
 };
 
+class BidiHelloCallData : public CallData {
+public:
+  BidiHelloCallData(Hello::AsyncService* service,
+                    grpc::ServerCompletionQueue* cq)
+      : cq_(cq), service_(service), rw_(&context_) {
+    process(true);
+  }
+
+  void process(bool ok) final {
+    if (status_ == Status::INIT) {
+      std::cout << "BidiHello: INIT" << std::endl;
+      status_ = Status::REQUEST;
+      service_->RequestBidiHello(&context_, &rw_, cq_, cq_, this);
+    } else if (status_ == Status::REQUEST) {
+      std::cout << "BidiHello: REQUEST" << std::endl;
+      status_ = Status::READ;
+      rw_.Read(&request_, this);
+    } else if (status_ == Status::READ) {
+      std::cout << "BidiHello: READ" << std::endl;
+      if (!ok) {
+        data_end_ = true;
+      } else {
+        for (int i = 0; i < request_.requests_size(); ++i) {
+          names_.push(request_.requests(i).name());
+        }
+      }
+      respond();
+    } else if (status_ == Status::WRITE) {
+      std::cout << "BidiHello: WRITE" << std::endl;
+      respond();
+    } else if (status_ == Status::DONE) {
+      std::cout << "BidiHello: DONE" << std::endl;
+      new BidiHelloCallData(service_, cq_);
+      delete this;
+    } else {
+      throw std::logic_error("Unhandled state enum.");
+    }
+  }
+
+private:
+  enum class Status {
+    INIT,
+    REQUEST,
+    READ,
+    WRITE,
+    DONE,
+  };
+
+  void respond() {
+    if (names_.empty() && data_end_) {
+      status_ = Status::DONE;
+      rw_.Finish(grpc::Status::OK, this);
+    } else if (names_.empty()) {
+      status_ = Status::READ;
+      rw_.Read(&request_, this);
+    } else {
+      auto& name = names_.front();
+      response_.Clear();
+      response_.set_greet("Hello " + name);
+      std::cout << "Responding " << name;
+      names_.pop();
+      status_ = Status::WRITE;
+      rw_.Write(response_, this);
+    }
+  }
+
+  bool data_end_ = false;
+  Status status_ = Status::INIT;
+  std::queue<std::string> names_;
+  grpc::ServerContext context_;
+  grpc::ServerCompletionQueue* cq_;
+  Hello::AsyncService* service_;
+  HelloRequests request_;
+  HelloResponse response_;
+  grpc::ServerAsyncReaderWriter<HelloResponse, HelloRequests> rw_;
+};
+
 void handle(grpc::ServerCompletionQueue* cq) {
   void* tag = nullptr;
   bool ok = false;
@@ -204,6 +281,7 @@ int main(int, char**) {
   new SayHelloCallData(&service, cq.get());
   new BatchHelloCallData(&service, cq.get());
   new SubscribeHelloCallData(&service, cq.get());
+  new BidiHelloCallData(&service, cq.get());
   handle(cq.get());
   return 0;
 }

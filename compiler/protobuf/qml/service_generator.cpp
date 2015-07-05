@@ -79,9 +79,6 @@ MethodGenerator::MethodGenerator(const google::protobuf::MethodDescriptor* t,
                                  const std::string& input_type_name,
                                  const std::string& output_type_name)
     : t_(t) {
-  auto w = t_->client_streaming();
-  auto r = t_->server_streaming();
-
   auto capital_name = t_->name();
   auto camel_name = uncapitalizeFirstLetter(t_->name());
 
@@ -93,43 +90,45 @@ MethodGenerator::MethodGenerator(const google::protobuf::MethodDescriptor* t,
       {"output_type", output_type_name},
       {"index", std::to_string(t_->index())},
   };
-  if (!w && !r) {
-    variables.insert(std::make_pair("method_type", "Unary"));
-    variables.insert(std::make_pair("server_method_type", "Unary"));
-  } else if (w) {
+
+  auto cl = t_->client_streaming();
+  auto sv = t_->server_streaming();
+  if (cl && sv) {
+    variables.insert(std::make_pair("method_type", "ReaderWriter"));
+    variables.insert(std::make_pair("server_method_type", "ReaderWriter"));
+  } else if (cl) {
     variables.insert(std::make_pair("method_type", "Writer"));
     variables.insert(std::make_pair("server_method_type", "Reader"));
-  } else if (r) {
+  } else if (sv) {
     variables.insert(std::make_pair("method_type", "Reader"));
     variables.insert(std::make_pair("server_method_type", "Writer"));
   } else {
-    // not implemented
+    variables.insert(std::make_pair("method_type", "Unary"));
+    variables.insert(std::make_pair("server_method_type", "Unary"));
   }
 }
 
 void MethodGenerator::generateMethod(google::protobuf::io::Printer& p) {
-  auto w = t_->client_streaming();
-  auto r = t_->server_streaming();
-  if (!w) {
-    generateUnaryMethod(p);
-  } else if (w && !r) {
-    generateWriterMethod(p);
+  if (!t_->client_streaming()) {
+    withPayload(p);
   } else {
-    // not implemented
+    withoutPayload(p);
   }
   generateMethodElement(p);
 }
 
 void MethodGenerator::generateServerMethod(google::protobuf::io::Printer& p) {
-  if (!t_->server_streaming()) {
-    p.Print(variables, "  property var $camel_name$\n");
-    generateServerUnaryMethod(p);
-  } else if (!t_->client_streaming()) {
-    p.Print(variables, "  property var $camel_name$\n");
-    generateServerUnaryMethod(p);
-  } else {
-    // not implemented
-  }
+  if (!t_->client_streaming() || !t_->server_streaming())
+  p.Print(variables,
+          "property var $camel_name$\n"
+          "  PB.Server$server_method_type$Method {\n"
+          "    id: $camel_name$Method\n"
+          "    methodName: '/$service_name$/$capital_name$'\n"
+          "    readType: $input_type$\n"
+          "    writeType: $output_type$\n"
+          "    index: $index$\n"
+          "    handler: $camel_name$\n"
+          "  }\n");
 }
 
 void MethodGenerator::generateMethodElement(google::protobuf::io::Printer& p) {
@@ -143,7 +142,7 @@ void MethodGenerator::generateMethodElement(google::protobuf::io::Printer& p) {
           "  }\n");
 }
 
-void MethodGenerator::generateUnaryMethod(google::protobuf::io::Printer& p) {
+void MethodGenerator::withPayload(google::protobuf::io::Printer& p) {
   p.Print(variables,
           "  function $camel_name$(data, callback) {\n"
           "    'use strict';\n"
@@ -151,20 +150,7 @@ void MethodGenerator::generateUnaryMethod(google::protobuf::io::Printer& p) {
           "  }\n");
 }
 
-void MethodGenerator::generateServerUnaryMethod(
-    google::protobuf::io::Printer& p) {
-  p.Print(variables,
-          "  PB.Server$server_method_type$Method {\n"
-          "    id: $camel_name$Method\n"
-          "    methodName: '/$service_name$/$capital_name$'\n"
-          "    readType: $input_type$\n"
-          "    writeType: $output_type$\n"
-          "    index: $index$\n"
-          "    handler: $camel_name$\n"
-          "  }\n");
-}
-
-void MethodGenerator::generateWriterMethod(google::protobuf::io::Printer& p) {
+void MethodGenerator::withoutPayload(google::protobuf::io::Printer& p) {
   p.Print(variables,
           "  function $camel_name$(callback) {\n"
           "    'use strict';\n"

@@ -137,7 +137,6 @@ public:
 
   Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {
     if (!ensureInit()) {
-      qWarning() << "Failed to initialize unary method implementation.";
       return false;
     }
     return impl_->write(tag, data, timeout);
@@ -176,7 +175,6 @@ public:
 
   Q_INVOKABLE bool write(int tag, const QVariant& data) {
     if (!ensureInit()) {
-      qWarning() << "Failed to initialize writer method implementation.";
       return false;
     }
     return impl_->write(tag, data);
@@ -184,7 +182,6 @@ public:
 
   Q_INVOKABLE bool writesDone(int tag) {
     if (!ensureInit()) {
-      qWarning() << "Failed to initialize writer method implementation.";
       return false;
     }
     return impl_->writesDone(tag);
@@ -192,14 +189,12 @@ public:
 
   Q_INVOKABLE int timeout(int tag) {
     if (!ensureInit()) {
-      qWarning() << "Failed to initialize unary method implementation.";
       return -1;
     }
     return impl_->timeout(tag);
   }
   Q_INVOKABLE void set_timeout(int tag, int milliseconds) {
     if (!ensureInit()) {
-      qWarning() << "Failed to initialize unary method implementation.";
       return;
     }
     impl_->set_timeout(tag, milliseconds);
@@ -244,7 +239,6 @@ public:
 
   Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {
     if (!ensureInit()) {
-      qWarning() << "Failed to initialize unary method implementation.";
       return false;
     }
     return impl_->write(tag, data, timeout);
@@ -271,7 +265,66 @@ signals:
 public:
   explicit ReaderWriterMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~ReaderWriterMethod() {}
+  virtual bool call(int tag) { return false; }
+  virtual bool write(int tag, const QVariant& data) { return false; }
   virtual bool writesDone(int tag) { return false; }
+  virtual int timeout(int tag) const { return -1; }
+  virtual void set_timeout(int tag, int milliseconds) {}
+};
+
+class PROTOBUF_QML_DLLEXPORT ReaderWriterMethodHolder
+    : public ClientMethodHolder {
+  Q_OBJECT
+
+signals:
+  void dataEnd(int tag);
+
+public:
+  explicit ReaderWriterMethodHolder(QObject* p = nullptr)
+      : ClientMethodHolder(p) {}
+  ~ReaderWriterMethodHolder() {}
+
+  Q_INVOKABLE bool call(int tag) {
+    if (!ensureInit()) {
+      return false;
+    }
+    return impl_->call(tag);
+  }
+
+  Q_INVOKABLE bool write(int tag, const QVariant& data) {
+    if (!ensureInit()) {
+      return false;
+    }
+    return impl_->write(tag, data);
+  }
+
+  Q_INVOKABLE bool writesDone(int tag) {
+    if (!ensureInit()) {
+      return false;
+    }
+    return impl_->writesDone(tag);
+  }
+
+  Q_INVOKABLE int timeout(int tag) {
+    if (!ensureInit()) {
+      return -1;
+    }
+    return impl_->timeout(tag);
+  }
+  Q_INVOKABLE void set_timeout(int tag, int milliseconds) {
+    if (!ensureInit()) {
+      return;
+    }
+    impl_->set_timeout(tag, milliseconds);
+  }
+
+protected:
+  void deinit() final { impl_.reset(); }
+
+private:
+  bool ensureInit();
+
+  std::unique_ptr<ReaderWriterMethod> impl_;
 };
 
 class PROTOBUF_QML_DLLEXPORT Channel2 : public QObject {

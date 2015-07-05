@@ -21,4 +21,6 @@ service Hello {
   }
   rpc SubscribeHello(HelloRequests) returns(stream HelloResponse) {
   }
+  rpc BidiHello(stream HelloRequests) returns(stream HelloResponse) {
+  }
 }

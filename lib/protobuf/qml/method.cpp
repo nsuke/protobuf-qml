@@ -12,6 +12,8 @@ bool UnaryMethodHolder::ensureInit() {
       connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
     }
+  } else {
+    qWarning() << "Failed to initialize unary method implementation.";
   }
   return impl_ != nullptr;
 }
@@ -25,6 +27,8 @@ bool WriterMethodHolder::ensureInit() {
       connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
     }
+  } else {
+    qWarning() << "Failed to initialize writer method implementation.";
   }
   return impl_ != nullptr;
 }
@@ -39,6 +43,25 @@ bool ReaderMethodHolder::ensureInit() {
               &ReaderMethodHolder::dataEnd);
       connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
+  } else {
+    qWarning() << "Failed to initialize reader method implementation.";
+    }
+  }
+  return impl_ != nullptr;
+}
+
+bool ReaderWriterMethodHolder::ensureInit() {
+  if (!impl_ && readyForInit()) {
+    impl_.reset(channel()->registerReaderWriterMethod(
+        method_name(), read_descriptor(), write_descriptor()));
+    if (impl_) {
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &ReaderWriterMethod::dataEnd, this,
+              &ReaderWriterMethodHolder::dataEnd);
+      connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
+      connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
+  } else {
+    qWarning() << "Failed to initialize bidi method implementation.";
     }
   }
   return impl_ != nullptr;

@@ -3,6 +3,7 @@
 #include "grpc/qml/unary.h"
 #include "grpc/qml/writer.h"
 #include "grpc/qml/reader.h"
+#include "grpc/qml/reader_writer.h"
 
 namespace grpc {
 namespace qml {
@@ -65,6 +66,7 @@ bool Channel::ensureInit() {
   if (raw_ && !thread_) {
     if (raw_) {
       startThread();
+      Q_ASSERT(cq_);
     }
   }
 
@@ -75,11 +77,8 @@ bool Channel::ensureInit() {
     const QString& name,
     ::protobuf::qml::DescriptorWrapper* read,
     ::protobuf::qml::DescriptorWrapper* write) {
-  if (!ensureInit()) {
-    return nullptr;
-  }
-  Q_ASSERT(cq_);
-  return new UnaryMethod(name.toStdString(), read, write, raw_, cq_.get());
+  return !ensureInit() ? nullptr : new UnaryMethod(name.toStdString(), read,
+                                                   write, raw_, cq_.get());
 }
 ::protobuf::qml::ReaderMethod* Channel::registerReaderMethod(
     const QString& name,
@@ -87,7 +86,6 @@ bool Channel::ensureInit() {
     ::protobuf::qml::DescriptorWrapper* write) {
   return !ensureInit() ? nullptr : new ReaderMethod(name.toStdString(), read,
                                                     write, raw_, cq_.get());
-  return nullptr;
 }
 ::protobuf::qml::WriterMethod* Channel::registerWriterMethod(
     const QString& name,
@@ -95,17 +93,14 @@ bool Channel::ensureInit() {
     ::protobuf::qml::DescriptorWrapper* write) {
   return !ensureInit() ? nullptr : new WriterMethod(name.toStdString(), read,
                                                     write, raw_, cq_.get());
-  return nullptr;
 }
 ::protobuf::qml::ReaderWriterMethod* Channel::registerReaderWriterMethod(
     const QString& name,
     ::protobuf::qml::DescriptorWrapper* read,
     ::protobuf::qml::DescriptorWrapper* write) {
-  // TODO: Not implemented yet
-  // return !ensureInit() ? nullptr
-  //                      : new ReaderWriterMethod(name.toStdString(), read, write,
-  //                                               raw_, cq_.get());
-  return nullptr;
+  return !ensureInit() ? nullptr
+                       : new ReaderWriterMethod(name.toStdString(), read, write,
+                                                raw_, cq_.get());
 }
 }
 }

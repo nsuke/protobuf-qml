@@ -3,6 +3,7 @@ Message 1.0 message.js
 UnaryMethod 1.0 UnaryMethod.qml
 WriterMethod 1.0 WriterMethod.qml
 ReaderMethod 1.0 ReaderMethod.qml
+ReaderWriterMethod 1.0 ReaderWriterMethod.qml
 ServerUnaryMethod 1.0 ServerUnaryMethod.qml
 ServerReaderMethod 1.0 ServerReaderMethod.qml
 ServerWriterMethod 1.0 ServerWriterMethod.qml

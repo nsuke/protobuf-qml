@@ -77,10 +77,8 @@ public:
 
 private:
   void generateMethodElement(google::protobuf::io::Printer& p);
-  void generateUnaryMethod(google::protobuf::io::Printer& p);
-  void generateWriterMethod(google::protobuf::io::Printer& p);
-
-  void generateServerUnaryMethod(google::protobuf::io::Printer& p);
+  void withPayload(google::protobuf::io::Printer& p);
+  void withoutPayload(google::protobuf::io::Printer& p);
 
   const google::protobuf::MethodDescriptor* t_;
   std::map<std::string, std::string> variables;

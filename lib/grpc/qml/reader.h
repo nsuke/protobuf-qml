@@ -67,7 +67,7 @@ public:
              grpc::RpcMethod::SERVER_STREAMING,
              channel_->RegisterMethod(name.c_str())) {}
 
-  bool write(int tag, const QVariant& data, int timeout);
+  bool write(int tag, const QVariant& data, int timeout) final;
 
   const grpc::RpcMethod& raw() const { return raw_; }
 

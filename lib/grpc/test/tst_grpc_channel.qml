@@ -25,7 +25,7 @@ Item {
       // when invoked service
       var ok = helloClient.sayHello({name: 'Foo'}, function(err, rsp) {
         // should not receive errror
-        verify(!err);
+        verify(!err, err);
 
         // should receive response processed by server
         compare(rsp.greet(), 'Hello Foo');
@@ -44,7 +44,7 @@ Item {
       // when start calling service
       var call = helloClient.batchHello(function(err, rsp) {
         // should not receive errror
-        verify(!err);
+        verify(!err, err);
 
         // should receive response processed with all messages by server
         compare(rsp.greet(), 'Hello Bar1 Bar2 Bar3');
@@ -86,7 +86,7 @@ Item {
           name: 'Baz3',
         }],
       }, function(err, data, finished) {
-        verify(!err);
+        verify(!err, err);
         if (finished) {
           end.called = true;
         } else {
@@ -101,6 +101,58 @@ Item {
       compare(received[1], 'Hello Baz1');
       compare(received[2], 'Hello Baz2');
       compare(received[3], 'Hello Baz3');
+    }
+
+    function test_bidi_streaming() {
+      var end = {};
+      var received = [];
+
+      var call = helloClient.bidiHello(function(err, data, finished) {
+        verify(!err, err);
+        if (finished) {
+          end.called = true;
+        } else {
+          received.push(data.greet());
+        }
+      });
+      verify(call);
+
+      // Ensure that call succeeds even if client does not immediately write.
+      wait(100);
+
+      call.write({
+        requests: [{
+          name: 'Baz0',
+        } , {
+          name: 'Baz1',
+        } , {
+          name: 'Baz2',
+        } , {
+          name: 'Baz3',
+        }],
+      });
+
+      call.write({
+        requests: [{
+          name: 'Foo0',
+        } , {
+          name: 'Foo1',
+        } , {
+          name: 'Foo2',
+        }],
+      });
+
+      call.end();
+
+      tryCompare(end, 'called', true, 500);
+      compare(received.length, 7);
+      compare(received[0], 'Hello Baz0');
+      compare(received[1], 'Hello Baz1');
+      compare(received[2], 'Hello Baz2');
+      compare(received[3], 'Hello Baz3');
+      compare(received[4], 'Hello Foo0');
+      compare(received[5], 'Hello Foo1');
+      compare(received[6], 'Hello Foo2');
     }
   }
 }

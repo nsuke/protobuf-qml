@@ -13,6 +13,7 @@ set(grpc-qml_SOURCES
   qml/unary.cpp
   qml/writer.cpp
   qml/reader.cpp
+  qml/reader_writer.cpp
   )
 
 add_library(grpc-qml SHARED ${grpc-qml_SOURCES})

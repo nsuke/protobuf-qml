@@ -32,6 +32,8 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
                                                      "WriterMethodHolder");
   qmlRegisterType<protobuf::qml::ReaderMethodHolder>(uri, 1, 0,
                                                      "ReaderMethodHolder");
+  qmlRegisterType<protobuf::qml::ReaderWriterMethodHolder>(
+      uri, 1, 0, "ReaderWriterMethodHolder");
 
   // server
   qmlRegisterType<protobuf::qml::RpcServer>(uri, 1, 0, "RpcServer");

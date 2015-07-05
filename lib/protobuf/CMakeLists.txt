@@ -50,6 +50,7 @@ copy(protobuf-qml
   imports/UnaryMethod.qml
   imports/WriterMethod.qml
   imports/ReaderMethod.qml
+  imports/ReaderWriterMethod.qml
   imports/ServerUnaryMethod.qml
   imports/ServerReaderMethod.qml
   imports/ServerWriterMethod.qml
