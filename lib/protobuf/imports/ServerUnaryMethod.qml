@@ -7,8 +7,8 @@ PB.ServerUnaryMethodHolder {
   property var readType
   property var writeType
 
-  readDescriptor: readType && readType.descriptor
-  writeDescriptor: writeType && writeType.descriptor
+  readDescriptor: (readType && readType.descriptor) || null
+  writeDescriptor: (writeType && writeType.descriptor) || null
 
   onData: {
     'use strict';

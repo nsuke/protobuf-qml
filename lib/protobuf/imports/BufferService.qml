@@ -1,7 +1,7 @@
 import QtQuick 2.2
 import Protobuf 1.0 as PB
 
-Item {
+QtObject {
   id: root
   property var channel
 
@@ -9,13 +9,13 @@ Item {
   property alias input: root
   property alias output: root
 
-  PB.UnaryMethod {
+  property var __parse__: PB.UnaryMethod {
     id: parseMethod
     methodName: '/Buffer/Parse'
     channel: root.channel
   }
 
-  PB.UnaryMethod {
+  property var __serialize__: PB.UnaryMethod {
     id: serializeMethod
     methodName: '/Buffer/Serialize'
     channel: root.channel

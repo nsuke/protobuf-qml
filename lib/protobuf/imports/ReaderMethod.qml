@@ -1,13 +1,13 @@
 import QtQuick 2.2
 import Protobuf 1.0 as P
 
-Item {
+QtObject {
   property alias channel: impl.channel
   property alias methodName: impl.methodName
   property var readType
   property var writeType
 
-  P.ReaderMethodHolder {
+  property var holder: P.ReaderMethodHolder {
     id: impl
     readDescriptor: (readType && readType.descriptor) || null
     writeDescriptor: (writeType && writeType.descriptor) || null
@@ -17,14 +17,14 @@ Item {
     onClosed: p.handleClosed(tag)
   }
 
-  Item {
+  property var __private__: QtObject {
     id: p
 
     property var callbackStorage: []
 
     function handleClosed(tag) {
       'use strict';
-      // TODO: find the call and delete
+      removeCallback(tag);
     }
 
     function addCallback(tag, callback) {
@@ -55,7 +55,7 @@ Item {
       try {
         call.callback(null, null, true);
       } finally {
-        delete callbackStorage[tag];
+        removeCallback(tag);
       }
     }
 
@@ -67,7 +67,7 @@ Item {
         try {
           call.callback(err);
         } finally {
-          delete callbackStorage[tag];
+          removeCallback(tag);
         }
       }
     }
@@ -75,7 +75,7 @@ Item {
 
     function removeCallback(tag) {
       'use strict';
-      // TODO:
+      callbackStorage.shift(tag, 1);
     }
   }
 

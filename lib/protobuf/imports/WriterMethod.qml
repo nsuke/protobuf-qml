@@ -1,29 +1,29 @@
 import QtQuick 2.2
 import Protobuf 1.0 as P
 
-Item {
+QtObject {
   property alias channel: impl.channel
   property alias methodName: impl.methodName
   property var readType
   property var writeType
 
-  P.WriterMethodHolder {
+  property var holder: P.WriterMethodHolder {
     id: impl
-    readDescriptor: readType && readType.descriptor
-    writeDescriptor: writeType && writeType.descriptor
+    readDescriptor: (readType && readType.descriptor) || null
+    writeDescriptor: (writeType && writeType.descriptor) || null
     onData: p.handleData(tag, data)
     onError: p.handleError(tag, message)
     onClosed: p.handleClosed(tag)
   }
 
-  Item {
+  property var __private__: QtObject {
     id: p
 
     property var callbackStorage: []
 
     function handleClosed(tag) {
       'use strict';
-      // TODO: find the call and delete
+      removeCallback(tag);
     }
 
     function addCallback(tag, callback) {
@@ -44,7 +44,7 @@ Item {
       try {
         call.callback(null, data);
       } finally {
-        delete callbackStorage[tag];
+        removeCallback(tag);
       }
     }
 
@@ -56,7 +56,7 @@ Item {
         try {
           call.callback(err);
         } finally {
-          delete callbackStorage[tag];
+          removeCallback(tag);
         }
       }
     }
@@ -64,7 +64,7 @@ Item {
 
     function removeCallback(tag) {
       'use strict';
-      // TODO:
+      callbackStorage.shift(tag, 1);
     }
 
     function write(tag, data, timeout) {
@@ -78,13 +78,13 @@ Item {
       }
       var ok = impl.write(tag, data, timeout);
       if (!ok) {
-        // TODO: notify error
+        call.callback('Failed to write.');
         p.removeCallback(tag);
       }
       return ok;
     }
 
-    function writeEnd(tag, timeout) {
+    function end(tag, timeout) {
       'use strict';
       if (typeof timeout == 'undefined') {
         timeout = -1;
@@ -95,7 +95,7 @@ Item {
       }
       var ok = impl.writesDone(tag, timeout);
       if (!ok) {
-        // TODO: notify error
+        call.callback('Failed to end writing.');
         p.removeCallback(tag);
       }
       return ok;
@@ -118,8 +118,8 @@ Item {
       write: function(data) {
         return p.write(t, new writeType(data)._raw);
       },
-      writeEnd: function() {
-        return p.writeEnd(t);
+      end: function() {
+        return p.end(t);
       },
     };
   }

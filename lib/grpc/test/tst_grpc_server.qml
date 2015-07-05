@@ -120,7 +120,7 @@ Item {
       verify(!val.called);
 
       // when notified wirtes done
-      ok = call.writeEnd(1000);
+      ok = call.end(1000);
 
       // should receive response
       tryCompare(val, 'called', true);
