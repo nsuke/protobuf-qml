@@ -8,7 +8,6 @@ GrpcServer::~GrpcServer() {
   if (thread_ && thread_->joinable()) {
     // TODO: Cancel jobs and wait for handling thread
     thread_->join();
-    // thread_->detach();
   }
 }
 

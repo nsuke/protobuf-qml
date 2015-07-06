@@ -37,7 +37,6 @@ void Channel::startThread() {
     bool handled = false;
     for (;;) {
       if (!cq_->Next(&tag, &ok)) {
-        qDebug() << "Shutting down";
         cq_.reset();
         return;
       }
@@ -52,8 +51,6 @@ void Channel::startThread() {
 
 bool Channel::ensureInit() {
   if (!raw_) {
-    qDebug() << "Initialize with creds "
-             << (creds_ ? creds_->raw().get() : nullptr);
     grpc::ChannelArguments null_args;
     auto before = raw_.get();
     raw_ = grpc::CreateChannel(target_.toStdString(),

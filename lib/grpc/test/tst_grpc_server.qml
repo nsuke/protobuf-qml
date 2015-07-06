@@ -65,7 +65,6 @@ Item {
     name: 'GrpcServerMethodTest'
 
     function initTestCase() {
-      skip('Wait for upstream change for graceful shutdown of server.');
       server.start();
     }
 
@@ -74,12 +73,11 @@ Item {
     }
 
     function test_unary() {
-      skip('Wait for upstream change for graceful shutdown of server.');
       var val = {};
       // when invoked service
       var ok = helloClient.sayHello({name: 'Foo'}, function(err, rsp) {
         // should not receive errror
-        verify(!err);
+        verify(!err, err);
 
         // should receive response processed by server
         compare(rsp.greet(), 'Hello Foo');
@@ -94,12 +92,11 @@ Item {
     }
 
     function test_client_streaming() {
-      // skip('Wait for upstream change for graceful shutdown of server.');
       var val = {};
       // when start calling service
       var call = helloClient.batchHello(function(err, rsp) {
         // should not receive errror
-        verify(!err);
+        verify(!err, err);
 
         // should receive response processed with all messages by server
         compare(rsp.greet(), 'Hello Bar1 Bar2 Bar3');
@@ -127,7 +124,6 @@ Item {
     }
 
     function test_server_streaming() {
-      skip('Wait for upstream change for graceful shutdown of server.');
       var end = {};
       var received = [];
 
@@ -142,7 +138,7 @@ Item {
           name: 'Baz3',
         }],
       }, function(err, data, finished) {
-        verify(!err);
+        verify(!err, err);
         if (finished) {
           end.called = true;
         } else {

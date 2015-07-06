@@ -97,16 +97,10 @@ public:
   bool registerService(::protobuf::qml::RpcService*) final;
 
   Q_INVOKABLE void shutdown() {
-    if (cq_) {
-    qDebug() << "SHUTDOWN";
+    if (server_) {
+      server_.reset();
       cq_->Shutdown();
     }
-    // if (thread_ && thread_->joinable()) {
-    // qDebug() << "JOIN";
-    //    thread_->join();
-    // }
-    //   //thread_->detach();
-    //  thread_.reset();
   }
 
 protected:
