@@ -10,25 +10,14 @@ import buildenv
 
 def run_test_server(outdir):
   cmd = [
-    os.path.join(outdir, 'lib', 'grpc', 'test', 'hello-async-server'),
+    os.path.join(outdir, 'bin', 'test-hello-async-server'),
   ]
   return subprocess.Popen(cmd, cwd=outdir)
 
 
-def run_protobuf_test(outdir):
-  cmd = [
-    os.path.join(outdir, 'protobuf-qml-test'),
-    '-import', os.path.join(outdir, 'plugins'),
-    '-input', os.path.join(outdir, 'test'),
-  ]
-  return subprocess.call(cmd, cwd=outdir)
-
-
 def run_client_test(outdir):
   cmd = [
-    os.path.join(outdir, 'protobuf-qml-test'),
-    '-import', os.path.join(outdir, 'plugins'),
-    '-input', os.path.join(outdir, 'lib', 'grpc', 'test'),
+    os.path.join(outdir, 'bin', 'test-grpc-qml'),
   ]
   return subprocess.call(cmd, cwd=outdir)
 
@@ -40,8 +29,7 @@ def main(argv):
   buildenv.setup_env()
   p = run_test_server(args.out)
   try:
-    r = run_protobuf_test(args.out)
-    return run_client_test(args.out) if r == 0 else r
+    return run_client_test(args.out)
   finally:
     p.kill()
 

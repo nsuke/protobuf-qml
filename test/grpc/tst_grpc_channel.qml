@@ -1,4 +1,4 @@
-// To run this test, you need to run hello-server program beforehand
+// To run this test, you need to run test-hello-async-server program beforehand
 
 import QtQuick 2.2
 import QtTest 1.0

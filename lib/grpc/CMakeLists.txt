@@ -23,7 +23,7 @@ protobuf_qml_target(grpc-qml)
 set_target_properties(
   grpc-qml
   PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plugins/Grpc)
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Grpc)
 
 target_link_libraries(grpc-qml
   protobuf-qml-core
@@ -31,7 +31,5 @@ target_link_libraries(grpc-qml
   Qt5::Qml)
 
 copy(grpc-qml
-  ${CMAKE_BINARY_DIR}/plugins/Grpc
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Grpc
   imports/qmldir)
-
-add_subdirectory(test)

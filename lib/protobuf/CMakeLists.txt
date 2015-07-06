@@ -34,7 +34,7 @@ protobuf_qml_target(protobuf-qml)
 set_target_properties(
   protobuf-qml
   PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plugins/Protobuf)
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Protobuf)
 
 target_compile_definitions(protobuf-qml PRIVATE -DPROTOBUF_QML_EXPORT)
 
@@ -44,7 +44,7 @@ target_link_libraries(protobuf-qml
   Qt5::Qml)
 
 copy(protobuf-qml
-  ${CMAKE_BINARY_DIR}/plugins/Protobuf
+  ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Protobuf
   imports/qmldir
   imports/message.js
   imports/UnaryMethod.qml

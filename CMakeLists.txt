@@ -6,11 +6,14 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  # TODO: check clang version
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-Wno-inconsistent-missing-override HAS_W_INCOSISTENT_MISSING_OVERRIDE)
+if(HAS_W_INCOSISTENT_MISSING_OVERRIDE)
   # Generated code for Q_OBJECT fires too many of this
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override")
 endif()
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 find_package(Protobuf REQUIRED)
 find_package(Qt5Core REQUIRED)
@@ -21,7 +24,10 @@ include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIRS})
 include_directories(compiler)
 
 find_package(GRPC++)
-if(GRPC++_FOUND)
+include(CMakeDependentOption)
+cmake_dependent_option(BUILD_GRPC "Build gRPC QML module" ON
+  "GRPC++_FOUND" OFF)
+if(BUILD_GRPC)
   include_directories(SYSTEM ${GRPC++_INCLUDE_DIRS})
 endif()
 
@@ -45,7 +51,7 @@ function(protobuf_generate_qml QML_OUT)
     add_custom_target("protobuf_generate_qml_${FIL_WE}" ALL
       DEPENDS ${ABS_FIL} protoc-gen-qml
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-      --plugin=${CMAKE_BINARY_DIR}/protoc-gen-qml
+      --plugin=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/protoc-gen-qml
       -I ${FIL_DIR}
       --qml_out  ${QML_OUT} ${ABS_FIL})
   endforeach()
@@ -72,7 +78,7 @@ set(PROTOBUF_QML_TARGETS protobuf-qml protoc-gen-qml)
 include_directories(lib)
 add_subdirectory(lib/protobuf)
 
-if(GRPC++_FOUND)
+if(BUILD_GRPC)
   add_subdirectory(lib/grpc)
 endif()
 
@@ -101,14 +107,17 @@ set(protoc-gen-qml_SOURCES
   compiler/protobuf/qml/main.cpp)
 add_executable(protoc-gen-qml ${protoc-gen-qml_SOURCES})
 protobuf_qml_target(protoc-gen-qml)
-target_compile_definitions(protoc-gen-qml PRIVATE PBQML_COMPILER_HAS_QT)
+option(PROTOBUF_COMPILER_HAS_QT "Allow compiler plugin dependency on Qt" ON)
+if(PROTOBUF_COMPILER_HAS_QT)
+  target_compile_definitions(protoc-gen-qml PRIVATE PBQML_COMPILER_HAS_QT)
+endif()
 target_link_libraries(protoc-gen-qml
   protoc-gen-qml-core
   protobuf-qml
   ${PROTOBUF_PROTOC_LIBRARIES}
   ${PROTOBUF_LIBRARIES}
   Qt5::Core)
-if(GRPC++_FOUND)
+if(BUILD_GRPC)
   target_link_libraries(protoc-gen-qml ${GRPC++_LIBRARIES})
 endif()
 
@@ -121,35 +130,9 @@ protobuf_qml_target(test-protoc-gen-qml)
 target_link_libraries(test-protoc-gen-qml
   protoc-gen-qml-core)
 
-#
-# QML tests
-#
-copy(protobuf-qml-test
-  ${CMAKE_CURRENT_BINARY_DIR}/test
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_jsobject.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_message.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_nesting.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_recursive.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_oneof.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_parse_error.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_primitive.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_repeated.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_serialize_error.qml
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/tst_file.qml
-  )
-
-find_package(Qt5QuickTest REQUIRED)
-add_executable(protobuf-qml-test test/test_main.cpp)
-protobuf_qml_target(protobuf-qml-test)
-target_link_libraries(protobuf-qml-test Qt5::QuickTest)
-enable_testing()
-add_test(NAME protobuf-qml-test
-  COMMAND ./protobuf-qml-test
-  -import ${CMAKE_CURRENT_BINARY_DIR}/plugins
-  -input ${CMAKE_CURRENT_BINARY_DIR}/test)
-
-protobuf_generate_qml(${CMAKE_CURRENT_BINARY_DIR}/test
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/recursive_test.proto
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/oneof_test.proto
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/ProtobufQmlTest.proto
-  ${CMAKE_CURRENT_SOURCE_DIR}/test/ProtobufQmlTest2.proto)
+include(CTest)
+if(BUILD_TESTING)
+  find_package(Qt5QuickTest REQUIRED)
+  enable_testing()
+  add_subdirectory(test)
+endif()
