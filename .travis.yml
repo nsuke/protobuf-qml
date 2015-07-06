@@ -18,19 +18,13 @@ before_install:
       qt5-default
       qtdeclarative5-qtquick2-plugin
       qtdeclarative5-test-plugin
-      python-simplejson
       python-mako
-      libgoogle-perftools-dev
-      curl
-      unzip
-      build-essential
       cmake
       ninja-build
-      autoconf
-      libtool
       zlib1g-dev
       gcc
       g++
+      perl
 
 script:
   - . tools/setup_env.sh
