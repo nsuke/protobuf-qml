@@ -1,4 +1,8 @@
 #include "grpc/qml/server.h"
+#include "grpc/qml/server_unary.h"
+#include "grpc/qml/server_reader.h"
+#include "grpc/qml/server_writer.h"
+#include "grpc/qml/server_bidi.h"
 
 namespace grpc {
 namespace qml {
@@ -6,7 +10,6 @@ namespace qml {
 GrpcServer::~GrpcServer() {
   shutdown();
   if (thread_ && thread_->joinable()) {
-    // TODO: Cancel jobs and wait for handling thread
     thread_->join();
   }
 }
@@ -48,8 +51,13 @@ bool GrpcServer::doStart() {
         writer->inject(new ServerWriterMethod(&srv, m->index(), cq_.get(),
                                               m->read_descriptor(),
                                               m->write_descriptor()));
+      } else if (auto bidi = qobject_cast<
+                     ::protobuf::qml::ServerReaderWriterMethodHolder*>(m)) {
+        bidi->inject(new ServerBidiMethod(&srv, m->index(), cq_.get(),
+                                          m->read_descriptor(),
+                                          m->write_descriptor()));
       } else {
-        qWarning() << "Currently, server streaming method is not supported.";
+        qWarning() << "Failed to register service method: Unknown method type.";
       }
     }
     build.RegisterAsyncService(srv.raw());

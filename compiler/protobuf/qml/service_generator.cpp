@@ -59,12 +59,8 @@ void ServiceGenerator::generateServerQmlFile(google::protobuf::io::Printer& p) {
       "  methods: [\n");
   for (int i = 0; i < t_->method_count(); ++i) {
     auto method = t_->method(i);
-    auto w = method->client_streaming();
-    auto r = method->server_streaming();
-    if (!(r && w)) {
-      p.Print("    $method_name$Method,\n", "method_name",
-              uncapitalizeFirstLetter(method->name()));
-    }
+    p.Print("    $method_name$Method,\n", "method_name",
+            uncapitalizeFirstLetter(method->name()));
   }
   p.Print("  ]\n");
   for (auto& g : method_generators_) {
@@ -118,7 +114,6 @@ void MethodGenerator::generateMethod(google::protobuf::io::Printer& p) {
 }
 
 void MethodGenerator::generateServerMethod(google::protobuf::io::Printer& p) {
-  if (!t_->client_streaming() || !t_->server_streaming())
   p.Print(variables,
           "property var $camel_name$\n"
           "  PB.Server$server_method_type$Method {\n"

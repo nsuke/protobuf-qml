@@ -59,6 +59,23 @@ Item {
         call.end();
       });
     }
+
+    bidiHello: function(call) {
+      var queue = [];
+      call.on('data', function(data) {
+        for (var i = 0; i < data.requestsCount(); ++i) {
+          queue.push({
+            'greet': 'Hello ' + data.requests(i).name(),
+          });
+        }
+      });
+      call.on('end', function(data) {
+        for (var i in queue) {
+          call.write(queue[i]);
+        }
+        call.end();
+      });
+    }
   }
 
   TestCase {
@@ -153,6 +170,62 @@ Item {
       compare(received[1], 'Hello Baz1');
       compare(received[2], 'Hello Baz2');
       compare(received[3], 'Hello Baz3');
+    }
+
+    function test_bidi_streaming() {
+      var end = {};
+      var received = [];
+
+      var call = helloClient.bidiHello(function(err, data, finished) {
+        verify(!err, err);
+        if (finished) {
+          end.called = true;
+        } else {
+          received.push(data.greet());
+        }
+      });
+      verify(call);
+
+      // Ensure that call succeeds even if client does not immediately write.
+      wait(100);
+
+      console.log('writing');
+      var res = call.write({
+        requests: [{
+          name: 'Baz0',
+        } , {
+          name: 'Baz1',
+        } , {
+          name: 'Baz2',
+        } , {
+          name: 'Baz3',
+        }],
+      });
+      verify(res);
+
+      res = call.write({
+        requests: [{
+          name: 'Foo0',
+        } , {
+          name: 'Foo1',
+        } , {
+          name: 'Foo2',
+        }],
+      });
+      verify(res);
+
+      res = call.end();
+      verify(res);
+
+      tryCompare(end, 'called', true, 1000);
+      compare(received.length, 7);
+      compare(received[0], 'Hello Baz0');
+      compare(received[1], 'Hello Baz1');
+      compare(received[2], 'Hello Baz2');
+      compare(received[3], 'Hello Baz3');
+      compare(received[4], 'Hello Foo0');
+      compare(received[5], 'Hello Foo1');
+      compare(received[6], 'Hello Foo2');
     }
   }
 }

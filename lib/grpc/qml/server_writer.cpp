@@ -71,8 +71,6 @@ void ServerWriterCallData::process(bool ok) {
   } else if (status_ == Status::READ) {
     if (!ok) {
       // init called after shutdown ?
-      // TODO: handle shutdown more explicitly
-      qWarning() << "READ: Status not OK.";
       lock.unlock();
       delete this;
       return;

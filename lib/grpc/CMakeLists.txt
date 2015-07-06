@@ -5,6 +5,7 @@ set(grpc-qml_SOURCES
   qml/server_unary.cpp
   qml/server_reader.cpp
   qml/server_writer.cpp
+  qml/server_bidi.cpp
   qml/server.cpp
   qml/server_credentials.cpp
   qml/credentials.cpp

@@ -44,4 +44,6 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
       uri, 1, 0, "ServerReaderMethodHolder");
   qmlRegisterType<protobuf::qml::ServerWriterMethodHolder>(
       uri, 1, 0, "ServerWriterMethodHolder");
+  qmlRegisterType<protobuf::qml::ServerReaderWriterMethodHolder>(
+      uri, 1, 0, "ServerReaderWriterMethodHolder");
 }

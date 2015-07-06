@@ -7,6 +7,7 @@ ReaderWriterMethod 1.0 ReaderWriterMethod.qml
 ServerUnaryMethod 1.0 ServerUnaryMethod.qml
 ServerReaderMethod 1.0 ServerReaderMethod.qml
 ServerWriterMethod 1.0 ServerWriterMethod.qml
+ServerReaderWriterMethod 1.0 ServerReaderWriterMethod.qml
 BufferService 1.0 BufferService.qml
 MemoryBuffer 1.0 MemoryBuffer.qml
 File 1.0 File.qml

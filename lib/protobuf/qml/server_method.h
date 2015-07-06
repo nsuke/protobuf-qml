@@ -212,6 +212,75 @@ private:
   std::unique_ptr<ServerWriterMethod> impl_;
 };
 
+class PROTOBUF_QML_DLLEXPORT ServerReaderWriterMethod : public MethodBase {
+  Q_OBJECT
+
+signals:
+  void dataEnd(int tag);
+
+public:
+  explicit ServerReaderWriterMethod(QObject* p = nullptr) : MethodBase(p) {}
+  virtual ~ServerReaderWriterMethod() {}
+  virtual bool respond(int tag, const QVariant& data) { return false; }
+  virtual bool end(int tag) { return false; }
+  virtual void startProcessing() {}
+};
+
+class PROTOBUF_QML_DLLEXPORT ServerReaderWriterMethodHolder
+    : public ServerMethodHolder {
+  Q_OBJECT
+
+signals:
+  void dataEnd(int tag);
+
+public:
+  explicit ServerReaderWriterMethodHolder(QObject* p = nullptr)
+      : ServerMethodHolder(p) {}
+  ~ServerReaderWriterMethodHolder() {}
+
+  void startProcessing() final {
+    Q_ASSERT(impl_);
+    impl_->startProcessing();
+  }
+
+  bool inject(ServerReaderWriterMethod* impl) {
+    if (impl_) {
+      qWarning() << "Server reader writer method is already initialized";
+    }
+    impl_.reset(impl);
+    if (impl_) {
+      connect(impl_.get(), &ServerReaderWriterMethod::dataEnd, this,
+              &ServerReaderWriterMethodHolder::dataEnd);
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
+      connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
+    }
+    return true;
+  }
+
+  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
+    if (!impl_) {
+      qWarning() << "Server reader writer method is not initialized.";
+      return false;
+    }
+    return impl_->respond(tag, data);
+  }
+
+  Q_INVOKABLE bool end(int tag) {
+    if (!impl_) {
+      qWarning() << "Server reader writer method is not initialized.";
+      return false;
+    }
+    return impl_->end(tag);
+  }
+
+protected:
+  void deinit() final {}
+
+private:
+  std::unique_ptr<ServerReaderWriterMethod> impl_;
+};
+
 class RpcServer;
 
 class PROTOBUF_QML_DLLEXPORT RpcService : public QQuickItem {
