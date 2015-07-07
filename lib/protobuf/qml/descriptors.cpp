@@ -234,7 +234,11 @@ QVariant getReflectionValue(const Reflection& ref,
     case FieldDescriptor::CPPTYPE_BOOL:
       return ref.GetBool(msg, field);
     case FieldDescriptor::CPPTYPE_STRING:
-      return QString::fromStdString(ref.GetString(msg, field));
+      if (field->type() == FieldDescriptor::TYPE_BYTES) {
+        return QByteArrayFromStdString(ref.GetString(msg, field));
+      } else {
+        return QString::fromStdString(ref.GetString(msg, field));
+      }
     case FieldDescriptor::CPPTYPE_ENUM:
       return ref.GetEnum(msg, field)->number();
     case FieldDescriptor::CPPTYPE_MESSAGE:
