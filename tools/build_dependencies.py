@@ -227,7 +227,7 @@ def build_grpc(wd, installdir, jobs, shared, debug):
     for dep in deps:
       collect_grpc_targets(acc, dic, dep)
 
-  version = '05c97690630640ab41df37858ea23ffce870a509'
+  version = 'ec5a0ba6bacecc63297edc4bede47d1bd364daf8'
   repodir = os.path.join(wd, 'grpc-%s' % version)
   download_from_github(wd, 'grpc', 'grpc', version)
 
