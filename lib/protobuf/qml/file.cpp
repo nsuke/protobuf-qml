@@ -14,6 +14,7 @@
 #define O_BINARY 0
 #include <unistd.h>
 #include <fcntl.h>
+#include <linux/stat.h>
 #endif
 
 namespace protobuf {
