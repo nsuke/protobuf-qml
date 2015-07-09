@@ -43,7 +43,7 @@ protobuf_qml_target(test-hello-async-server)
 #
 # QML test runner
 #
-add_executable(test-grpc-qml ../test_main.cpp)
+add_executable(test-grpc-qml test_main.cpp)
 protobuf_qml_target(test-grpc-qml)
 target_compile_definitions(test-grpc-qml PRIVATE
   QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_BINARY_DIR}")

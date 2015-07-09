@@ -25,7 +25,7 @@ protobuf_generate_qml(${CMAKE_CURRENT_BINARY_DIR}
 #
 # QML test runner
 #
-add_executable(test-protobuf-qml ../test_main.cpp)
+add_executable(test-protobuf-qml test_main.cpp)
 protobuf_qml_target(test-protobuf-qml)
 target_compile_definitions(test-protobuf-qml PRIVATE
   QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_BINARY_DIR}")
