@@ -21,6 +21,8 @@ public:
                        ReaderWriterMethod* method,
                        ::protobuf::qml::DescriptorWrapper* read);
 
+  ~ReaderWriterCallData();
+
   void process(bool ok) final;
   void resume(const QVariant& data);
 

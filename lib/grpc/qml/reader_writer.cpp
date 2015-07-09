@@ -18,6 +18,9 @@ ReaderWriterCallData::ReaderWriterCallData(
       stream_(channel_, cq_, method_->raw(), &context_, this) {
 }
 
+ReaderWriterCallData::~ReaderWriterCallData() {
+}
+
 void ReaderWriterCallData::process(bool ok) {
   if (status_ == Status::INIT) {
     if (!ok) {

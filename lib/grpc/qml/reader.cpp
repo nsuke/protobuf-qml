@@ -26,6 +26,9 @@ ReaderCallData::ReaderCallData(
       channel_, cq_, method_->raw(), &context_, *request_, this));
 }
 
+ReaderCallData::~ReaderCallData() {
+}
+
 void ReaderCallData::process(bool ok) {
   if (status_ == Status::WRITE) {
     if (!ok) {

@@ -19,6 +19,9 @@ WriterCallData::WriterCallData(int tag,
       writer_(channel_, cq_, method_->raw(), &context_, response_.get(), this) {
 }
 
+WriterCallData::~WriterCallData() {
+}
+
 void WriterCallData::process(bool ok) {
   std::unique_lock<std::mutex> lock(mutex_);
   if (status_ == Status::INIT) {

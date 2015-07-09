@@ -24,6 +24,8 @@ public:
                 std::unique_ptr<google::protobuf::Message> request,
                 int timeout);
 
+  ~UnaryCallData();
+
   void process(bool ok) final;
 
 private:

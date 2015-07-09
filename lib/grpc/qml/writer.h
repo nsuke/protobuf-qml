@@ -23,6 +23,8 @@ public:
                  WriterMethod* method,
                  ::protobuf::qml::DescriptorWrapper* read);
 
+  ~WriterCallData();
+
   void process(bool ok) final;
 
   bool write(std::unique_ptr<google::protobuf::Message> request);

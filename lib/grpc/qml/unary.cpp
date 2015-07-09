@@ -27,6 +27,9 @@ UnaryCallData::UnaryCallData(int tag,
   process(true);
 }
 
+UnaryCallData::~UnaryCallData() {
+}
+
 void UnaryCallData::process(bool ok) {
   if (status_ == Status::INIT) {
     status_ = Status::DONE;

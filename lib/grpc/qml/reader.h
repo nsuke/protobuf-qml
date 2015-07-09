@@ -21,6 +21,7 @@ public:
                  ::protobuf::qml::DescriptorWrapper* read,
                  std::unique_ptr<google::protobuf::Message> request,
                  int timeout);
+  ~ReaderCallData();
 
   void process(bool ok) final;
   void resume(const QVariant& data);
