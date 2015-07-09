@@ -74,6 +74,7 @@ void ReaderWriterCallData::process(bool ok) {
 }
 
 void ReaderWriterCallData::handleQueuedRequests() {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (requests_.empty()) {
     // if (read_done_) {
     // It seems that gRPC stream can only be read when client can block until
@@ -164,6 +165,7 @@ ReaderWriterCallData* ReaderWriterMethod::ensureCallData(int tag) {
 }
 
 bool ReaderWriterMethod::call(int tag) {
+  std::lock_guard<std::mutex> lock(calls_mutex_);
   return ensureCallData(tag);
 }
 
