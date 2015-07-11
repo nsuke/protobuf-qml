@@ -23,6 +23,31 @@ def concurrency():
     return 4
 
 
+class BuildConf(object):
+  def __init__(self, cc, cxx, shared, debug):
+    self.cc = cc
+    self.cxx = cxx
+    self.shared = shared
+    self.debug = debug
+    self.libext = '.so' if shared else '.a'
+    self.shared_on = 'ON' if self.shared else 'OFF'
+    self.build_type = 'Debug' if self.debug else 'Release'
+
+  def cmake_cmd(self, extra_args, cmake_dir='.'):
+    cmd = [
+      'cmake',
+      '-GNinja',
+      '-DBUILD_SHARED_LIBS=' + self.shared_on,
+      '-DCMAKE_BUILD_TYPE=' + self.build_type,
+    ] + extra_args
+    if self.cc:
+      cmd.append('-DCMAKE_C_COMPILER=' + self.cc)
+    if self.cxx:
+      cmd.append('-DCMAKE_CXX_COMPILER=' + self.cxx)
+    cmd.append(cmake_dir)
+    return cmd
+
+
 def execute(cmd, **kwargs):
   cmdstr = ' '.join(cmd)
   print('Executing: %s' % cmdstr)
@@ -112,7 +137,7 @@ def download_from_github(cwd, user, proj, commit, check_path=None):
   download_source_archive(url, arc, os.path.dirname(arc), check_path)
 
 
-def build_protobuf3(wd, installdir, jobs, shared, debug):
+def build_protobuf3(wd, installdir, jobs, conf):
   # version = 'v3.0.0-alpha-3'
   # repodir = os.path.join(wd, 'protobuf-%s' % version)
   # # archive for protobuf tag does not have 'v' prefix
@@ -122,18 +147,10 @@ def build_protobuf3(wd, installdir, jobs, shared, debug):
   repodir = os.path.join(wd, 'protobuf-%s' % version)
   download_from_github(wd, 'google', 'protobuf', version)
 
-  shared_on = 'ON' if shared else 'OFF'
-  build_type = 'Debug' if debug else 'Release'
-  cmake_cmd = [
-    'cmake',
-    '-GNinja',
+  cmake_cmd = conf.cmake_cmd([
     '-DBUILD_TESTING=OFF',
     '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11 -DLANG_CXX11',
-    '-DBUILD_SHARED_LIBS=' + shared_on,
-    '-DCMAKE_BUILD_TYPE=' + build_type,
-  ]
-
-  cmake_cmd.append('cmake')
+  ], 'cmake')
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
@@ -148,9 +165,8 @@ def build_protobuf3(wd, installdir, jobs, shared, debug):
       shutil.rmtree(dst_include_dir)
     shutil.copytree(src_include_dir, dst_include_dir)
     shutil.copy(os.path.join(repodir, 'protoc'), os.path.join(installdir, 'bin'))
-    libext = '.so' if shared else '.a'
-    shutil.copy(os.path.join(repodir, 'libprotoc%s' % libext), os.path.join(installdir, 'lib'))
-    shutil.copy(os.path.join(repodir, 'libprotobuf%s' % libext), os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'libprotoc%s' % conf.libext), os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'libprotobuf%s' % conf.libext), os.path.join(installdir, 'lib'))
     return True
 
 
@@ -165,19 +181,10 @@ def prepare_boringssl(wd):
   return version
 
 
-def build_boringssl(wd, installdir, jobs, shared, debug):
+def build_boringssl(wd, installdir, jobs, conf):
   version = prepare_boringssl(wd)
   repodir = os.path.join(wd, str(version))
-  shared_on = 'ON' if shared else 'OFF'
-  build_type = 'Debug' if debug else 'Release'
-  cmake_cmd = [
-    'cmake',
-    '-GNinja',
-    '-DCMAKE_C_FLAGS=-fPIC',
-    '-DBUILD_SHARED_LIBS=' + shared_on,
-    '-DCMAKE_BUILD_TYPE=' + build_type,
-    '.',
-  ]
+  cmake_cmd = conf.cmake_cmd(['-DCMAKE_C_FLAGS=-fPIC'])
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
@@ -190,9 +197,8 @@ def build_boringssl(wd, installdir, jobs, shared, debug):
     if os.path.exists(dst_include_dir):
       shutil.rmtree(dst_include_dir)
     shutil.copytree(src_include_dir, dst_include_dir)
-    libext = '.so' if shared else '.a'
-    shutil.copy(os.path.join(repodir, 'ssl', 'libssl%s' % libext), os.path.join(installdir, 'lib'))
-    shutil.copy(os.path.join(repodir, 'crypto', 'libcrypto%s' % libext), os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'ssl', 'libssl%s' % conf.libext), os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'crypto', 'libcrypto%s' % conf.libext), os.path.join(installdir, 'lib'))
     return True
 
 
@@ -205,7 +211,7 @@ class GrpcTarget(object):
     self.secure = secure
 
 
-def build_grpc(wd, installdir, jobs, shared, debug):
+def build_grpc(wd, installdir, jobs, conf):
   def find_in_json(arr, name):
     for elem in arr:
       if elem['name'] == name:
@@ -249,17 +255,10 @@ def build_grpc(wd, installdir, jobs, shared, debug):
   with open(cmake_out, 'w+') as fp:
     fp.write(mako.template.Template(filename=cmake_template).render(boringssl_dir=boringssl_dir, **acc))
 
-  shared_on = 'ON' if shared else 'OFF'
-  build_type = 'Debug' if debug else 'Release'
-  cmake_cmd = [
-    'cmake',
-    '-GNinja',
+  cmake_cmd = conf.cmake_cmd([
     '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11',
-    '-DBUILD_SHARED_LIBS=' + shared_on,
-    '-DCMAKE_BUILD_TYPE=' + build_type,
     '-DCMAKE_PREFIX_PATH=%s' % installdir,
-    '.',
-  ]
+  ])
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
@@ -278,13 +277,12 @@ def build_grpc(wd, installdir, jobs, shared, debug):
       if os.path.exists(dst_include_dir):
         shutil.rmtree(dst_include_dir)
       shutil.copytree(src_include_dir, dst_include_dir)
-    libext = '.so' if shared else '.a'
     libs = [
-      os.path.join('openssl', 'ssl', 'libssl%s' % libext),
-      os.path.join('openssl', 'crypto', 'libcrypto%s' % libext),
-      'libgpr%s' % libext,
-      'libgrpc%s' % libext,
-      'libgrpc++%s' % libext,
+      os.path.join('openssl', 'ssl', 'libssl%s' % conf.libext),
+      os.path.join('openssl', 'crypto', 'libcrypto%s' % conf.libext),
+      'libgpr%s' % conf.libext,
+      'libgrpc%s' % conf.libext,
+      'libgrpc++%s' % conf.libext,
     ]
     for lib in libs:
       shutil.copy(os.path.join(repodir, lib), os.path.join(installdir, 'lib'))
@@ -298,9 +296,17 @@ def main(argv):
   p.add_argument('--shared', action='store_true', help='build shared libraries')
   p.add_argument('--clean', action='store_true', help='cleanup intermediate directory')
   p.add_argument('--jobs', '-j', type=int, default=concurrency())
+  p.add_argument('--clang', action='store_true', help='use clang')
+  p.add_argument('--cc', help='C compiler')
+  p.add_argument('--cxx', help='C++ compiler')
   p.add_argument('--out', '-o', default=buildenv.DEFAULT_DEPS,
                  help='installation root path for dependencies')
   args = p.parse_args(argv)
+
+  cc = args.cc or (args.clang and 'clang')
+  cxx = args.cxx or (args.clang and 'clang++')
+  conf = BuildConf(cc, cxx, args.shared, args.debug)
+
   buildenv.setup_env(args.out)
   installdir = args.out
   if not os.path.exists(installdir):
@@ -322,9 +328,9 @@ def main(argv):
       return
 
     prepend_common_envpaths(installdir)
-    if not build_protobuf3(wd, installdir, args.jobs, args.shared, args.debug):
+    if not build_protobuf3(wd, installdir, args.jobs, conf):
       return -1
-    if not build_grpc(wd, installdir, args.jobs, args.shared, args.debug):
+    if not build_grpc(wd, installdir, args.jobs, conf):
       return -1
     return 0
   except:
