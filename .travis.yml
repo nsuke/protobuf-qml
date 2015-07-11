@@ -7,29 +7,26 @@ compiler:
 before_install:
   - export DISPLAY=:99.0
   - sh -e /etc/init.d/xvfb start
-  - sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu/ trusty main restricted"
+  - sudo add-apt-repository -y ppa:smspillaz/cmake-2.8.12
+  - sudo add-apt-repository -y ppa:beineri/opt-qt532
+  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get update -qq
-  - sudo apt-get install -qq
-      libpango-1.0-0
-      qtbase5-dev
-      qtdeclarative5-dev
-      qttools5-dev-tools
-      qtdeclarative5-dev-tools
-      qt5-default
-      qtdeclarative5-qtquick2-plugin
-      qtdeclarative5-test-plugin
+  - sudo apt-get purge cmake
+  - sudo apt-get install -y
+      libgl1-mesa-dev
+      qt53declarative
+      zlib1g-dev
       python-mako
       cmake
       ninja-build
-      zlib1g-dev
-      gcc
-      g++
-      perl
+      gcc-4.8
+      g++-4.8
 
 script:
+  - if [ $CC == gcc ]; then export CC=gcc-4.8; export CXX=g++-4.8; fi
   - . tools/setup_env.sh
-  - tools/build_dependencies.py -j4 --shared
-  - tools/bootstrap.py
+  - tools/build_dependencies.py -j4 --shared --debug --cc=$CC --cxx=$CXX
+  - tools/bootstrap.py --cc=$CC --cxx=$CXX --qt5dir=/opt/qt53/lib/cmake
   - ninja -j4 -C out
   - cd out && ctest -VV
   - cd ${TRAVIS_BUILD_DIR} && tools/run_test.py
