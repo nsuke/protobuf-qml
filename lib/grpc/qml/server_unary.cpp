@@ -62,12 +62,6 @@ void ServerUnaryCallData::process(bool ok) {
     data_ = read_->dataFromMessage(*request_);
     status_ = Status::FROZEN;
     method_->onRequest(this);
-  } else if (status_ == Status::WRITE) {
-    if (!ok) {
-      // notify
-    }
-    status_ = Status::DONE;
-    writer_.Finish(grpc::Status::OK, this);
   } else if (status_ == Status::DONE) {
     new ServerUnaryCallData(method_, service_, index_, cq_, read_, write_);
     if (!ok) {
@@ -82,14 +76,15 @@ void ServerUnaryCallData::process(bool ok) {
 void ServerUnaryCallData::resume(const QVariant& data) {
   if (status_ != Status::FROZEN) {
     qWarning() << "Resume called for non-frozen call data.";
+    Q_ASSERT(false);
     return;
   }
   response_.reset(write_->dataToMessage(data));
   if (!response_) {
     // TODO: how to abort from here ?
   }
-  status_ = Status::WRITE;
-  writer_.Write(*response_, this);
+  status_ = Status::DONE;
+  writer_.Finish(*response_, grpc::Status::OK, this);
 }
 }
 }
