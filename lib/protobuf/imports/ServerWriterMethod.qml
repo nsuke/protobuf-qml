@@ -18,6 +18,15 @@ PB.ServerWriterMethodHolder {
         return;
       }
       var call = {
+        error: function(err) {
+          if (typeof err === 'string') {
+            var message = err;
+          } else {
+            var message = err.message || 'Unknown error';
+          }
+          var code = err.code || PB.Errors.INTERNAL;
+          return root.abort(tag, code, message);
+        },
         write: function(response) {
           root.respond(tag, new root.writeType(response)._raw);
         },

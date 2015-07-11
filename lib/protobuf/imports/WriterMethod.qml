@@ -49,7 +49,7 @@ ClientMethod {
 
   function call(callback) {
     'use strict';
-    var t = ++_storage.tag;
+    var t = _storage.nextTag();
     _storage.addCallback(t, function(err, data) {
       callback && callback(err, new readType(data));
     });

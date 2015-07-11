@@ -55,6 +55,7 @@ void ReaderCallData::process(bool ok) {
       method_->error(tag_, grpc_status_.error_code(),
                      QString::fromStdString(grpc_status_.error_message()));
     }
+    method_->closed(tag_);
     delete this;
   } else {
     Q_ASSERT(false);

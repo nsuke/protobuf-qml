@@ -34,6 +34,16 @@ bool ServerWriterMethod::respond(int tag, const QVariant& data) {
   return true;
 }
 
+bool ServerWriterMethod::abort(int tag, int code, const QString& message) {
+  auto cdata = remove(tag);
+  if (!cdata) {
+    qWarning() << "Unknown tag to abort: " << tag;
+    return false;
+  }
+  cdata->abort(code, message);
+  return true;
+}
+
 bool ServerWriterMethod::end(int tag) {
   auto cdata = remove(tag);
   if (!cdata) {
@@ -131,6 +141,17 @@ void ServerWriterCallData::write(const QVariant& data) {
   } else {
     enqueueData(data);
   }
+}
+
+void ServerWriterCallData::abort(int code, const QString& message) {
+  if (status_ != Status::FROZEN) {
+    qWarning() << "Abort called for non-frozen call data.";
+    return;
+  }
+  status_ = Status::DONE;
+  grpc::Status grpc_status(static_cast<grpc::StatusCode>(code),
+                           message.toStdString());
+  writer_.Finish(grpc_status, this);
 }
 
 // Should only be called from inside locked scope.

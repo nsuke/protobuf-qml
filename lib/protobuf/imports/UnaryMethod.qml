@@ -14,7 +14,7 @@ ClientMethod {
     if (typeof timeout == 'undefined') {
       timeout = -1;
     }
-    var t = ++_storage.tag;
+    var t = _storage.nextTag();
     _storage.addCallback(t, function(err, data) {
       callback && callback(err, new readType(data));
     });

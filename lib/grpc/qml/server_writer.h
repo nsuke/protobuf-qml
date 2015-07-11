@@ -34,6 +34,7 @@ public:
 
   void startProcessing() final;
   bool respond(int tag, const QVariant& data) final;
+  bool abort(int tag, int code, const QString& message) final;
   bool end(int tag) final;
 
 private:
@@ -55,6 +56,7 @@ public:
 
   void process(bool ok) final;
   void write(const QVariant& data);
+  void abort(int code, const QString& message);
   void end();
 
 private:

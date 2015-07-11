@@ -20,11 +20,7 @@ ClientMethod {
         console.warn('Received data for unknown tag: ' + tag);
         return;
       }
-      try {
-        call.callback(null, null, true);
-      } finally {
-        _storage.removeCallback(tag);
-      }
+      call.callback(null, null, true);
     }
   }
 
@@ -33,12 +29,13 @@ ClientMethod {
     if (typeof timeout == 'undefined') {
       timeout = -1;
     }
-    var t = ++_storage.tag;
+    var t = _storage.nextTag();
     _storage.addCallback(t, function(err, data, end) {
       callback && callback(err, new readType(data), end);
     });
     var ok = impl.write(t, new writeType(data)._raw, timeout);
     if (!ok) {
+      console.log('Discarding callback for failed call');
       _storage.removeCallback(t);
     }
     return ok;

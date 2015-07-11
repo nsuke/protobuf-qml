@@ -52,7 +52,7 @@ Item {
       var msg = 'Hello';
       var err = null;
       call.on('data', function(data) {
-        if (data.name() == 'GIVE_ME_ERROR') {
+        if (data.name() === 'GIVE_ME_ERROR') {
           err = new PB.RpcErrors.Aborted(clientStreamingErrorMessage);
           return;
         }
@@ -73,6 +73,10 @@ Item {
       call.on('data', function(data) {
         for (var i = 0; i < data.requestsCount(); ++i) {
           var req = data.requests(i);
+          if (req.name() === 'GIVE_ME_ERROR') {
+            call.error(new PB.RpcErrors.Aborted(serverStreamingErrorMessage));
+            return;
+          }
           call.write({
             'greet': 'Hello ' + req.name(),
           });
@@ -152,6 +156,27 @@ Item {
       test.verify(ok);
 
       ok = call.end(1000);
+      test.verify(ok);
+
+      tryCompare(called, 'called', true, 2000);
+    }
+
+    function test_server_streaming_error() {
+      var called = {};
+      var ok = helloClient.subscribeHello({
+        requests: [{
+          name: 'GIVE_ME_ERROR',
+        }],
+      }, function(err, rsp, fin) {
+        if (!fin) {
+          verify(err);
+          compare(err.message, service.serverStreamingErrorMessage);
+          compare(err.code, PB.StatusCode.ABORTED);
+          compare(err.name, 'Aborted');
+          verify(err instanceof PB.RpcErrors.Aborted);
+          called.called = true;
+        }
+      });
       test.verify(ok);
 
       tryCompare(called, 'called', true, 2000);

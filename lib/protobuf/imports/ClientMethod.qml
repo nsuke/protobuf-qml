@@ -25,8 +25,12 @@ QtObject {
     }
 
   property var _storage: QtObject {
-    property int tag: 0
+    property int _tag: 0
     property var callbackStorage: []
+
+    function nextTag() {
+      return ++_tag;
+    }
 
     function addCallback(tag, callback) {
       'use strict';
