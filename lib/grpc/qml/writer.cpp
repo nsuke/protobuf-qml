@@ -30,14 +30,14 @@ void WriterCallData::process(bool ok) {
   } else if (status_ == Status::WRITE) {
     if (!ok) {
       qWarning() << QString::fromStdString(grpc_status_.error_message());
-      method_->error(tag_, "Failed to send message.");
+      method_->unknownError(tag_, "Failed to send message.");
       // TODO: should we abort this call entirely ?
     }
     handleQueuedRequests();
   } else if (status_ == Status::DONE) {
     if (!ok) {
       qWarning() << QString::fromStdString(grpc_status_.error_message());
-      method_->error(tag_, "Failed to send client streaming done.");
+      method_->unknownError(tag_, "Failed to send client streaming done.");
     }
     status_ = Status::FINISH;
     writer_.Finish(&grpc_status_, this);
@@ -45,7 +45,8 @@ void WriterCallData::process(bool ok) {
     if (ok) {
       method_->data(tag_, read_->dataFromMessage(*response_));
     } else {
-      method_->error(tag_, "Failed to complete writer call.");
+      method_->error(tag_, grpc_status_.error_code(),
+                     QString::fromStdString(grpc_status_.error_message()));
     }
     method_->deleteCall(tag_);
     // Release member mutex before deleting itself.
@@ -74,7 +75,7 @@ void WriterCallData::handleQueuedRequests() {
 
 bool WriterCallData::write(std::unique_ptr<google::protobuf::Message> request) {
   if (!request) {
-    method_->error(tag_, "Request message is empty.");
+    method_->unknownError(tag_, "Request message is empty.");
     return false;
   }
   std::lock_guard<std::mutex> lock(mutex_);
@@ -126,7 +127,7 @@ WriterCallData* WriterMethod::ensureCallData(int tag) {
     auto res = calls_.insert(std::make_pair(
         tag, new WriterCallData(tag, channel_.get(), cq_, this, read_)));
     if (!res.second) {
-      error(tag, "Failed to create call object");
+      unknownError(tag, "Failed to create call object");
       return nullptr;
     }
     call = res.first->second;
@@ -140,7 +141,7 @@ bool WriterMethod::write(int tag, const QVariant& data) {
   std::unique_ptr<google::protobuf::Message> request(
       write_->dataToMessage(data));
   if (!request) {
-    error(tag, "Failed to convert to message object.");
+    unknownError(tag, "Failed to convert to message object.");
     return false;
   }
   std::lock_guard<std::mutex> lock(calls_mutex_);

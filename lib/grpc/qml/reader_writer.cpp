@@ -31,7 +31,7 @@ void ReaderWriterCallData::process(bool ok) {
     }
   } else if (status_ == Status::WRITE) {
     if (!ok) {
-      method_->error(tag_, "Failed to send request.");
+      method_->unknownError(tag_, "Failed to send request.");
       status_ = Status::FINISH;
       stream_.Finish(&grpc_status_, this);
     } else {
@@ -55,7 +55,7 @@ void ReaderWriterCallData::process(bool ok) {
   } else if (status_ == Status::WRITES_DONE) {
     if (!ok) {
       qWarning() << QString::fromStdString(grpc_status_.error_message());
-      // method_->error(tag_, "Failed to send client streaming done.");
+      // method_->unknownError(tag_, "Failed to send client streaming done.");
     }
     write_done_ = true;
     if (read_done_) {
@@ -67,7 +67,7 @@ void ReaderWriterCallData::process(bool ok) {
     }
   } else if (status_ == Status::FINISH) {
     if (!grpc_status_.ok()) {
-      method_->error(tag_,
+      method_->unknownError(tag_,
                      QString::fromStdString(grpc_status_.error_message()));
     }
     delete this;
@@ -104,7 +104,7 @@ void ReaderWriterCallData::handleQueuedRequests() {
 bool ReaderWriterCallData::write(
     std::unique_ptr<google::protobuf::Message> request) {
   if (!request) {
-    method_->error(tag_, "Request message is empty.");
+    method_->unknownError(tag_, "Request message is empty.");
     return false;
   }
   std::lock_guard<std::mutex> lock(mutex_);
@@ -157,7 +157,7 @@ ReaderWriterCallData* ReaderWriterMethod::ensureCallData(int tag) {
     auto res = calls_.insert(std::make_pair(
         tag, new ReaderWriterCallData(tag, channel_.get(), cq_, this, read_)));
     if (!res.second) {
-      error(tag, "Failed to create call object");
+      unknownError(tag, "Failed to create call object");
       return nullptr;
     }
     call = res.first->second;
@@ -176,7 +176,7 @@ bool ReaderWriterMethod::write(int tag, const QVariant& data) {
   std::unique_ptr<google::protobuf::Message> request(
       write_->dataToMessage(data));
   if (!request) {
-    error(tag, "Failed to convert to message object.");
+    unknownError(tag, "Failed to convert to message object.");
     return false;
   }
   std::lock_guard<std::mutex> lock(calls_mutex_);

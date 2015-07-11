@@ -38,10 +38,20 @@ void ServerReaderMethod::onDataEnd(ServerReaderCallData* cdata) {
 bool ServerReaderMethod::respond(int tag, const QVariant& data) {
   auto cdata = remove(tag);
   if (!cdata) {
-    qWarning() << "";
+    qWarning() << "Unknown tag to respond: " << tag;
     return false;
   }
   cdata->resume(data);
+  return true;
+}
+
+bool ServerReaderMethod::abort(int tag, int code, const QString& message) {
+  auto cdata = remove(tag);
+  if (!cdata) {
+    qWarning() << "Unknown tag to abort: " << tag;
+    return false;
+  }
+  cdata->abort(code, message);
   return true;
 }
 
@@ -105,6 +115,17 @@ void ServerReaderCallData::resume(const QVariant& data) {
   }
   status_ = Status::DONE;
   reader_.Finish(*response_, grpc::Status::OK, this);
+}
+
+void ServerReaderCallData::abort(int code, const QString& message) {
+  if (status_ != Status::FROZEN) {
+    qWarning() << "Abort called for non-frozen call data.";
+    return;
+  }
+  status_ = Status::DONE;
+  grpc::Status grpc_status(static_cast<grpc::StatusCode>(code),
+                           message.toStdString());
+  reader_.FinishWithError(grpc_status, this);
 }
 }
 }

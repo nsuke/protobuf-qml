@@ -1,5 +1,6 @@
 #include "grpc/qml/server_unary.h"
 #include "grpc/qml/server.h"
+#include <grpc++/status_code_enum.h>
 
 namespace grpc {
 namespace qml {
@@ -23,10 +24,22 @@ void ServerUnaryMethod::onRequest(ServerUnaryCallData* cdata) {
 bool ServerUnaryMethod::respond(int tag, const QVariant& data) {
   auto cdata = remove(tag);
   if (!cdata) {
-    qWarning() << "";
+    qWarning() << "Unknown tag: " << tag;
     return false;
   }
   cdata->resume(data);
+  return true;
+}
+
+bool ServerUnaryMethod::abort(int tag,
+                              int error_code,
+                              const QString& error_message) {
+  auto cdata = remove(tag);
+  if (!cdata) {
+    qWarning() << "Unknown tag: " << tag;
+    return false;
+  }
+  cdata->abort(error_code, error_message);
   return true;
 }
 
@@ -85,6 +98,19 @@ void ServerUnaryCallData::resume(const QVariant& data) {
   }
   status_ = Status::DONE;
   writer_.Finish(*response_, grpc::Status::OK, this);
+}
+
+void ServerUnaryCallData::abort(int error_code, const QString& error_message) {
+  qDebug() << "ABORT";
+  if (status_ != Status::FROZEN) {
+    qWarning() << "Resume called for non-frozen call data.";
+    Q_ASSERT(false);
+    return;
+  }
+  status_ = Status::DONE;
+  grpc::Status error_status(static_cast<grpc::StatusCode>(error_code),
+                            error_message.toStdString());
+  writer_.FinishWithError(error_status, this);
 }
 }
 }

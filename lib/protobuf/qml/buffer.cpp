@@ -24,11 +24,11 @@ bool SerializeMethod::write(int tag, const QVariant& v, int timeout) {
   std::unique_ptr<io::ZeroCopyOutputStream, decltype(close)> stream(
       channel_->openOutput(tag, msg->ByteSize()), close);
   if (!stream) {
-    error(tag, "Failed to open output stream");
+    unknownError(tag, "Failed to open output stream");
     return false;
   }
   if (!msg->SerializeToZeroCopyStream(stream.get())) {
-    error(tag, "Failed to serialize to protobuf stream");
+    unknownError(tag, "Failed to serialize to protobuf stream");
     return false;
   }
   // Flush before notifying "done".
@@ -50,16 +50,16 @@ bool ParseMethod::write(int tag, const QVariant& v, int timeout) {
   std::unique_ptr<io::ZeroCopyInputStream, decltype(close)> stream(
       channel_->openInput(tag), close);
   if (!stream) {
-    error(tag, "Failed to open input stream");
+    unknownError(tag, "Failed to open input stream");
     return false;
   }
   std::unique_ptr<google::protobuf::Message> msg(descriptor_->newMessage());
   if (!msg) {
-    error(tag, "Failed to create protobuf message object");
+    unknownError(tag, "Failed to create protobuf message object");
     return false;
   }
   if (!msg->ParseFromZeroCopyStream(stream.get())) {
-    error(tag, "Failed to parse from protobuf buffer");
+    unknownError(tag, "Failed to parse from protobuf buffer");
     return false;
   }
   stream.reset();

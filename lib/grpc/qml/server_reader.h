@@ -32,6 +32,7 @@ public:
 
   void startProcessing() final;
   bool respond(int tag, const QVariant& data) final;
+  bool abort(int tag, int code, const QString& message) final;
 
 private:
   ::protobuf::qml::DescriptorWrapper* read_;
@@ -52,6 +53,7 @@ public:
 
   void process(bool ok) final;
   void resume(const QVariant& data);
+  void abort(int code, const QString& message);
   const QVariant& data() const { return data_; }
   int tag = 0;
 

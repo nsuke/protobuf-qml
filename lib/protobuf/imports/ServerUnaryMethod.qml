@@ -17,7 +17,15 @@ PB.ServerUnaryMethodHolder {
       return;
     }
     handler(new root.readType(data), function(err, response) {
-      root.respond(tag, new root.writeType(response)._raw);
+      if (err) {
+        if (err instanceof Error) {
+          root.abort(tag, err.code || PB.StatusCode.UNKNOWN, err.message);
+        } else if (typeof err === 'string') {
+          root.abort(tag, PB.StatusCode.UNKNOWN, err);
+        }
+      } else {
+        root.respond(tag, new root.writeType(response)._raw);
+      }
     });
   }
 }

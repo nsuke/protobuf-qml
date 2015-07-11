@@ -8,6 +8,35 @@
 namespace protobuf {
 namespace qml {
 
+class PROTOBUF_QML_DLLEXPORT StatusCode {
+  Q_GADGET
+  Q_ENUMS(StatusCode_)
+
+public:
+  // Synced with grpc++/status_code_enum.h
+  // vim search phrase:
+  // ^\s*[A-Z_]\+\s*=\s*-\?[0-9]\+,\?$
+  enum StatusCode_ {
+    CANCELLED = 1,
+    UNKNOWN = 2,
+    INVALID_ARGUMENT = 3,
+    DEADLINE_EXCEEDED = 4,
+    NOT_FOUND = 5,
+    ALREADY_EXISTS = 6,
+    PERMISSION_DENIED = 7,
+    UNAUTHENTICATED = 16,
+    RESOURCE_EXHAUSTED = 8,
+    FAILED_PRECONDITION = 9,
+    ABORTED = 10,
+    OUT_OF_RANGE = 11,
+    UNIMPLEMENTED = 12,
+    INTERNAL = 13,
+    UNAVAILABLE = 14,
+    DATA_LOSS = 15,
+    DO_NOT_USE = -1
+  };
+};
+
 class Channel2;
 
 class PROTOBUF_QML_DLLEXPORT MethodBase : public QObject {
@@ -15,8 +44,13 @@ class PROTOBUF_QML_DLLEXPORT MethodBase : public QObject {
 
 signals:
   void data(int tag, const QVariant& data);
-  void error(int tag, const QString& message);
+  void error(int tag, int code, const QString& message);
   void closed(int tag);
+
+public:
+  void unknownError(int tag, const QString& message) {
+    error(tag, StatusCode::UNKNOWN, message);
+  }
 
 protected:
   explicit MethodBase(QObject* p = nullptr) : QObject(p) {}
@@ -38,7 +72,7 @@ class PROTOBUF_QML_DLLEXPORT MethodHolder : public QObject {
 
 signals:
   void data(int tag, const QVariant& data);
-  void error(int tag, const QString& message);
+  void error(int tag, int code, const QString& message);
   void closed(int tag);
 
   void methodNameChanged();

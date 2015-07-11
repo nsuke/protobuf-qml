@@ -41,7 +41,7 @@ void UnaryCallData::process(bool ok) {
       method_->data(tag_, data);
     } else {
       std::cerr << grpc_status_.error_message() << std::endl;
-      method_->error(tag_,
+      method_->error(tag_, grpc_status_.error_code(),
                      QString::fromStdString(grpc_status_.error_message()));
     }
     method_->closed(tag_);
@@ -75,7 +75,7 @@ bool UnaryMethod::write(int tag, const QVariant& data, int timeout) {
   std::unique_ptr<google::protobuf::Message> request(
       write_->dataToMessage(data));
   if (!request) {
-    error(tag, "Failed to convert to message object.");
+    unknownError(tag, "Failed to convert to message object.");
     return false;
   }
   new UnaryCallData(tag, this, channel_.get(), cq_, read_, std::move(request),

@@ -99,7 +99,7 @@ void ServerBidiCallData::process(bool ok) {
   } else if (status_ == Status::DONE) {
     new ServerBidiCallData(method_, service_, index_, cq_, read_, write_);
     if (!ok) {
-      method_->error(tag_, "Error while finishing call.");
+      method_->unknownError(tag_, "Error while finishing call.");
     }
     lock.unlock();
     delete this;

@@ -81,14 +81,14 @@ void ServerWriterCallData::process(bool ok) {
   } else if (status_ == Status::WRITE) {
     if (!ok) {
       qWarning() << "Failed to write.";
-      method_->error(tag_, "Failed to write.");
+      method_->unknownError(tag_, "Failed to write.");
     }
     processQueuedData();
   } else if (status_ == Status::DONE) {
     new ServerWriterCallData(method_, service_, index_, cq_, read_, write_);
     if (!ok) {
       qWarning() << "Failed to complete writer call.";
-      method_->error(tag_, "Failed to complete writer call.");
+      method_->unknownError(tag_, "Failed to complete writer call.");
     }
     lock.unlock();
     delete this;

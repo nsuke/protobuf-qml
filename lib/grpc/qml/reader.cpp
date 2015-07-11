@@ -32,7 +32,7 @@ ReaderCallData::~ReaderCallData() {
 void ReaderCallData::process(bool ok) {
   if (status_ == Status::WRITE) {
     if (!ok) {
-      method_->error(tag_, "Failed to send request.");
+      method_->unknownError(tag_, "Failed to send request.");
       // TODO: need to call Finish or not ?
       delete this;
       return;
@@ -52,6 +52,8 @@ void ReaderCallData::process(bool ok) {
   } else if (status_ == Status::DONE) {
     if (grpc_status_.error_code()) {
       qWarning() << QString::fromStdString(grpc_status_.error_message());
+      method_->error(tag_, grpc_status_.error_code(),
+                     QString::fromStdString(grpc_status_.error_message()));
     }
     delete this;
   } else {
@@ -63,7 +65,7 @@ bool ReaderMethod::write(int tag, const QVariant& data, int timeout) {
   std::unique_ptr<google::protobuf::Message> request(
       write_->dataToMessage(data));
   if (!request) {
-    error(tag, "Failed to convert to message object.");
+    unknownError(tag, "Failed to convert to message object.");
     return false;
   }
   new ReaderCallData(tag, channel_.get(), cq_, this, read_, std::move(request),

@@ -47,7 +47,9 @@ copy(protobuf-qml
   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Protobuf
   imports/qmldir
   imports/message.js
+  imports/errors.js
   imports/UnaryMethod.qml
+  imports/ClientMethod.qml
   imports/WriterMethod.qml
   imports/ReaderMethod.qml
   imports/ReaderWriterMethod.qml

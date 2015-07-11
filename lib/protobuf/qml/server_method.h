@@ -10,6 +10,22 @@
 namespace protobuf {
 namespace qml {
 
+class PROTOBUF_QML_DLLEXPORT ServerMethod : public MethodBase {
+  Q_OBJECT
+
+public:
+  explicit ServerMethod(QObject* p = nullptr) : MethodBase(p) {}
+  virtual ~ServerMethod() {}
+
+  virtual bool respond(int tag, const QVariant& data) { return false; }
+
+  virtual bool abort(int tag, int error_code, const QString& error_message) {
+    return false;
+  }
+
+  virtual void startProcessing() {}
+};
+
 class PROTOBUF_QML_DLLEXPORT ServerMethodHolder : public MethodHolder {
   Q_OBJECT
 
@@ -29,20 +45,39 @@ public:
       indexChanged();
     }
   }
-  virtual void startProcessing() {}
+  void startProcessing() {
+    Q_ASSERT(impl());
+    impl()->startProcessing();
+  }
+
+  virtual ServerMethod* impl() const { return nullptr; }
+
+  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
+    if (!impl()) {
+      qWarning() << "Server method is not initialized.";
+      return false;
+    }
+    return impl()->respond(tag, data);
+  }
+
+  Q_INVOKABLE bool abort(int tag, int error_code, const QString& message) {
+    if (!impl()) {
+      qWarning() << "Server method is not initialized.";
+      return false;
+    }
+    return impl()->abort(tag, error_code, message);
+  }
 
 private:
   int index_ = -1;
 };
 
-class PROTOBUF_QML_DLLEXPORT ServerUnaryMethod : public MethodBase {
+class PROTOBUF_QML_DLLEXPORT ServerUnaryMethod : public ServerMethod {
   Q_OBJECT
 
 public:
-  explicit ServerUnaryMethod(QObject* p = nullptr) : MethodBase(p) {}
+  explicit ServerUnaryMethod(QObject* p = nullptr) : ServerMethod(p) {}
   virtual ~ServerUnaryMethod() {}
-  virtual bool respond(int tag, const QVariant& data) { return false; }
-  virtual void startProcessing() {}
 };
 
 class PROTOBUF_QML_DLLEXPORT ServerUnaryMethodHolder
@@ -54,10 +89,7 @@ public:
       : ServerMethodHolder(p) {}
   ~ServerUnaryMethodHolder() {}
 
-  void startProcessing() final {
-    Q_ASSERT(impl_);
-    impl_->startProcessing();
-  }
+  ServerMethod* impl() const final { return impl_.get(); }
 
   bool inject(ServerUnaryMethod* impl) {
     if (impl_) {
@@ -72,14 +104,6 @@ public:
     return true;
   }
 
-  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
-    if (!impl_) {
-      qWarning() << "Server unary method is not initialized.";
-      return false;
-    }
-    return impl_->respond(tag, data);
-  }
-
 protected:
   void deinit() final {
     // qWarning() << "Service method cannot be deinitialized.";
@@ -89,17 +113,15 @@ private:
   std::unique_ptr<ServerUnaryMethod> impl_;
 };
 
-class PROTOBUF_QML_DLLEXPORT ServerReaderMethod : public MethodBase {
+class PROTOBUF_QML_DLLEXPORT ServerReaderMethod : public ServerMethod {
   Q_OBJECT
 
 signals:
   void dataEnd(int tag);
 
 public:
-  explicit ServerReaderMethod(QObject* p = nullptr) : MethodBase(p) {}
+  explicit ServerReaderMethod(QObject* p = nullptr) : ServerMethod(p) {}
   virtual ~ServerReaderMethod() {}
-  virtual bool respond(int tag, const QVariant& data) { return false; }
-  virtual void startProcessing() {}
 };
 
 class PROTOBUF_QML_DLLEXPORT ServerReaderMethodHolder
@@ -114,10 +136,7 @@ public:
       : ServerMethodHolder(p) {}
   ~ServerReaderMethodHolder() {}
 
-  void startProcessing() final {
-    Q_ASSERT(impl_);
-    impl_->startProcessing();
-  }
+  ServerMethod* impl() const final { return impl_.get(); }
 
   bool inject(ServerReaderMethod* impl) {
     if (impl_) {
@@ -134,14 +153,6 @@ public:
     return true;
   }
 
-  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
-    if (!impl_) {
-      qWarning() << "Server reader method is not initialized.";
-      return false;
-    }
-    return impl_->respond(tag, data);
-  }
-
 protected:
   void deinit() final {}
 
@@ -149,15 +160,13 @@ private:
   std::unique_ptr<ServerReaderMethod> impl_;
 };
 
-class PROTOBUF_QML_DLLEXPORT ServerWriterMethod : public MethodBase {
+class PROTOBUF_QML_DLLEXPORT ServerWriterMethod : public ServerMethod {
   Q_OBJECT
 
 public:
-  explicit ServerWriterMethod(QObject* p = nullptr) : MethodBase(p) {}
+  explicit ServerWriterMethod(QObject* p = nullptr) : ServerMethod(p) {}
   virtual ~ServerWriterMethod() {}
-  virtual bool respond(int tag, const QVariant& data) { return false; }
   virtual bool end(int tag) { return false; }
-  virtual void startProcessing() {}
 };
 
 class PROTOBUF_QML_DLLEXPORT ServerWriterMethodHolder
@@ -169,10 +178,7 @@ public:
       : ServerMethodHolder(p) {}
   ~ServerWriterMethodHolder() {}
 
-  void startProcessing() final {
-    Q_ASSERT(impl_);
-    impl_->startProcessing();
-  }
+  ServerMethod* impl() const final { return impl_.get(); }
 
   bool inject(ServerWriterMethod* impl) {
     if (impl_) {
@@ -185,14 +191,6 @@ public:
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
     }
     return true;
-  }
-
-  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
-    if (!impl_) {
-      qWarning() << "Server writer method is not initialized.";
-      return false;
-    }
-    return impl_->respond(tag, data);
   }
 
   Q_INVOKABLE bool end(int tag) {
@@ -212,18 +210,16 @@ private:
   std::unique_ptr<ServerWriterMethod> impl_;
 };
 
-class PROTOBUF_QML_DLLEXPORT ServerReaderWriterMethod : public MethodBase {
+class PROTOBUF_QML_DLLEXPORT ServerReaderWriterMethod : public ServerMethod {
   Q_OBJECT
 
 signals:
   void dataEnd(int tag);
 
 public:
-  explicit ServerReaderWriterMethod(QObject* p = nullptr) : MethodBase(p) {}
+  explicit ServerReaderWriterMethod(QObject* p = nullptr) : ServerMethod(p) {}
   virtual ~ServerReaderWriterMethod() {}
-  virtual bool respond(int tag, const QVariant& data) { return false; }
   virtual bool end(int tag) { return false; }
-  virtual void startProcessing() {}
 };
 
 class PROTOBUF_QML_DLLEXPORT ServerReaderWriterMethodHolder
@@ -238,10 +234,7 @@ public:
       : ServerMethodHolder(p) {}
   ~ServerReaderWriterMethodHolder() {}
 
-  void startProcessing() final {
-    Q_ASSERT(impl_);
-    impl_->startProcessing();
-  }
+  ServerMethod* impl() const final { return impl_.get(); }
 
   bool inject(ServerReaderWriterMethod* impl) {
     if (impl_) {
@@ -256,14 +249,6 @@ public:
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
     }
     return true;
-  }
-
-  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
-    if (!impl_) {
-      qWarning() << "Server reader writer method is not initialized.";
-      return false;
-    }
-    return impl_->respond(tag, data);
   }
 
   Q_INVOKABLE bool end(int tag) {

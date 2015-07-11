@@ -33,6 +33,16 @@ PB.ServerReaderMethodHolder {
         }
       };
       root.handler(call, function(err, response) {
+        if (err) {
+          if (typeof err === 'string') {
+            var message = err;
+          } else {
+            var message = err.message || 'Unknown error';
+          }
+          var code = err.code || PB.Errors.UNKNOWN;
+          root.abort(tag, code, message);
+          return;
+        }
         root.respond(tag, new root.writeType(response)._raw);
       });
     }

@@ -37,7 +37,7 @@ Item {
           console.log('msg ' + msg._raw);
           fail();
         } else {
-          verify('error ' + err);
+          verify(err);
           called.value = true;
         }});
       tryCompare(called, 'value', true, 100);
