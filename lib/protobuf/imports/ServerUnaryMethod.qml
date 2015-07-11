@@ -1,4 +1,4 @@
-import QtQuick 2.2
+import QtQuick 2.3
 import Protobuf 1.0 as PB
 
 PB.ServerUnaryMethodHolder {

@@ -16,13 +16,14 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
-      qtbase5-dev \
-      qtdeclarative5-dev \
-      qttools5-dev-tools \
-      qtdeclarative5-dev-tools \
-      qt5-default \
-      qtdeclarative5-qtquick2-plugin \
-      qtdeclarative5-test-plugin \
+      software-properties-common \
+      python-software-properties
+    add-apt-repository -y ppa:beineri/opt-qt532
+    apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+      libgl1-mesa-dev \
+      qt53declarative \
+      ninja-build \
+      cmake \
       python-simplejson \
       python-mako \
       cmake \
