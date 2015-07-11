@@ -24,6 +24,9 @@ set(test-hello-server_SOURCES
 add_executable(test-hello-server ${test-hello-server_SOURCES})
 
 target_link_libraries(test-hello-server ${GRPC++_LIBRARIES} ${PROTOBUF_LIBRARIES})
+if(UNIX)
+  target_link_libraries(test-hello-server rt)
+endif()
 
 protobuf_qml_target(test-hello-server)
 
@@ -38,6 +41,9 @@ set(test-hello-async-server_SOURCES
 add_executable(test-hello-async-server ${test-hello-async-server_SOURCES})
 
 target_link_libraries(test-hello-async-server ${GRPC++_LIBRARIES} ${PROTOBUF_LIBRARIES})
+if(UNIX)
+  target_link_libraries(test-hello-async-server rt)
+endif()
 
 protobuf_qml_target(test-hello-async-server)
 
