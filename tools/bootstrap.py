@@ -14,6 +14,8 @@ def main(argv):
   p.add_argument('--configuration', '-C', default='Debug', help='CMake build type')
   p.add_argument('--qt5dir', help='directory that has Qt5<module>/Qt5<module>Config.cmake files')
   p.add_argument('--clang', action='store_true', help='use clang')
+  p.add_argument('--cc', help='C compiler')
+  p.add_argument('--cxx', help='C++ compiler')
   p.add_argument('--out', '-o', default=buildenv.DEFAULT_OUT, help='build directory path')
   # p.add_argument('--qt5dir', '-Q', default='/usr/lib/qt5', help='Qt5 directory path')
   args, other_args = p.parse_known_args(argv)
@@ -46,11 +48,13 @@ def main(argv):
       '-DQt5QuickTest_DIR=%s/Qt5QuickTest' % args.qt5dir,
     ])
 
-  if args.clang:
-    cmd.extend([
-      '-DCMAKE_C_COMPILER=clang',
-      '-DCMAKE_CXX_COMPILER=clang++',
-    ])
+  cc = args.cc or (args.clang and 'clang')
+  cxx = args.cxx or (args.clang and 'clang++')
+  if cc:
+    cmd.append('-DCMAKE_C_COMPILER=' + cc)
+  if cxx:
+    cmd.append('-DCMAKE_CXX_COMPILER=' + cxx)
+
   cmd.extend(other_args)
   cmd.append(buildenv.ROOT_DIR)
 
