@@ -58,7 +58,7 @@ PB.ServerReaderMethodHolder {
     'use strict';
     var handler = getHandler(tag);
     if (!handler) {
-      console.warn('Received DataEnd for unknown tag: ' + tag);
+      console.warn('Received Data for unknown tag: ' + tag);
       return;
     }
     var fn = handler.data;
