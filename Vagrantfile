@@ -25,14 +25,8 @@ Vagrant.configure(2) do |config|
       qtdeclarative5-test-plugin \
       python-simplejson \
       python-mako \
-      libgoogle-perftools-dev \
-      curl \
-      unzip \
-      build-essential \
       cmake \
       ninja-build \
-      autoconf \
-      libtool \
       zlib1g-dev \
       gcc \
       g++ \
