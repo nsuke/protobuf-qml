@@ -31,7 +31,7 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.repeatedField);
-          compare(msg2.repeatedFieldLength(), 3);
+          compare(msg2.repeatedFieldLength, 3);
           compare(msg2.repeatedField(0), 42);
           compare(msg2.repeatedField(1), -42);
           compare(msg2.repeatedField(2), 43);
@@ -54,7 +54,7 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.repeatedStringField);
-          compare(msg2.repeatedStringFieldSize(), 2);
+          compare(msg2.repeatedStringFieldSize, 2);
           compare(msg2.repeatedStringField(0), 'foo Bar');
           compare(msg2.repeatedStringField(1), 'FooBar 2');
           called.value = true;
@@ -78,7 +78,7 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.repeatedEnumField);
-          compare(msg2.repeatedEnumFieldCount(), 4);
+          compare(msg2.repeatedEnumFieldCount, 4);
           compare(Test1.Enum1.toString(msg2.repeatedEnumField(0)), 'ENUM_VALUE_SECOND');
           compare(Test1.Enum1.toString(msg2.repeatedEnumField(1)), 'ENUM_VALUE_THIRD');
           compare(Test1.Enum1.toString(msg2.repeatedEnumField(2)), 'ENUM_VALUE_SECOND');
@@ -108,10 +108,10 @@ Item {
         Test2.Msg2.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.msgs1);
-          compare(msg2.msgs1Count(), 2);
+          compare(msg2.msgs1Count, 2);
           compare(msg2.msgs1(0).field1, 300);
-          compare(msg2.msgs1(0).repeatedStringFieldCount(), 0);
-          verify(msg2.msgs1(1).repeatedStringFieldCount() > 0);
+          compare(msg2.msgs1(0).repeatedStringFieldCount, 0);
+          verify(msg2.msgs1(1).repeatedStringFieldCount > 0);
           verify(typeof msg2.msgs1(1).repeatedStringField(0), 'baz');
           called.value = true;
         });

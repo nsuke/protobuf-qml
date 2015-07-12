@@ -71,7 +71,7 @@ Item {
 
     subscribeHello: function(call) {
       call.on('data', function(data) {
-        for (var i = 0; i < data.requestsCount(); ++i) {
+        for (var i = 0; i < data.requestsSize; ++i) {
           var req = data.requests(i);
           if (req.name === 'GIVE_ME_ERROR') {
             call.error(new PB.RpcErrors.Aborted(serverStreamingErrorMessage));
@@ -88,7 +88,7 @@ Item {
     bidiHello: function(call) {
       var queue = [];
       call.on('data', function(data) {
-        for (var i = 0; i < data.requestsCount(); ++i) {
+        for (var i = 0; i < data.requestsSize; ++i) {
           if (data.requests(i).name === 'GIVE_ME_ERROR') {
             call.error(new PB.RpcErrors.Aborted(bidiStreamingErrorMessage));
             return;

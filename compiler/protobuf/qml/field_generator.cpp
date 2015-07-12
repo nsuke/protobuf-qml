@@ -190,7 +190,7 @@ void FieldGenerator::generateRepeatedProperty(
   p.Print(variables_,
           "    }\n"
           "  };\n"
-          "  $type$.prototype.$name$Count = function() {\n");
+          "  var count = function() {\n");
 
   if (is_message_) {
     messageAssertLength(p);
@@ -200,8 +200,11 @@ void FieldGenerator::generateRepeatedProperty(
 
           "    return this._raw[FIELD][$index$].length;\n"
           "  };\n"
-          "  $type$.prototype.$name$Size = $type$.prototype.$name$Count;\n"
-          "  $type$.prototype.$name$Length = $type$.prototype.$name$Count;\n"
+          "  Object.defineProperties($type$.prototype, {\n"
+          "    $name$Count: { get: count },\n"
+          "    $name$Size: { get: count },\n"
+          "    $name$Length: { get: count },\n"
+          "  });\n"
           "  $type$.prototype.add$capital_name$ = function(value) {\n"
           "    if (typeof value == 'undefined') {\n"
           "      throw new TypeError('Cannot add undefined.');\n"
