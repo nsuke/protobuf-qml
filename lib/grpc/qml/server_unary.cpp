@@ -101,7 +101,6 @@ void ServerUnaryCallData::resume(const QVariant& data) {
 }
 
 void ServerUnaryCallData::abort(int error_code, const QString& error_message) {
-  qDebug() << "ABORT";
   if (status_ != Status::FROZEN) {
     qWarning() << "Resume called for non-frozen call data.";
     Q_ASSERT(false);

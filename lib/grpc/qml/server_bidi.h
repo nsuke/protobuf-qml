@@ -33,6 +33,7 @@ public:
 
   void startProcessing() final;
   bool respond(int tag, const QVariant& data) final;
+  bool abort(int tag, int code, const QString& message) final;
   bool end(int tag) final;
 
 private:
@@ -55,6 +56,7 @@ public:
   void process(bool ok) final;
   void write(const QVariant& data);
   void writesDone();
+  void abort(int code, const QString& message);
   int tag = 0;
 
 private:
@@ -67,7 +69,9 @@ private:
     DONE,
   };
   void handleQueuedMessages();
+  void decrementRef(std::unique_lock<std::mutex>& lock, bool terminate = false);
 
+  int ref_count_ = 1;
   Status status_ = Status::INIT;
   ::grpc::ServerContext context_;
   ::protobuf::qml::DescriptorWrapper* read_;

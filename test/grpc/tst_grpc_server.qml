@@ -89,6 +89,10 @@ Item {
       var queue = [];
       call.on('data', function(data) {
         for (var i = 0; i < data.requestsCount(); ++i) {
+          if (data.requests(i).name() === 'GIVE_ME_ERROR') {
+            call.error(new PB.RpcErrors.Aborted(bidiStreamingErrorMessage));
+            return;
+          }
           queue.push({
             'greet': 'Hello ' + data.requests(i).name(),
           });
@@ -179,6 +183,27 @@ Item {
       });
       test.verify(ok);
 
+      tryCompare(called, 'called', true, 2000);
+    }
+
+    function test_bidi_streaming_error() {
+      var called = {};
+      var call = helloClient.bidiHello(function(err, rsp, fin) {
+        if (!fin) {
+          verify(err);
+          compare(err.message, service.bidiStreamingErrorMessage);
+          compare(err.code, PB.StatusCode.ABORTED);
+          compare(err.name, 'Aborted');
+          verify(err instanceof PB.RpcErrors.Aborted);
+          called.called = true;
+        }
+      });
+      call.write({
+        requests: [{
+          name: 'GIVE_ME_ERROR',
+        }],
+      });
+      call.end();
       tryCompare(called, 'called', true, 2000);
     }
   }

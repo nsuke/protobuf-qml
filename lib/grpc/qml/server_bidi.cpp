@@ -35,17 +35,27 @@ bool ServerBidiMethod::respond(int tag, const QVariant& data) {
   auto lk = lock();
   auto cdata = getUnsafe(tag);
   if (!cdata) {
-    qWarning() << "Tag not found" << tag;
+    qWarning() << "Tag not found for" << __func__ << ":" << tag;
     return false;
   }
   cdata->write(data);
   return true;
 }
 
+bool ServerBidiMethod::abort(int tag, int code, const QString& message) {
+  auto cdata = remove(tag);
+  if (!cdata) {
+    qWarning() << "Tag not found for" << __func__ << ":" << tag;
+    return false;
+  }
+  cdata->abort(code, message);
+  return true;
+}
+
 bool ServerBidiMethod::end(int tag) {
   auto cdata = remove(tag);
   if (!cdata) {
-    qWarning() << "Tag not found" << tag;
+    qWarning() << "Tag not found for" << __func__ << ":" << tag;
     return false;
   }
   cdata->writesDone();
@@ -69,6 +79,17 @@ ServerBidiCallData::ServerBidiCallData(
   process(true);
 }
 
+void ServerBidiCallData::decrementRef(unique_lock<std::mutex>& lock,
+                                      bool terminate) {
+  if (!--ref_count_) {
+    if (!terminate)
+      new ServerBidiCallData(method_, service_, index_, cq_, read_, write_);
+    method_->closed(tag_);
+    lock.unlock();
+    delete this;
+  }
+}
+
 void ServerBidiCallData::process(bool ok) {
   std::unique_lock<std::mutex> lock(mutex_);
   if (status_ == Status::INIT) {
@@ -78,8 +99,7 @@ void ServerBidiCallData::process(bool ok) {
     status_ = Status::REQUEST;
   } else if (status_ == Status::REQUEST && !ok) {
     // init called after shutdown ?
-    lock.unlock();
-    delete this;
+    decrementRef(lock, true);
   } else if (status_ == Status::REQUEST) {
     // handleQueuedMessages();
     status_ = Status::READ;
@@ -97,13 +117,12 @@ void ServerBidiCallData::process(bool ok) {
   } else if (status_ == Status::WRITE) {
     handleQueuedMessages();
   } else if (status_ == Status::DONE) {
-    new ServerBidiCallData(method_, service_, index_, cq_, read_, write_);
     if (!ok) {
       method_->unknownError(tag_, "Error while finishing call.");
     }
-    lock.unlock();
-    delete this;
+    decrementRef(lock);
   } else {
+    qWarning() << "Unexpected state " << (int)status_;
     Q_ASSERT(false);
   }
 }
@@ -151,6 +170,18 @@ void ServerBidiCallData::writesDone() {
   } else {
     queue_.emplace(nullptr);
   }
+}
+
+void ServerBidiCallData::abort(int code, const QString& message) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (status_ != Status::FROZEN) {
+    // Avoid deleting twice in the completion queue thread.
+    ++ref_count_;
+  }
+  grpc::Status grpc_status(static_cast<grpc::StatusCode>(code),
+                           message.toStdString());
+  status_ = Status::DONE;
+  stream_.Finish(grpc_status, this);
 }
 }
 }

@@ -55,7 +55,8 @@ void ReaderWriterCallData::process(bool ok) {
   } else if (status_ == Status::WRITES_DONE) {
     if (!ok) {
       qWarning() << QString::fromStdString(grpc_status_.error_message());
-      // method_->unknownError(tag_, "Failed to send client streaming done.");
+      status_ = Status::FINISH;
+      stream_.Finish(&grpc_status_, this);
     }
     write_done_ = true;
     if (read_done_) {
@@ -67,10 +68,10 @@ void ReaderWriterCallData::process(bool ok) {
     }
   } else if (status_ == Status::FINISH) {
     if (!grpc_status_.ok()) {
-      method_->unknownError(tag_,
+      method_->error(tag_, grpc_status_.error_code(),
                      QString::fromStdString(grpc_status_.error_message()));
     }
-    delete this;
+    method_->deleteCall(tag_);
   } else {
     Q_ASSERT(false);
   }
