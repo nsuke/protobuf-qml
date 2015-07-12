@@ -19,7 +19,8 @@ ClientMethod {
       }
       var call = _storage.getCallback(tag);
       if (!call) {
-        throw new Error('Call object is invalid.');
+        console.warn('Call object not found for tag: ' + tag);
+        return false;
       }
       var ok = impl.write(tag, data, timeout);
       if (!ok) {
@@ -36,7 +37,8 @@ ClientMethod {
       }
       var call = _storage.getCallback(tag);
       if (!call) {
-        throw new Error('Call object is invalid.');
+        console.warn('Call object not found for tag: ' + tag);
+        return false;
       }
       var ok = impl.writesDone(tag, timeout);
       if (!ok) {
