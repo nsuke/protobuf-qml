@@ -35,6 +35,7 @@ Item {
     function test_valid_field_get() {
       var msg1 = new Test1.Msg1();
       var f1 = msg1.field1;
+      var f2 = msg1.getField1();
       // no error
     }
 

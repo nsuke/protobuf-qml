@@ -17,6 +17,27 @@ Item {
       buffer.size = 1000;
     }
 
+    function test_repeated_append() {
+      var msg1 = new Test1.Msg1();
+      msg1.addRepeatedField(42);
+      msg1.addRepeatedField(100);
+      msg1.addRepeatedField(-99);
+      compare(msg1.repeatedFieldSize, 3);
+      compare(msg1.repeatedField(0), 42);
+      compare(msg1.repeatedField(1), 100);
+      compare(msg1.repeatedField(2), -99);
+    }
+
+    function test_repeated_setter() {
+      var msg1 = new Test1.Msg1();
+      msg1.repeatedField(3, 42);
+      compare(msg1.repeatedFieldLength, 4);
+      compare(msg1.repeatedField(3), 42);
+      compare(msg1.repeatedField(0), undefined);
+      compare(msg1.repeatedField(1), undefined);
+      compare(msg1.repeatedField(2), undefined);
+    }
+
     function test_repeated() {
       var called = {};
       var msg1 = new Test1.Msg1({
