@@ -143,56 +143,71 @@ void FieldGenerator::messageAssertLength(google::protobuf::io::Printer& p) {
 void FieldGenerator::generateRepeatedProperty(
     google::protobuf::io::Printer& p) {
   p.Print(variables_,
+          "    // Replacement setter\n"
+          "  $type$.prototype.set$capital_name$ = function(values) {\n"
+          "    if (!(values instanceof Array)) {\n"
+          "      throw new TypeError();\n"
+          "    }\n"
+          "    this._raw[FIELD][$index$].length = values.length;\n");
+  if (is_message_) {
+    p.Print(variables_,
+            "     this._$name$.length = values.length;\n"
+            "     for (var i in values) {\n"
+            "       var msg = new "
+            "$message_scope$$message_type$(values[i]);\n"
+            "       this._$name$[i] = msg;\n"
+            "       this._raw[FIELD][$index$][i] = msg._raw;\n");
+  } else {
+    p.Print(variables_,
+            "     for (var i in values) {\n"
+            "       this._raw[FIELD][$index$][i] = values[i];\n");
+  }
+  p.Print(variables_,
+          "     }\n"
+          "  };\n"
+          "  // Single value setter\n"
+          "  $type$.prototype.set$capital_name$At = function(index, value) {\n"
+          "    if (typeof index !== 'number') {\n"
+          "      throw new TypeError();\n"
+          "    }\n"
+          "    if(this._raw[FIELD][$index$].length < index) {\n"
+          "      throw new RangeError();\n"
+          "    }\n");
+  if (is_message_) {
+    p.Print(variables_,
+            "    var msg = new $message_scope$$message_type$(value);\n"
+            "    this._$name$[index] = msg;\n"
+            "    this._raw[FIELD][$index$][index] = msg._raw;\n");
+  } else {
+    p.Print(variables_, "    this._raw[FIELD][$index$][index] = value;\n");
+  }
+  p.Print(variables_,
+          "  };\n"
+          "  // Getter\n"
+          "  $type$.prototype.get$capital_name$At = function(index) {\n"
+          "    if (typeof index !== 'number') {\n"
+          "      throw new TypeError();\n"
+          "    }\n"
+          "    if(this._raw[FIELD][$index$].length < index) {\n"
+          "      throw new RangeError();\n"
+          "    }\n");
+  if (is_message_) {
+    p.Print(variables_, "    return this._$name$[index];\n");
+  } else {
+    p.Print(variables_, "    return this._raw[FIELD][$index$][index];\n");
+  }
+  p.Print("  };\n");
+
+  p.Print(variables_,
           "  $type$.prototype.$name$ = function(indexOrValues, value) {\n"
           "    if (typeof indexOrValues == 'undefined') {\n"
-          "      return;\n"
-          "    }\n"
-          "    if (indexOrValues instanceof Array) {\n"
-          "      this._raw[FIELD][$index$].length = indexOrValues.length;\n");
-
-  if (is_message_) {
-    p.Print(variables_,
-            "      this._$name$.length = indexOrValues.length;\n"
-            "      for (var i in indexOrValues) {\n"
-            "        var msg = new "
-            "$message_scope$$message_type$(indexOrValues[i]);\n"
-            "        this._$name$[i] = msg;\n"
-            "        this._raw[FIELD][$index$][i] = msg._raw;\n");
-  } else {
-    p.Print(variables_,
-            "      for (var i in indexOrValues) {\n"
-            "        this._raw[FIELD][$index$][i] = indexOrValues[i];\n");
-  }
-
-  p.Print(variables_,
-          "      }\n"
-          "      return;\n"
-          "    }\n"
-          "    if (typeof indexOrValues != 'number') {\n"
-          "      throw new TypeError('Index should be a number.');\n"
-          "    }\n"
-          "    if (typeof value == 'undefined') {\n");
-
-  if (is_message_) {
-    p.Print(variables_,
-            "      return this._$name$[indexOrValues];\n"
-            "    } else if(this._$name$.length < indexOrValues) {\n"
-            "      throw new RangeError();\n"
-            "    } else {\n"
-            "      var msg = new $message_scope$$message_type$(value);\n"
-            "      this._$name$[indexOrValues] = msg;\n"
-            "      this._raw[FIELD][$index$][indexOrValues] = msg._raw;\n");
-  } else {
-    p.Print(
-        variables_,
-        "      return this._raw[FIELD][$index$][indexOrValues];\n"
-        "    } else if(this._raw[FIELD][$index$].length < indexOrValues) {\n"
-        "      throw new RangeError();\n"
-        "    } else {\n"
-        "      this._raw[FIELD][$index$][indexOrValues] = value;\n");
-  }
-
-  p.Print(variables_,
+          "      throw new TypeError();\n"
+          "    } else if (indexOrValues instanceof Array) {\n"
+          "      this.set$capital_name$(indexOrValues);\n"
+          "    } else if (typeof value == 'undefined') {\n"
+          "      return this.get$capital_name$At(indexOrValues);\n"
+          "    } else {\n"
+          "      this.set$capital_name$At(indexOrValues, value);\n"
           "    }\n"
           "  };\n"
           "  var $name$Count = function() {\n");
