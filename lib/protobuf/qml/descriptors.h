@@ -21,11 +21,6 @@ class DescriptorWrapper;
 class PROTOBUF_QML_DLLEXPORT DescriptorWrapper : public QObject {
   Q_OBJECT
 
-signals:
-  void parseCompleted(int key, QVariant result, bool error);
-  void serializeCompleted(int key, bool error);
-  void maxThreadsChanged();
-
 public:
   DescriptorWrapper(const google::protobuf::Descriptor* descriptor,
                     QObject* p = nullptr)
