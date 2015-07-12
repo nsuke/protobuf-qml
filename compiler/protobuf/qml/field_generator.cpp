@@ -290,7 +290,7 @@ void FieldGenerator::generateOptionalProperty(
 
   if (oneof_) {
     p.Print(variables_,
-            "      if (this.$oneof_camel$Case() != "
+            "      if (this.$oneof_camel$Case != "
             "type.$oneof_capital$Case.$all_capital_name$) {\n"
             "        return undefined;\n"
             "      } else {\n");
@@ -316,7 +316,7 @@ void FieldGenerator::generateOptionalProperty(
   genClear(p, "    ");
   if (oneof_) {
     p.Print(variables_,
-            "    if (this.$oneof_camel$Case() == "
+            "    if (this.$oneof_camel$Case == "
             "type.$oneof_capital$Case.$all_capital_name$) {\n"
             "      this._raw[ONEOF][$oneof_index$] = "
             "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"

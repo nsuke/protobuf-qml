@@ -73,32 +73,42 @@ void OneofGenerator::generateCaseEnum(io::Printer& p) {
 
 void OneofGenerator::generateCase(io::Printer& p) {
   p.Print(variables_,
-          "  $type$.prototype.$name$Case = function() {\n"
-          "    return this._raw[ONEOF][$index$];\n"
-          "  };\n"
-          "  Object.defineProperty($type$.prototype, '$name$', {\n"
-          "    get: function() {\n"
-          "      switch (this._raw[ONEOF][$index$]) {\n");
+          "  Object.defineProperties($type$.prototype, {\n"
+          "    $name$Case: {\n"
+          "      get: function() {\n"
+          "        return this._raw[ONEOF][$index$];\n"
+          "      },\n"
+          "    },\n"
+          "    $name$: {\n"
+          "      get: function() {\n"
+          "        switch (this._raw[ONEOF][$index$]) {\n");
   for (int i = 0; i < t_->field_count(); ++i) {
     auto f = t_->field(i);
     p.Print(
-        "        case $type$.$capital_name$Case.$all_capital_name$: {\n"
-        "          return '$name$';\n"
-        "        }\n",
+        "          case $type$.$capital_name$Case.$all_capital_name$: {\n"
+        "            return '$name$';\n"
+        "          }\n",
         "name", camelize(f->name()), "all_capital_name",
         capitalizeAll(f->name()), "capital_name", capital_name_, "type",
         containing_type);
   }
-  p.Print(
-      "      }\n"
-      "    },\n"
-      "  });\n");
+  p.Print(variables_,
+          "        }\n"
+          "      },\n"
+          "    },\n"
+          "  });\n"
+          "  $type$.prototype.get$capital_name$Case = function() {\n"
+          "    return this.$name$Case;\n"
+          "  };\n"
+          "  $type$.prototype.get$capital_name$ = function() {\n"
+          "    return this.$name$;\n"
+          "  };\n");
 }
 
 void OneofGenerator::generateClear(google::protobuf::io::Printer& p) {
   p.Print(variables_,
           "  $type$.prototype.clear$capital_name$ = function() {\n"
-          "    switch (this.$name$Case()) {\n");
+          "    switch (this.$name$Case) {\n");
   for (int i = 0; i < t_->field_count(); ++i) {
     auto f = t_->field(i);
     switch (f->cpp_type()) {
