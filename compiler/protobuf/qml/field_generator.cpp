@@ -176,6 +176,8 @@ void FieldGenerator::generateRepeatedProperty(
   if (is_message_) {
     p.Print(variables_,
             "      return this._$name$[indexOrValues];\n"
+            "    } else if(this._$name$.length < indexOrValues) {\n"
+            "      throw new RangeError();\n"
             "    } else {\n"
             "      var msg = new $message_scope$$message_type$(value);\n"
             "      this._$name$[indexOrValues] = msg;\n"
@@ -183,6 +185,8 @@ void FieldGenerator::generateRepeatedProperty(
   } else {
     p.Print(variables_,
             "      return this._raw[FIELD][$index$][indexOrValues];\n"
+            "    } else if(this._raw[FIELD][$index$].length < indexOrValues) {\n"
+            "      throw new RangeError();\n"
             "    } else {\n"
             "      this._raw[FIELD][$index$][indexOrValues] = value;\n");
   }

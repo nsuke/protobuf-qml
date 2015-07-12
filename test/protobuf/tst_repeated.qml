@@ -30,12 +30,20 @@ Item {
 
     function test_repeated_setter() {
       var msg1 = new Test1.Msg1();
-      msg1.repeatedField(3, 42);
-      compare(msg1.repeatedFieldLength, 4);
-      compare(msg1.repeatedField(3), 42);
-      compare(msg1.repeatedField(0), undefined);
-      compare(msg1.repeatedField(1), undefined);
-      compare(msg1.repeatedField(2), undefined);
+      msg1.addRepeatedField(42);
+      msg1.addRepeatedField(100);
+      msg1.addRepeatedField(-99);
+      msg1.repeatedField(1, 33);
+      compare(msg1.repeatedField(1), 33);
+    }
+
+    function test_repeated_setter_out_of_range() {
+      var msg1 = new Test1.Msg1();
+      try {
+        msg1.repeatedField(1, 42);
+        fail('Out of range setter should throw');
+      } catch (err) {
+      }
     }
 
     function test_repeated() {
