@@ -1,4 +1,4 @@
-import QtQuick 2.3
+import QtQuick 2.4
 import Protobuf 1.0 as PB
 
 PB.ServerWriterMethodHolder {

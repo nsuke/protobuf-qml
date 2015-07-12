@@ -16,12 +16,7 @@ inline QByteArray base64Buffer(size_t size) {
 }
 
 inline std::string toBase64(QByteArray& buf) {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 4, 0))
   return buf.toBase64().toStdString();
-#else
-  auto tmp_ba = buf.toBase64();
-  return std::string(tmp_ba.data(), tmp_ba.size());
-#endif
 }
 }
 }

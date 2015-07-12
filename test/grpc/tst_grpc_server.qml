@@ -1,5 +1,5 @@
-import QtQuick 2.3
-import QtTest 1.0
+import QtQuick 2.4
+import QtTest 1.1
 import Protobuf 1.0 as PB
 import Grpc 1.0 as G
 import 'hello.pb.js' as Hello

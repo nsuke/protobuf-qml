@@ -1,5 +1,5 @@
-import QtQuick 2.3
-import QtTest 1.0
+import QtQuick 2.4
+import QtTest 1.1
 import Protobuf 1.0 as Protobuf
 import 'oneof_test.pb.js' as Msg
 
