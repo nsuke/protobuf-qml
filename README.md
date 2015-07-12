@@ -78,4 +78,4 @@ $ cd out && ctest -VV
 Dependency versions
 ---
 * Protocol Buffers 3.0-alpha3 or later
-* Qt 5.3.2 or later
+* Qt 5.4.1 or later
