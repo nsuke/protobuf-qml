@@ -199,6 +199,8 @@ void FieldGenerator::generateRepeatedProperty(
 
           "    return this._raw[FIELD][$index$].length;\n"
           "  };\n"
+          "  $type$.prototype.$name$Size = $type$.prototype.$name$Count;\n"
+          "  $type$.prototype.$name$Length = $type$.prototype.$name$Count;\n"
           "  $type$.prototype.add$capital_name$ = function(value) {\n"
           "    if (typeof value == 'undefined') {\n"
           "      throw new TypeError('Cannot add undefined.');\n"

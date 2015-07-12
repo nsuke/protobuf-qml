@@ -31,7 +31,7 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.repeatedField);
-          compare(msg2.repeatedFieldCount(), 3);
+          compare(msg2.repeatedFieldLength(), 3);
           compare(msg2.repeatedField(0), 42);
           compare(msg2.repeatedField(1), -42);
           compare(msg2.repeatedField(2), 43);
@@ -54,7 +54,7 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
           verify(msg2.repeatedStringField);
-          compare(msg2.repeatedStringFieldCount(), 2);
+          compare(msg2.repeatedStringFieldSize(), 2);
           compare(msg2.repeatedStringField(0), 'foo Bar');
           compare(msg2.repeatedStringField(1), 'FooBar 2');
           called.value = true;
