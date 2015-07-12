@@ -122,15 +122,15 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
   } else if (t_->message_type()) {
     auto v = variables_;
     v.insert(std::make_pair("arg", arg));
-    p.Print(
-        v,
-        "        if (typeof this.$name$ == 'undefined') {\n"
-        "          this.$name$ = {};\n"
-        "        }\n"
-        "        this.$name$._mergeFromRawArray($arg$[FIELD][$index$]);\n");
+    p.Print(v,
+            "        if (typeof this.$name$ == 'undefined') {\n"
+            "          this.$name$ = {};\n"
+            "        }\n"
+            "        this.$name$._mergeFromRawArray($arg$[FIELD][$index$]);\n");
   } else {
-    p.Print("        this.set$capital_name$($arg$[FIELD][$index$]);\n", "capital_name",
-            capital_name_, "arg", arg, "index", std::to_string(t_->index()));
+    p.Print("        this.set$capital_name$($arg$[FIELD][$index$]);\n",
+            "capital_name", capital_name_, "arg", arg, "index",
+            std::to_string(t_->index()));
   }
 }
 
@@ -205,6 +205,9 @@ void FieldGenerator::generateRepeatedProperty(
           "    $name$Size: { get: count },\n"
           "    $name$Length: { get: count },\n"
           "  });\n"
+          "  $type$.prototype.get$capital_name$Count = count;\n"
+          "  $type$.prototype.get$capital_name$Size = count;\n"
+          "  $type$.prototype.get$capital_name$Length = count;\n"
           "  $type$.prototype.add$capital_name$ = function(value) {\n"
           "    if (typeof value == 'undefined') {\n"
           "      throw new TypeError('Cannot add undefined.');\n"

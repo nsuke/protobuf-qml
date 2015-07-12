@@ -32,6 +32,11 @@ Item {
           verify(msg2);
           verify(msg2.repeatedField);
           compare(msg2.repeatedFieldLength, 3);
+          compare(msg2.repeatedFieldCount, 3);
+          compare(msg2.repeatedFieldSize, 3);
+          compare(msg2.getRepeatedFieldLength(), 3);
+          compare(msg2.getRepeatedFieldCount(), 3);
+          compare(msg2.getRepeatedFieldSize(), 3);
           compare(msg2.repeatedField(0), 42);
           compare(msg2.repeatedField(1), -42);
           compare(msg2.repeatedField(2), 43);
