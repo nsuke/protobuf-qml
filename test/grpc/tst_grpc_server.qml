@@ -39,12 +39,12 @@ Item {
     // because it removes some properties from inccomming messages.
     // So we generate function property to be assigned like this.
     sayHello: function(data, callback) {
-      if (data.name() === 'GIVE_ME_ERROR') {
+      if (data.name === 'GIVE_ME_ERROR') {
         callback(new PB.RpcErrors.Aborted(unaryErrorMessage));
         return;
       }
       callback(null, {
-        greet: 'Hello ' + data.name(),
+        greet: 'Hello ' + data.name,
       });
     }
 
@@ -52,11 +52,11 @@ Item {
       var msg = 'Hello';
       var err = null;
       call.on('data', function(data) {
-        if (data.name() === 'GIVE_ME_ERROR') {
+        if (data.name === 'GIVE_ME_ERROR') {
           err = new PB.RpcErrors.Aborted(clientStreamingErrorMessage);
           return;
         }
-        msg += ' ' + data.name();
+        msg += ' ' + data.name;
       });
       call.on('end', function() {
         if (err) {
@@ -73,12 +73,12 @@ Item {
       call.on('data', function(data) {
         for (var i = 0; i < data.requestsCount(); ++i) {
           var req = data.requests(i);
-          if (req.name() === 'GIVE_ME_ERROR') {
+          if (req.name === 'GIVE_ME_ERROR') {
             call.error(new PB.RpcErrors.Aborted(serverStreamingErrorMessage));
             return;
           }
           call.write({
-            'greet': 'Hello ' + req.name(),
+            'greet': 'Hello ' + req.name,
           });
         }
         call.end();
@@ -89,12 +89,12 @@ Item {
       var queue = [];
       call.on('data', function(data) {
         for (var i = 0; i < data.requestsCount(); ++i) {
-          if (data.requests(i).name() === 'GIVE_ME_ERROR') {
+          if (data.requests(i).name === 'GIVE_ME_ERROR') {
             call.error(new PB.RpcErrors.Aborted(bidiStreamingErrorMessage));
             return;
           }
           queue.push({
-            'greet': 'Hello ' + data.requests(i).name(),
+            'greet': 'Hello ' + data.requests(i).name,
           });
         }
       });

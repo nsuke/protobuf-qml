@@ -22,7 +22,7 @@ Item {
       var msg1 = new Test1.Msg1({field1: -42});
       msg1.serializeTo(buffer.output, function() {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
-          compare(msg2.field1(), -42);
+          compare(msg2.field1, -42);
           called.called = true;
         });
       });
@@ -48,7 +48,7 @@ Item {
       });
       tryCompare(called, 'called', true, 100);
       verify(msg2);
-      compare(msg2.camelFieldTest1(), 80);
+      compare(msg2.camelFieldTest1, 80);
     }
 
     function test_multi_message() {
@@ -66,7 +66,7 @@ Item {
             fail('parse error');
           }
           verify(msg2);
-          compare(msg2.str(), 'some text');
+          compare(msg2.str, 'some text');
           called.parsed = true;
         });
       });
@@ -82,7 +82,7 @@ Item {
       msg1.serializeTo(buffer.output, function() {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
-          compare(msg2.field1(), -80000000000);
+          compare(msg2.field1, -80000000000);
           called.called = true;
         });
       });
@@ -98,7 +98,7 @@ Item {
       msg1.serializeTo(buffer.output, function() {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
-          compare(msg2.camelFieldTest1(), 80000000000);
+          compare(msg2.camelFieldTest1, 80000000000);
           called.called = true;
         });
       });
@@ -114,7 +114,7 @@ Item {
       msg1.serializeTo(buffer.output, function() {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
-          compare(msg2.stringField(), 'foo Bar');
+          compare(msg2.stringField, 'foo Bar');
           called.called = true;
         });
       });
@@ -128,7 +128,7 @@ Item {
       msg1.serializeTo(buffer.output, function() {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
-          compare(typeof msg2.optionalField1(), 'undefined');
+          compare(typeof msg2.optionalField1, 'undefined');
           called.called = true;
         });
       });

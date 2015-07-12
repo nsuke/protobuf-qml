@@ -26,7 +26,7 @@ Item {
       msg1.serializeTo(buffer.output, function() {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
-          compare(msg2.enumField(), Test1.Enum1.ENUM_VALUE_SECOND);
+          compare(msg2.enumField, Test1.Enum1.ENUM_VALUE_SECOND);
           called.value = true;
         });
       });
@@ -40,13 +40,13 @@ Item {
           field1: 17,
         },
       });
-      verify(msg1.msg1());
-      compare(msg1.msg1().field1(), 17);
+      verify(msg1.msg1);
+      compare(msg1.msg1.field1, 17);
       msg1.serializeTo(buffer.output, function() {
         Test2.Msg2.parseFrom(buffer.input, function(err, msg2) {
           verify(msg2);
-          verify(msg2.msg1());
-          compare(msg2.msg1().field1(), 17);
+          verify(msg2.msg1);
+          compare(msg2.msg1.field1, 17);
           called.value = true;
         });
       });

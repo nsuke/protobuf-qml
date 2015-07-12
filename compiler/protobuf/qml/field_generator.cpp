@@ -11,7 +11,8 @@ using namespace google::protobuf;
 
 FieldGenerator::FieldGenerator(const FieldDescriptor* t)
     : t_(t),
-      is_message_(t_ ? t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE : false),
+      is_message_(t_ ? t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE
+                     : false),
       oneof_(t_ ? t_->containing_oneof() : nullptr),
       camel_name_(t_ ? camelize(t_->name()) : "") {
   capital_name_ = capitalizeFirstLetter(camel_name_);
@@ -87,7 +88,7 @@ void FieldGenerator::generateInit(io::Printer& p) {
         "      this.$name$(values.$name$);\n"
         "    }\n");
   } else {
-    p.Print(variables_, "    this.$name$($default$);\n");
+    p.Print(variables_, "    this.set$capital_name$($default$);\n");
   }
 }
 
@@ -123,13 +124,13 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
     v.insert(std::make_pair("arg", arg));
     p.Print(
         v,
-        "        if (typeof this.$name$() == 'undefined') {\n"
-        "          this.$name$({});\n"
+        "        if (typeof this.$name$ == 'undefined') {\n"
+        "          this.$name$ = {};\n"
         "        }\n"
-        "        this.$name$()._mergeFromRawArray($arg$[FIELD][$index$]);\n");
+        "        this.$name$._mergeFromRawArray($arg$[FIELD][$index$]);\n");
   } else {
-    p.Print("        this.$name$($arg$[FIELD][$index$]);\n", "name",
-            camel_name_, "arg", arg, "index", std::to_string(t_->index()));
+    p.Print("        this.set$capital_name$($arg$[FIELD][$index$]);\n", "capital_name",
+            capital_name_, "arg", arg, "index", std::to_string(t_->index()));
   }
 }
 
@@ -254,7 +255,7 @@ void FieldGenerator::genGet(google::protobuf::io::Printer& p,
 }
 
 void FieldGenerator::genSet(google::protobuf::io::Printer& p,
-                               std::string indent) {
+                            std::string indent) {
   auto v = variables_;
   v.insert(std::make_pair("indent", indent));
   if (is_message_) {
@@ -273,8 +274,8 @@ void FieldGenerator::genClear(google::protobuf::io::Printer& p,
   v.insert(std::make_pair("indent", indent));
   if (is_message_) {
     p.Print(v,
-          "$indent$this._raw[FIELD][$index$] = undefined;\n"
-          "$indent$this._$name$ = undefined;\n");
+            "$indent$this._raw[FIELD][$index$] = undefined;\n"
+            "$indent$this._$name$ = undefined;\n");
   } else {
     p.Print(v, "$indent$this._raw[FIELD][$index$] = $default$;\n");
   }
@@ -282,9 +283,7 @@ void FieldGenerator::genClear(google::protobuf::io::Printer& p,
 
 void FieldGenerator::generateOptionalProperty(
     google::protobuf::io::Printer& p) {
-  p.Print(variables_,
-          "  $type$.prototype.$name$ = function(value) {\n"
-          "    if (typeof value == 'undefined') {\n");
+  p.Print(variables_, "  $type$.prototype.get$capital_name$ = function() {\n");
 
   if (oneof_) {
     p.Print(variables_,
@@ -295,17 +294,20 @@ void FieldGenerator::generateOptionalProperty(
     genGet(p, "        ");
     p.Print(variables_,
             "      }\n"
-            "    } else {\n"
+            "  };\n"
+            "  $type$.prototype.set$capital_name$ = function(value) {\n"
             "      this.clear$oneof_capital$();\n"
+
             "      this._raw[ONEOF][$oneof_index$] = "
             "type.$oneof_capital$Case.$all_capital_name$;\n");
   } else {
-    genGet(p, "      ");
-    p.Print(variables_, "    } else {\n");
+    genGet(p, "    ");
+    p.Print(variables_,
+            "  }\n"
+            "  $type$.prototype.set$capital_name$ = function(value) {\n");
   }
-  genSet(p, "      ");
+  genSet(p, "    ");
   p.Print(variables_,
-          "    }\n"
           "  };\n"
           "  $type$.prototype.clear$capital_name$ = function() {\n");
   genClear(p, "    ");
@@ -317,7 +319,12 @@ void FieldGenerator::generateOptionalProperty(
             "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
             "    }\n");
   }
-  p.Print(variables_, "  };\n");
+  p.Print(variables_,
+          "  };\n"
+          "  Object.defineProperty(type.prototype, '$name$', {\n"
+          "    get: $type$.prototype.get$capital_name$,\n"
+          "    set: $type$.prototype.set$capital_name$,\n"
+          "  });\n\n");
 }
 
 void FieldGenerator::generateProperty(google::protobuf::io::Printer& p) {

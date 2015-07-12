@@ -26,7 +26,7 @@ Item {
         Test1.Msg1.parseFrom(buffer.input, function(err, msg2) {
           console.log(msg2);
           verify(!err);
-          compare(msg2.field1(), -42);
+          compare(msg2.field1, -42);
           called.value = true;
         });
       });

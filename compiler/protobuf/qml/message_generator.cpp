@@ -75,11 +75,11 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "      this._mergeFromRawArray(values);\n"
       "    } else {\n"
       "      for (var k in values) {\n"
-      "        if (!(this[k] instanceof Function)) {\n"
-      "          // Without this, we end up with a cryptic error message.\n"
-      "          throw new Error(k + ' is not a member of $message_name$');\n"
+      "        if (this[k] instanceof Function) {\n"
+      "          this[k](values[k]);\n"
+      "        } else {\n"
+      "          this[k] = values[k];\n"
       "        }\n"
-      "        this[k](values[k]);\n"
       "      }\n"
       "    }\n"
       "  };\n\n",
@@ -114,9 +114,6 @@ void MessageGenerator::generateMessagePrototype(io::Printer& p) {
       "Protobuf.Message.createMessageType($message_name$, "
       "_file.descriptor.messageType($message_index$));\n\n",
       "message_name", name_, "message_index", std::to_string(t_->index()));
-}
-
-void MessageGenerator::generateMessageProperties(io::Printer& p) {
 }
 
 void MessageGenerator::generateNestedAlias(google::protobuf::io::Printer& p) {

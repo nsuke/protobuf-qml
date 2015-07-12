@@ -12,7 +12,7 @@ function test_unary(test, data) {
       test.verify(!err, err);
 
       // should receive response processed by server
-      test.compare(rsp.greet(), 'Hello Foo');
+      test.compare(rsp.greet, 'Hello Foo');
       val.called = true;
     }, 500);
 
@@ -33,11 +33,11 @@ function test_client_streaming(test, data) {
       test.verify(!err, err);
 
       // should receive response processed with all messages by server
-      test.compare(rsp.greet(), 'Hello Bar1 Bar2 Bar3');
+      test.compare(rsp.greet, 'Hello Bar1 Bar2 Bar3');
       val.called = true;
     });
 
-    call.timeout = 500;
+    call.timeout = 1000;
 
     // and send 3 messages and not end
     var ok = call.write({name: 'Bar1'});
@@ -78,7 +78,7 @@ function test_server_streaming(test, data) {
       if (finished) {
         end.called = true;
       } else {
-        received.push(data.greet());
+        received.push(data.greet);
       }
     });
     test.verify(ok);
@@ -102,7 +102,7 @@ function test_bidi_streaming(test, data) {
       if (finished) {
         end.called = true;
       } else {
-        received.push(data.greet());
+        received.push(data.greet);
       }
     });
     test.verify(call);

@@ -20,7 +20,7 @@ Item {
         console.log('[Expected Exception]: ' + err);
         if (keyword && (String(err).indexOf(keyword) < 0)) {
           qtest_fail('Expected keyword [' + keyword
-              + '] was not found in error message [' + String(err) + ']');
+              + '] was not found in error message [' + String(err) + ']', 2);
         }
       }
     }
@@ -28,34 +28,45 @@ Item {
     function test_storage_is_isolated() {
       var msg1 = new Test1.Msg1();
       var msg2 = new Test1.Msg1({field1: 42});
-      msg1.field1(4200);
-      compare(msg2.field1(), 42);
+      msg1.field1 = 4200;
+      compare(msg2.field1, 42);
     }
 
     function test_valid_field_get() {
       var msg1 = new Test1.Msg1();
-      var f1 = msg1.field1();
+      var f1 = msg1.field1;
       // no error
     }
 
     function test_invalid_field_get() {
       var msg1 = new Test1.Msg1();
+      // Function access should throw concise message.
       shouldThrow(function() {
-        var f1 = msg1.nonExistent();
-      }, 'nonExistent');
+        var f1 = msg1.getNonExistent();
+      }, 'NonExistent');
+
+      // Unable to make property access to throw.
+      var f1 = msg1.nonExistent;
+      verify(typeof f1 == 'undefined');
     }
 
     function test_valid_field_set() {
       var msg1 = new Test1.Msg1();
-      msg1.field1(42);
+      msg1.field1 = 42;
+      msg1.setField1(42);
       // no error
     }
 
     function test_invalid_field_set() {
+      // Function access should throw concise message.
       var msg1 = new Test1.Msg1();
       shouldThrow(function() {
-        msg1.nonExistent(42);
-      }, 'nonExistent');
+        msg1.setNonExistent(42);
+      }, 'NonExistent');
+
+      // Unable to make property access to throw.
+      msg1.nonExistent = 42;
+      verify(typeof msg1.nonExistent == 'undefined');
     }
 
     function test_valid_field_init() {
