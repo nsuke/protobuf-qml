@@ -183,35 +183,35 @@ void FieldGenerator::generateRepeatedProperty(
             "      this._$name$[indexOrValues] = msg;\n"
             "      this._raw[FIELD][$index$][indexOrValues] = msg._raw;\n");
   } else {
-    p.Print(variables_,
-            "      return this._raw[FIELD][$index$][indexOrValues];\n"
-            "    } else if(this._raw[FIELD][$index$].length < indexOrValues) {\n"
-            "      throw new RangeError();\n"
-            "    } else {\n"
-            "      this._raw[FIELD][$index$][indexOrValues] = value;\n");
+    p.Print(
+        variables_,
+        "      return this._raw[FIELD][$index$][indexOrValues];\n"
+        "    } else if(this._raw[FIELD][$index$].length < indexOrValues) {\n"
+        "      throw new RangeError();\n"
+        "    } else {\n"
+        "      this._raw[FIELD][$index$][indexOrValues] = value;\n");
   }
 
   p.Print(variables_,
           "    }\n"
           "  };\n"
-          "  var count = function() {\n");
+          "  var $name$Count = function() {\n");
 
   if (is_message_) {
     messageAssertLength(p);
   }
 
   p.Print(variables_,
-
           "    return this._raw[FIELD][$index$].length;\n"
           "  };\n"
           "  Object.defineProperties($type$.prototype, {\n"
-          "    $name$Count: { get: count },\n"
-          "    $name$Size: { get: count },\n"
-          "    $name$Length: { get: count },\n"
+          "    $name$Count: { get: $name$Count },\n"
+          "    $name$Size: { get: $name$Count },\n"
+          "    $name$Length: { get: $name$Count },\n"
           "  });\n"
-          "  $type$.prototype.get$capital_name$Count = count;\n"
-          "  $type$.prototype.get$capital_name$Size = count;\n"
-          "  $type$.prototype.get$capital_name$Length = count;\n"
+          "  $type$.prototype.get$capital_name$Count = $name$Count;\n"
+          "  $type$.prototype.get$capital_name$Size = $name$Count;\n"
+          "  $type$.prototype.get$capital_name$Length = $name$Count;\n"
           "  $type$.prototype.add$capital_name$ = function(value) {\n"
           "    if (typeof value == 'undefined') {\n"
           "      throw new TypeError('Cannot add undefined.');\n"
@@ -250,7 +250,7 @@ void FieldGenerator::generateRepeatedProperty(
     messageAssertLength(p);
   }
 
-  p.Print(variables_, "  };\n");
+  p.Print("  };\n");
 }
 
 void FieldGenerator::genGet(google::protobuf::io::Printer& p,
