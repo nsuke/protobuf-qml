@@ -139,7 +139,7 @@ Item {
         compare(err.name, 'Aborted');
         verify(err instanceof PB.RpcErrors.Aborted);
         called.called = true;
-      });
+      }, 1000);
       tryCompare(called, 'called', true, 2000);
     }
 
@@ -154,12 +154,12 @@ Item {
         called.called = true;
       });
 
-      call.timeout = 500;
+      call.timeout = 1000;
 
       var ok = call.write({name: 'GIVE_ME_ERROR'});
       test.verify(ok);
 
-      ok = call.end(1000);
+      ok = call.end();
       test.verify(ok);
 
       tryCompare(called, 'called', true, 2000);
@@ -180,7 +180,7 @@ Item {
           verify(err instanceof PB.RpcErrors.Aborted);
           called.called = true;
         }
-      });
+      }, 1000);
       test.verify(ok);
 
       tryCompare(called, 'called', true, 2000);
@@ -198,6 +198,7 @@ Item {
           called.called = true;
         }
       });
+      call.timeout = 1000;
       call.write({
         requests: [{
           name: 'GIVE_ME_ERROR',
