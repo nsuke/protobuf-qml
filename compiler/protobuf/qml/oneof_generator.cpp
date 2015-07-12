@@ -75,7 +75,24 @@ void OneofGenerator::generateCase(io::Printer& p) {
   p.Print(variables_,
           "  $type$.prototype.$name$Case = function() {\n"
           "    return this._raw[ONEOF][$index$];\n"
-          "  };\n");
+          "  };\n"
+          "  Object.defineProperty($type$.prototype, '$name$', {\n"
+          "    get: function() {\n"
+          "      switch (this._raw[ONEOF][$index$]) {\n");
+  for (int i = 0; i < t_->field_count(); ++i) {
+    auto f = t_->field(i);
+    p.Print(
+        "        case $type$.$capital_name$Case.$all_capital_name$: {\n"
+        "          return '$name$';\n"
+        "        }\n",
+        "name", camelize(f->name()), "all_capital_name",
+        capitalizeAll(f->name()), "capital_name", capital_name_, "type",
+        containing_type);
+  }
+  p.Print(
+      "      }\n"
+      "    },\n"
+      "  });\n");
 }
 
 void OneofGenerator::generateClear(google::protobuf::io::Printer& p) {

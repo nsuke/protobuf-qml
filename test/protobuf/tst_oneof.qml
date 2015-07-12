@@ -33,6 +33,7 @@ Item {
       msg1.serializeTo(buffer.output, function() {
         Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.ONEOF2);
+          compare(msg2.simple, 'oneof2');
           compare(msg2.oneof2(), 'foo');
           called.called = true;
         });
@@ -50,6 +51,7 @@ Item {
 
       // oneof virtual field should return case enum
       compare(msg1.simpleCase(), Msg.Foo.SimpleCase.ONEOF3);
+      compare(msg1.simple, 'oneof3');
 
       // value should be available
       compare(msg1.oneof3().baz(), 'baz!');
@@ -59,6 +61,7 @@ Item {
       msg1.serializeTo(buffer.output, function() {
         Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.ONEOF3);
+          compare(msg2.simple, 'oneof3');
           compare(msg2.oneof3().baz(), 'baz!');
           called.called = true;
         });
@@ -77,8 +80,11 @@ Item {
       });
 
       compare(msg1.baz().bazXCase(), Msg.Foo.Baz.BazXCase.BAZ2);
+      compare(msg1.baz().bazX, 'baz2');
       compare(msg1.baz().baz2().bar1Case(), Msg.Bar.Bar1Case.BAR_STR2);
+      compare(msg1.baz().baz2().bar1, 'barStr2');
       compare(msg1.baz().baz2().bar2Case(), Msg.Bar.Bar2Case.BAR_STR3);
+      compare(msg1.baz().baz2().bar2, 'barStr3');
       compare(msg1.baz().baz2().barStr2(), 'foo');
       compare(msg1.baz().baz2().barStr3(), 'bar');
 
@@ -87,8 +93,11 @@ Item {
       msg1.serializeTo(buffer.output, function() {
         Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.baz().bazXCase(), Msg.Foo.Baz.BazXCase.BAZ2);
+          compare(msg2.baz().bazX, 'baz2');
           compare(msg2.baz().baz2().bar1Case(), Msg.Bar.Bar1Case.BAR_STR2);
+          compare(msg2.baz().baz2().bar1, 'barStr2');
           compare(msg2.baz().baz2().bar2Case(), Msg.Bar.Bar2Case.BAR_STR3);
+          compare(msg2.baz().baz2().bar2, 'barStr3');
           compare(msg2.baz().baz2().barStr2(), 'foo');
           compare(msg2.baz().baz2().barStr3(), 'bar');
           called.called = true;
@@ -101,6 +110,7 @@ Item {
       var foo = new Msg.Foo();
 
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.SIMPLE_NOT_SET);
+      verify(!foo.simple);
       compare(foo.oneof1(), undefined);
       compare(foo.oneof2(), undefined);
       compare(foo.oneof3(), undefined);
@@ -110,6 +120,7 @@ Item {
       foo.serializeTo(buffer.output, function() {
         Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.SIMPLE_NOT_SET);
+          verify(!msg2.simple);
           compare(msg2.oneof1(), undefined);
           compare(msg2.oneof2(), undefined);
           compare(msg2.oneof3(), undefined);
@@ -125,6 +136,7 @@ Item {
       foo.clearSimple();
 
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.SIMPLE_NOT_SET);
+      verify(!foo.simple);
       compare(foo.oneof1(), undefined);
       compare(foo.oneof2(), undefined);
       compare(foo.oneof3(), undefined);
@@ -135,12 +147,14 @@ Item {
 
       foo.oneof1(60);
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.ONEOF1);
+      compare(foo.simple, 'oneof1');
       compare(foo.oneof1(), 60);
       compare(foo.oneof2(), undefined);
       compare(foo.oneof3(), undefined);
 
       foo.oneof2('Hello.');
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.ONEOF2);
+      compare(foo.simple, 'oneof2');
       compare(foo.oneof1(), undefined);
       compare(foo.oneof2(), 'Hello.');
       compare(foo.oneof3(), undefined);
@@ -149,12 +163,14 @@ Item {
         barStr4: -20,
       });
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.ONEOF3);
+      compare(foo.simple, 'oneof3');
       compare(foo.oneof1(), undefined);
       compare(foo.oneof2(), undefined);
       compare(foo.oneof3().barStr4(), -20);
 
       foo.oneof2('Hello again.');
       compare(foo.simpleCase(), Msg.Foo.SimpleCase.ONEOF2);
+      compare(foo.simple, 'oneof2');
       compare(foo.oneof1(), undefined);
       compare(foo.oneof2(), 'Hello again.');
       compare(foo.oneof3(), undefined);
@@ -164,6 +180,7 @@ Item {
       foo.serializeTo(buffer.output, function() {
         Msg.Foo.parseFrom(buffer.input, function(err, msg2) {
           compare(msg2.simpleCase(), Msg.Foo.SimpleCase.ONEOF2);
+          compare(msg2.simple, 'oneof2');
           compare(msg2.oneof1(), undefined);
           compare(msg2.oneof2(), 'Hello again.');
           compare(msg2.oneof3(), undefined);
