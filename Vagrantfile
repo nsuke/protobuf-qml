@@ -18,13 +18,12 @@ Vagrant.configure(2) do |config|
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
       software-properties-common \
       python-software-properties
-    add-apt-repository -y ppa:beineri/opt-qt532
+    add-apt-repository -y ppa:beineri/opt-qt542
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
       libgl1-mesa-dev \
-      qt53declarative \
+      qt54declarative \
       ninja-build \
       cmake \
-      python-simplejson \
       python-mako \
       cmake \
       ninja-build \
