@@ -18,6 +18,8 @@ void ProtobufQmlPlugin::registerTypes(const char* uri) {
       uri, 1, 0, "FileDescriptor", "FileDescriptor is abstract type.");
   qmlRegisterUncreatableType<protobuf::qml::DescriptorWrapper>(
       uri, 1, 0, "Descriptor", "Descriptor is abstract type.");
+  qmlRegisterUncreatableType<protobuf::qml::Descriptor>(
+      uri, 1, 0, "V4Descriptor", "Descriptor is abstract type.");
   qmlRegisterUncreatableType<protobuf::qml::StatusCode>(
       uri, 1, 0, "StatusCode", "StatusCode is enum holder.");
 

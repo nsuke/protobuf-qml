@@ -16,12 +16,15 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 find_package(Protobuf REQUIRED)
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Qml REQUIRED)
-find_package(Qt5Quick REQUIRED)
+find_package(Qt5Core COMPONENTS Private REQUIRED)
+find_package(Qt5Qml COMPONENTS Private REQUIRED)
+find_package(Qt5Quick COMPONENTS Private REQUIRED)
 
 include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIRS})
 include_directories(compiler)
+
+include_directories(
+  ${Qt5Qml_PRIVATE_INCLUDE_DIRS})
 
 find_package(GRPC++)
 include(CMakeDependentOption)

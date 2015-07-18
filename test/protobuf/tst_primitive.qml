@@ -17,6 +17,39 @@ Item {
       buffer.size = 1000;
     }
 
+    function test_v4() {
+      var msg1 = new Test1.Msg1({
+        field1: 9,
+        stringField: 'foo Bar',
+      });
+      var buf = msg1.serialize();
+      verify(buf);
+      verify(buf.byteLength > 0);
+      var msg2 = Test1.Msg1.parse(buf);
+      compare(msg2.field1, 9);
+      compare(msg2.stringField, 'foo Bar');
+    }
+
+    function test_v4cb() {
+      var msg1 = new Test1.Msg1({
+        field1: 9,
+        stringField: 'foo Bar',
+      });
+      var called = {};
+      msg1.serialize(function(err, buf) {
+        verify(!err);
+        verify(buf);
+        verify(buf.byteLength > 0);
+        Test1.Msg1.parse(buf, function(err, msg2) {
+          verify(!err);
+          compare(msg2.field1, 9);
+          compare(msg2.stringField, 'foo Bar');
+          called.called = true;
+        });
+      });
+      tryCompare(called, 'called', true, 500);
+    }
+
     function test_write_read() {
       var called = {};
       var msg1 = new Test1.Msg1({field1: -42});

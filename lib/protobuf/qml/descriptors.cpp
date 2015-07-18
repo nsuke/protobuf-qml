@@ -12,6 +12,13 @@ namespace qml {
 
 using namespace google::protobuf;
 
+DescriptorWrapper::DescriptorWrapper(
+    const google::protobuf::Descriptor* descriptor, QObject* p)
+    : QObject(p),
+      descriptor_(descriptor),
+      v4_(new Descriptor(descriptor, this)) {
+}
+
 DescriptorWrapper::~DescriptorWrapper() {
   clearSharedMessage();
 }

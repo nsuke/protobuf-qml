@@ -2,6 +2,8 @@
 #define PROTOBUF_QML_DESCRIPTOR_DATABASE_H
 
 #include "protobuf/qml/common.h"
+#include "protobuf/qml/v4/descriptor.h"
+
 #include <google/protobuf/descriptor_database.h>
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
@@ -16,16 +18,20 @@
 namespace protobuf {
 namespace qml {
 
-class DescriptorWrapper;
+class QPBDescriptor {
+public:
+};
 
 class PROTOBUF_QML_DLLEXPORT DescriptorWrapper : public QObject {
   Q_OBJECT
 
 public:
-  DescriptorWrapper(const google::protobuf::Descriptor* descriptor,
-                    QObject* p = nullptr)
-      : QObject(p), descriptor_(descriptor) {}
+  explicit DescriptorWrapper(const google::protobuf::Descriptor* descriptor,
+                             QObject* p = nullptr);
+
   ~DescriptorWrapper();
+
+  Q_INVOKABLE protobuf::qml::Descriptor* v4() { return v4_; }
 
   void clearSharedMessage() { message_.setLocalData(nullptr); }
 
@@ -47,6 +53,7 @@ private:
   const google::protobuf::Descriptor* descriptor_;
   google::protobuf::DynamicMessageFactory message_factory_;
   QThreadStorage<google::protobuf::Message*> message_;
+  Descriptor* v4_;
 };
 
 class PROTOBUF_QML_DLLEXPORT FileDescriptorWrapper : public QObject {
