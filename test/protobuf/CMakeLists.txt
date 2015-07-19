@@ -3,6 +3,7 @@
 #
 copy(protobuf-qml-test
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/tst_binary.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/tst_jsobject.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/tst_message.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/tst_nesting.qml

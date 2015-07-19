@@ -15,6 +15,8 @@ message Msg1 {
   // enum
   Enum1 enum_field = 6;
   repeated Enum1 repeated_enum_field = 7;
+
+  bytes bytes_field1 = 8;
 }
 
 enum Enum1 {

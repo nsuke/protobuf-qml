@@ -67,7 +67,11 @@ std::string FieldGenerator::defaultValue() {
 #undef PRINT_DEFAULT_VALUE
 
     case FieldDescriptor::CPPTYPE_STRING:
-      return "'" + t_->default_value_string() + "'";
+      if (t_->type() == FieldDescriptor::TYPE_BYTES) {
+        return "(typeof ArrayBuffer == 'undefined') ? undefined : new ArrayBuffer()";
+      } else {
+        return "'" + t_->default_value_string() + "'";
+      }
     case FieldDescriptor::CPPTYPE_MESSAGE:
       return "{}";
     default:
