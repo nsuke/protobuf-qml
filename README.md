@@ -44,18 +44,14 @@ Buiding
 
 Ubuntu 14.04 example for installing above dependencies:
 ```
+# add-apt-repository ppa:beineri/opt-qt55-trusty
 # apt-get install
       zlib1g-dev
       cmake
       ninja-build
       python-mako
       perl
-      qtbase5-dev
-      qtdeclarative5-dev
-      qttools5-dev-tools
-      qtdeclarative5-dev-tools
-      qtdeclarative5-qtquick2-plugin
-      qtdeclarative5-test-plugin
+      qt55declarative
 ```
 
 ### Build
@@ -78,4 +74,4 @@ $ cd out && ctest -VV
 Dependency versions
 ---
 * Protocol Buffers 3.0-alpha3 or later
-* Qt 5.4.1 or later
+* Qt 5.5.0 or later
