@@ -33,26 +33,11 @@ public:
 
   Q_INVOKABLE protobuf::qml::Descriptor* v4() { return v4_; }
 
-  void clearSharedMessage() { message_.setLocalData(nullptr); }
-
-  google::protobuf::Message* dataToMessage(const QVariant& msgData);
-
-  QVariant dataFromMessage(const google::protobuf::Message& msg);
-
   google::protobuf::Message* newMessage() {
-    return message_factory_.GetPrototype(descriptor_)->New();
+    return v4()->newMessage();
   }
 
 private:
-  google::protobuf::Message* sharedMessage() {
-    if (!message_.hasLocalData()) message_.setLocalData(newMessage());
-    return message_.localData();
-  }
-
-  int key_ = 0;
-  const google::protobuf::Descriptor* descriptor_;
-  google::protobuf::DynamicMessageFactory message_factory_;
-  QThreadStorage<google::protobuf::Message*> message_;
   Descriptor* v4_;
 };
 
