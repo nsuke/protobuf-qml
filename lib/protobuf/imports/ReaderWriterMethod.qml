@@ -61,7 +61,7 @@ ClientMethod {
     'use strict';
     var t = _storage.nextTag();
     _storage.addCallback(t, function(err, data, finished) {
-      callback && callback(err, new readType(data), finished);
+      callback && callback(err, toReadMessage(data), finished);
     });
     impl.call(t);
     return {
@@ -72,7 +72,7 @@ ClientMethod {
         return impl.set_timeout(t, val);
       },
       write: function(data) {
-        return p.write(t, new writeType(data)._raw);
+        return p.write(t, toWriteMessage(data)._raw);
       },
       end: function() {
         return p.end(t);

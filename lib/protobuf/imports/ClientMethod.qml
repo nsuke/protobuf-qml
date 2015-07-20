@@ -22,7 +22,19 @@ QtObject {
     onData: _storage.handleData(tag, data)
     onError: _storage.handleError(tag, code, message)
     onClosed: _storage.handleClosed(tag)
-    }
+  }
+
+  function toMessage(type, data) {
+    return data instanceof type ? data : new type(data);
+  }
+
+  function toReadMessage(data) {
+    return toMessage(readType, data);
+  }
+
+  function toWriteMessage(data) {
+    return toMessage(writeType, data);
+  }
 
   property var _storage: QtObject {
     property int _tag: 0

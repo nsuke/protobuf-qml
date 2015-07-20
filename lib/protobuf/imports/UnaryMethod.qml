@@ -16,9 +16,9 @@ ClientMethod {
     }
     var t = _storage.nextTag();
     _storage.addCallback(t, function(err, data) {
-      callback && callback(err, new readType(data));
+      callback && callback(err, toReadMessage(data));
     });
-    var ok = impl.write(t, new writeType(data)._raw, timeout);
+    var ok = impl.write(t, toWriteMessage(data)._raw, timeout);
     if (!ok) {
       console.log('Discarding stored callback.');
       _storage.removeCallback(t);

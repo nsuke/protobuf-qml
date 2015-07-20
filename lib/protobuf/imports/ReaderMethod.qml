@@ -31,9 +31,9 @@ ClientMethod {
     }
     var t = _storage.nextTag();
     _storage.addCallback(t, function(err, data, end) {
-      callback && callback(err, new readType(data), end);
+      callback && callback(err, toReadMessage(data), end);
     });
-    var ok = impl.write(t, new writeType(data)._raw, timeout);
+    var ok = impl.write(t, toWriteMessage(data)._raw, timeout);
     if (!ok) {
       console.log('Discarding callback for failed call');
       _storage.removeCallback(t);
