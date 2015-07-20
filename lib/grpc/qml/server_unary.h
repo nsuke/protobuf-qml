@@ -54,7 +54,9 @@ public:
   void process(bool ok) final;
   void resume(const QVariant& data);
   void abort(int error_code, const QString& error_message);
-  const QVariant& data() const { return data_; }
+  const std::shared_ptr<google::protobuf::Message>& data() const {
+    return request_;
+  }
 
 private:
   enum class Status {
@@ -69,7 +71,7 @@ private:
   ::grpc::ServerContext context_;
   ::protobuf::qml::DescriptorWrapper* read_;
   ::protobuf::qml::DescriptorWrapper* write_;
-  std::unique_ptr<google::protobuf::Message> request_;
+  std::shared_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
   QVariant data_;
   ServerUnaryMethod* method_;

@@ -54,7 +54,9 @@ public:
   void process(bool ok) final;
   void resume(const QVariant& data);
   void abort(int code, const QString& message);
-  const QVariant& data() const { return data_; }
+  const std::shared_ptr<google::protobuf::Message>& data() const {
+    return request_;
+  }
   int tag = 0;
 
 private:
@@ -71,11 +73,9 @@ private:
   ::grpc::ServerContext context_;
   ::protobuf::qml::DescriptorWrapper* read_;
   ::protobuf::qml::DescriptorWrapper* write_;
-  std::unique_ptr<google::protobuf::Message> request_;
+  std::shared_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
-  QVariant data_;
   ServerReaderMethod* method_;
-  // ::grpc::ServerAsyncWriter<google::protobuf::Message> writer_;
   ::grpc::ServerAsyncReader<google::protobuf::Message,
                             google::protobuf::Message> reader_;
   ::grpc::ServerCompletionQueue* cq_;

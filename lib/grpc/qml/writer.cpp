@@ -43,7 +43,8 @@ void WriterCallData::process(bool ok) {
     writer_.Finish(&grpc_status_, this);
   } else if (status_ == Status::FINISH) {
     if (ok) {
-      method_->data(tag_, read_->dataFromMessage(*response_));
+      method_->data(tag_, response_);
+      response_.reset(read_->newMessage());
     } else {
       method_->error(tag_, grpc_status_.error_code(),
                      QString::fromStdString(grpc_status_.error_message()));

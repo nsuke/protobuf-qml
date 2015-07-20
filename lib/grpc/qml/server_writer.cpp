@@ -17,8 +17,9 @@ void ServerWriterMethod::startProcessing() {
   new ServerWriterCallData(this, service_, index_, cq_, read_, write_);
 }
 
-void ServerWriterMethod::onRequest(ServerWriterCallData* cdata,
-                                   const QVariant& v) {
+void ServerWriterMethod::onRequest(
+    ServerWriterCallData* cdata,
+    const std::shared_ptr<google::protobuf::Message>& v) {
   auto tag = store(cdata);
   data(tag, v);
 }
@@ -81,12 +82,13 @@ void ServerWriterCallData::process(bool ok) {
   } else if (status_ == Status::READ) {
     if (!ok) {
       // init called after shutdown ?
+      method_->closed(tag_);
       lock.unlock();
       delete this;
       return;
     }
-    auto data = read_->dataFromMessage(*request_);
-    method_->onRequest(this, data);
+    method_->onRequest(this, request_);
+    request_.reset();
     processQueuedData();
   } else if (status_ == Status::WRITE) {
     if (!ok) {
@@ -100,6 +102,7 @@ void ServerWriterCallData::process(bool ok) {
       qWarning() << "Failed to complete writer call.";
       method_->unknownError(tag_, "Failed to complete writer call.");
     }
+    method_->closed(tag_);
     lock.unlock();
     delete this;
   } else {

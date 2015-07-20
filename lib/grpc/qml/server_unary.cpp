@@ -72,7 +72,6 @@ void ServerUnaryCallData::process(bool ok) {
       delete this;
       return;
     }
-    data_ = read_->dataFromMessage(*request_);
     status_ = Status::FROZEN;
     method_->onRequest(this);
   } else if (status_ == Status::DONE) {
@@ -80,6 +79,7 @@ void ServerUnaryCallData::process(bool ok) {
     if (!ok) {
       // notify
     }
+    method_->closed(tag_);
     delete this;
   } else {
     Q_ASSERT(false);

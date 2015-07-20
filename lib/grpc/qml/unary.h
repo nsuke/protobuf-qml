@@ -43,7 +43,7 @@ private:
   ::protobuf::qml::DescriptorWrapper* read_;
   ::protobuf::qml::DescriptorWrapper* write_;
   std::unique_ptr<google::protobuf::Message> request_;
-  std::unique_ptr<google::protobuf::Message> response_;
+  std::shared_ptr<google::protobuf::Message> response_;
   grpc::Status grpc_status_;
   grpc::ClientAsyncResponseReader<google::protobuf::Message> reader_;
 };
@@ -61,7 +61,9 @@ public:
 
   ~UnaryMethod();
 
-  bool write(int tag, const QVariant& data, int timeout) final;
+  bool write(int tag,
+             std::unique_ptr<google::protobuf::Message> msg,
+             int timeout) final;
 
   grpc::RpcMethod& raw() { return raw_; }
 

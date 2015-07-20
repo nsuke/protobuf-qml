@@ -34,7 +34,6 @@ public:
   QV4::ReturnedValue messageToJsValue(QV4::ExecutionEngine*,
                                       const google::protobuf::Message&);
 
-private:
   google::protobuf::Message* parseToNewMessage(const char* data, int size);
   google::protobuf::Message* newMessage() {
     return message_factory_.GetPrototype(descriptor_)->New();
@@ -47,6 +46,7 @@ private:
     return default_message_.get();
   }
 
+private:
   QV4::ReturnedValue getFieldValue(
       QV4::ExecutionEngine*,
       const google::protobuf::Reflection& ref,

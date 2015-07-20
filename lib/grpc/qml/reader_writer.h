@@ -52,7 +52,7 @@ private:
   grpc::ClientContext context_;
   ::protobuf::qml::DescriptorWrapper* read_;
   std::unique_ptr<google::protobuf::Message> request_;
-  std::unique_ptr<google::protobuf::Message> response_;
+  std::shared_ptr<google::protobuf::Message> response_;
   ReaderWriterMethod* method_;
   grpc::CompletionQueue* cq_;
   int tag_;

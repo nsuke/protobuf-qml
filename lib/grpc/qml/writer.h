@@ -53,7 +53,7 @@ private:
   grpc::ChannelInterface* channel_;
   ::protobuf::qml::DescriptorWrapper* read_;
   std::unique_ptr<google::protobuf::Message> request_;
-  std::unique_ptr<google::protobuf::Message> response_;
+  std::shared_ptr<google::protobuf::Message> response_;
   grpc::Status grpc_status_;
   grpc::ClientAsyncWriter<google::protobuf::Message> writer_;
 };

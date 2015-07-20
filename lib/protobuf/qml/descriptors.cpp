@@ -302,9 +302,7 @@ bool packToMessage(const QVariantList& raw_fields,
     auto raw_field = raw_fields[i];
     auto field = descriptor->field(i);
     auto oneof = field->containing_oneof();
-    if (oneof) {
-    }
-    if ((!field->containing_oneof() && raw_field.isValid()) ||
+    if ((!oneof && raw_field.isValid()) ||
         (oneof && oneof_numbers.size() > oneof->index() &&
          oneof_numbers[oneof->index()] == field->number())) {
       if (field->is_repeated()) {

@@ -16,7 +16,9 @@ void ServerBidiMethod::startProcessing() {
   new ServerBidiCallData(this, service_, index_, cq_, read_, write_);
 }
 
-void ServerBidiMethod::onData(ServerBidiCallData* cdata, QVariant v) {
+void ServerBidiMethod::onData(
+    ServerBidiCallData* cdata,
+    const std::shared_ptr<google::protobuf::Message>& v) {
   Q_ASSERT(cdata);
   if (!cdata->tag) {
     cdata->tag = store(cdata);
@@ -105,8 +107,8 @@ void ServerBidiCallData::process(bool ok) {
     status_ = Status::READ;
     stream_.Read(request_.get(), this);
   } else if (status_ == Status::READ && ok) {
-    method_->onData(this, read_->dataFromMessage(*request_));
-    request_->Clear();
+    method_->onData(this, request_);
+    request_.reset(read_->newMessage());
     stream_.Read(request_.get(), this);
   } else if (status_ == Status::READ) {
     // client streaming completed

@@ -97,7 +97,7 @@ public:
     }
     impl_.reset(impl);
     if (impl_) {
-      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::handleData);
       connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
     }
@@ -146,7 +146,7 @@ public:
     if (impl_) {
       connect(impl_.get(), &ServerReaderMethod::dataEnd, this,
               &ServerReaderMethodHolder::dataEnd);
-      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::handleData);
       connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
     }
@@ -186,7 +186,7 @@ public:
     }
     impl_.reset(impl);
     if (impl_) {
-      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::handleData);
       connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
     }
@@ -244,7 +244,7 @@ public:
     if (impl_) {
       connect(impl_.get(), &ServerReaderWriterMethod::dataEnd, this,
               &ServerReaderWriterMethodHolder::dataEnd);
-      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::data);
+      connect(impl_.get(), &MethodBase::data, this, &MethodHolder::handleData);
       connect(impl_.get(), &MethodBase::error, this, &MethodHolder::error);
       connect(impl_.get(), &MethodBase::closed, this, &MethodHolder::closed);
     }

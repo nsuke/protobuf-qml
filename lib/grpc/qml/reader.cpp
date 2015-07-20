@@ -45,8 +45,8 @@ void ReaderCallData::process(bool ok) {
       status_ = Status::DONE;
       reader_->Finish(&grpc_status_, this);
     } else {
-      method_->data(tag_, read_->dataFromMessage(*response_));
-      response_->Clear();
+      method_->data(tag_, response_);
+      response_.reset(read_->newMessage());
       reader_->Read(response_.get(), this);
     }
   } else if (status_ == Status::DONE) {

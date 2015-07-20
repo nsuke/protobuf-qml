@@ -30,11 +30,10 @@ Item {
           verify(!err);
           verify(msg2);
           verify(msg2.bytesField1);
-          // Legacy serialization does not handle bytes as ArrayBuffer
-          // var view = new Int32Array(msg2.bytesField1);
-          // for (var i = 0; i < 100; ++i) {
-          //   compare(view[i], i);
-          // }
+          var view = new Int32Array(msg2.bytesField1);
+          for (var i = 0; i < view.length; ++i) {
+            compare(view[i], i + i);
+          }
           called.called = true;
         });
       });

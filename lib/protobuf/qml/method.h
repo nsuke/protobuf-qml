@@ -5,6 +5,10 @@
 #include "protobuf/qml/descriptors.h"
 #include <QObject>
 
+#include <memory>
+Q_DECLARE_SMART_POINTER_METATYPE(std::shared_ptr)
+Q_DECLARE_METATYPE(std::shared_ptr<google::protobuf::Message>)
+
 namespace protobuf {
 namespace qml {
 
@@ -43,7 +47,7 @@ class PROTOBUF_QML_DLLEXPORT MethodBase : public QObject {
   Q_OBJECT
 
 signals:
-  void data(int tag, const QVariant& data);
+  void data(int tag, const std::shared_ptr<google::protobuf::Message>& data);
   void error(int tag, int code, const QString& message);
   void closed(int tag);
 
@@ -53,7 +57,9 @@ public:
   }
 
 protected:
-  explicit MethodBase(QObject* p = nullptr) : QObject(p) {}
+  explicit MethodBase(QObject* p = nullptr) : QObject(p) {
+    qRegisterMetaType<std::shared_ptr<google::protobuf::Message>>();
+  }
   virtual ~MethodBase() {}
 };
 
@@ -71,7 +77,7 @@ class PROTOBUF_QML_DLLEXPORT MethodHolder : public QObject {
                      writeDescriptorChanged)
 
 signals:
-  void data(int tag, const QVariant& data);
+  void data(int tag, const QJSValue& data);
   void error(int tag, int code, const QString& message);
   void closed(int tag);
 
@@ -94,27 +100,20 @@ public:
   }
 
   DescriptorWrapper* read_descriptor() const { return read_desc_; }
-  void set_read_descriptor(DescriptorWrapper* read_desc) {
-    if (read_desc != read_desc_) {
-      deinit();
-      read_desc_ = read_desc;
-      readDescriptorChanged();
-    }
-  }
+  void set_read_descriptor(DescriptorWrapper* read_desc);
 
   DescriptorWrapper* write_descriptor() const { return write_desc_; }
-  void set_write_descriptor(DescriptorWrapper* write_desc) {
-    if (write_desc != write_desc_) {
-      deinit();
-      write_desc_ = write_desc;
-      writeDescriptorChanged();
-    }
-  }
+  void set_write_descriptor(DescriptorWrapper* write_desc);
+
+public slots:
+  void handleData(int tag,
+                  const std::shared_ptr<google::protobuf::Message>& data);
 
 protected:
   virtual void deinit() {}
 
-// private:
+  // private:
+  QV4::ExecutionEngine* v4 = nullptr;
   QString method_name_;
   DescriptorWrapper* read_desc_ = nullptr;
   DescriptorWrapper* write_desc_ = nullptr;
@@ -157,7 +156,9 @@ class PROTOBUF_QML_DLLEXPORT UnaryMethod : public MethodBase {
 public:
   explicit UnaryMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~UnaryMethod() {}
-  virtual bool write(int tag, const QVariant& data, int timeout) {
+  virtual bool write(int tag,
+                     std::unique_ptr<google::protobuf::Message>,
+                     int timeout) {
     return false;
   }
 };
@@ -169,12 +170,7 @@ public:
   explicit UnaryMethodHolder(QObject* p = nullptr) : ClientMethodHolder(p) {}
   ~UnaryMethodHolder() {}
 
-  Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {
-    if (!ensureInit()) {
-      return false;
-    }
-    return impl_->write(tag, data, timeout);
-  }
+  Q_INVOKABLE void write(QQmlV4Function*);
 
 protected:
   void deinit() final {

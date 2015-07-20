@@ -48,8 +48,8 @@ void ReaderWriterCallData::process(bool ok) {
         handleQueuedRequests();
       }
     } else {
-      method_->data(tag_, read_->dataFromMessage(*response_));
-      response_->Clear();
+      method_->data(tag_, response_);
+      response_.reset(read_->newMessage());
       handleQueuedRequests();
     }
   } else if (status_ == Status::WRITES_DONE) {

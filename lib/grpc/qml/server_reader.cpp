@@ -86,11 +86,10 @@ void ServerReaderCallData::process(bool ok) {
     // TODO: handle shutdown more explicitly
     delete this;
   } else if (status_ == Status::READ && ok) {
-    data_ = read_->dataFromMessage(*request_);
     method_->onData(this);
+    request_.reset(read_->newMessage());
     reader_.Read(request_.get(), this);
   } else if (status_ == Status::READ) {
-    // client streaming completed
     status_ = Status::FROZEN;
     method_->onDataEnd(this);
   } else if (status_ == Status::DONE) {
@@ -98,6 +97,7 @@ void ServerReaderCallData::process(bool ok) {
     if (!ok) {
       // notify
     }
+    method_->closed(tag_);
     delete this;
   } else {
     Q_ASSERT(false);

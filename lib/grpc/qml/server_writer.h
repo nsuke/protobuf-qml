@@ -30,7 +30,8 @@ public:
                      ::protobuf::qml::DescriptorWrapper* write);
 
   // To be called from IO thread
-  void onRequest(ServerWriterCallData* cdata, const QVariant& data);
+  void onRequest(ServerWriterCallData* cdata,
+                 const std::shared_ptr<google::protobuf::Message>&);
 
   void startProcessing() final;
   bool respond(int tag, const QVariant& data) final;
@@ -76,7 +77,7 @@ private:
   ::grpc::ServerContext context_;
   ::protobuf::qml::DescriptorWrapper* read_;
   ::protobuf::qml::DescriptorWrapper* write_;
-  std::unique_ptr<google::protobuf::Message> request_;
+  std::shared_ptr<google::protobuf::Message> request_;
   std::unique_ptr<google::protobuf::Message> response_;
   std::queue<std::unique_ptr<google::protobuf::Message>> queue_;
   ServerWriterMethod* method_;

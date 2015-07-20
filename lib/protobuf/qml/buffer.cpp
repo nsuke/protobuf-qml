@@ -13,10 +13,11 @@ SerializeMethod::SerializeMethod(BufferChannel* channel,
     : channel_(channel), descriptor_(descriptor) {
 }
 
-bool SerializeMethod::write(int tag, const QVariant& v, int timeout) {
-  auto msg = descriptor_->dataToMessage(v);
+bool SerializeMethod::write(int tag,
+                            std::unique_ptr<google::protobuf::Message> msg,
+                            int timeout) {
   if (!msg) {
-    qWarning() << "Failed to create message object to write";
+    qWarning() << "No message object to write";
     return false;
   }
   auto close = std::bind(&BufferChannel::closeOutput, channel_, tag,
@@ -33,7 +34,7 @@ bool SerializeMethod::write(int tag, const QVariant& v, int timeout) {
   }
   // Flush before notifying "done".
   stream.reset();
-  data(tag, QVariant());
+  data(tag, 0);
   return true;
 }
 
@@ -41,10 +42,12 @@ ParseMethod::ParseMethod(BufferChannel* channel, DescriptorWrapper* descriptor)
     : channel_(channel), descriptor_(descriptor) {
 }
 
-bool ParseMethod::write(int tag, const QVariant& v, int timeout) {
-  if (v.isValid()) {
-    // qWarning() << "Received unexpected non-empty value.";
-  }
+bool ParseMethod::write(int tag,
+                        std::unique_ptr<google::protobuf::Message>,
+                        int timeout) {
+  // if (v.isValid()) {
+  //   // qWarning() << "Received unexpected non-empty value.";
+  // }
   auto close = std::bind(&BufferChannel::closeInput, channel_, tag,
                          std::placeholders::_1);
   std::unique_ptr<io::ZeroCopyInputStream, decltype(close)> stream(
@@ -53,7 +56,7 @@ bool ParseMethod::write(int tag, const QVariant& v, int timeout) {
     unknownError(tag, "Failed to open input stream");
     return false;
   }
-  std::unique_ptr<google::protobuf::Message> msg(descriptor_->newMessage());
+  std::shared_ptr<google::protobuf::Message> msg(descriptor_->newMessage());
   if (!msg) {
     unknownError(tag, "Failed to create protobuf message object");
     return false;
@@ -63,8 +66,7 @@ bool ParseMethod::write(int tag, const QVariant& v, int timeout) {
     return false;
   }
   stream.reset();
-  auto v2 = descriptor_->dataFromMessage(*msg);
-  data(tag, v2);
+  data(tag, msg);
   return true;
 }
 

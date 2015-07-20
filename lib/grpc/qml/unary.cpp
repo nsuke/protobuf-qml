@@ -36,9 +36,7 @@ void UnaryCallData::process(bool ok) {
     reader_.Finish(response_.get(), &grpc_status_, this);
   } else if (status_ == Status::DONE) {
     if (ok) {
-      // TODO: check status
-      auto data = read_->dataFromMessage(*response_);
-      method_->data(tag_, data);
+      method_->data(tag_, response_);
     } else {
       std::cerr << grpc_status_.error_message() << std::endl;
       method_->error(tag_, grpc_status_.error_code(),
@@ -71,11 +69,11 @@ UnaryMethod::UnaryMethod(const std::string& name,
 UnaryMethod::~UnaryMethod() {
 }
 
-bool UnaryMethod::write(int tag, const QVariant& data, int timeout) {
-  std::unique_ptr<google::protobuf::Message> request(
-      write_->dataToMessage(data));
+bool UnaryMethod::write(int tag,
+                        std::unique_ptr<google::protobuf::Message> request,
+                        int timeout) {
   if (!request) {
-    unknownError(tag, "Failed to convert to message object.");
+    unknownError(tag, "No message object.");
     return false;
   }
   new UnaryCallData(tag, this, channel_.get(), cq_, read_, std::move(request),
