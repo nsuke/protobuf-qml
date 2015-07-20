@@ -5,6 +5,69 @@ using namespace QV4;
 namespace protobuf {
 namespace qml {
 
+template <typename Holder, typename Impl>
+void v4write_with_timeout(Holder* that, Impl* impl, QQmlV4Function* args) {
+  auto v4 = args->v4engine();
+  Scope scope(v4);
+  ScopedValue arg_tag(scope, (*args)[0]);
+  if (!arg_tag || !arg_tag->isNumber()) {
+    // TODO: throw error
+    qWarning() << "tag argument is invalid";
+    args->setReturnValue(Encode(false));
+    return;
+  }
+  auto tag = arg_tag->toInt32();
+  ScopedArrayObject arg_data(scope, (*args)[1]);
+  if (!arg_data) {
+    qWarning() << "data argument is invalid";
+    args->setReturnValue(Encode(false));
+    return;
+  }
+  auto msg = that->write_descriptor()->v4()->jsValueToMessage(v4, *arg_data);
+  if (!msg) {
+    qWarning() << "Failed to create message object";
+    args->setReturnValue(Encode(false));
+    return;
+  }
+  ScopedValue arg_timeout(scope, (*args)[2]);
+  int timeout = -1;
+  if (arg_timeout && arg_timeout->isInteger()) {
+    timeout = arg_timeout->toInt32();
+  }
+
+  auto result = impl->write(tag, std::move(msg), timeout);
+  args->setReturnValue(Encode(result));
+}
+
+template <typename Holder, typename Impl>
+void v4write(Holder* that, Impl* impl, QQmlV4Function* args) {
+  auto v4 = args->v4engine();
+  Scope scope(v4);
+  ScopedValue arg_tag(scope, (*args)[0]);
+  if (!arg_tag || !arg_tag->isNumber()) {
+    // TODO: throw error
+    qWarning() << "tag argument is invalid";
+    args->setReturnValue(Encode(false));
+    return;
+  }
+  auto tag = arg_tag->toInt32();
+  ScopedArrayObject arg_data(scope, (*args)[1]);
+  if (!arg_data) {
+    qWarning() << "data argument is invalid";
+    args->setReturnValue(Encode(false));
+    return;
+  }
+  auto msg = that->write_descriptor()->v4()->jsValueToMessage(v4, *arg_data);
+  if (!msg) {
+    qWarning() << "Failed to create message object";
+    args->setReturnValue(Encode(false));
+    return;
+  }
+
+  auto result = impl->write(tag, std::move(msg));
+  args->setReturnValue(Encode(result));
+}
+
 void MethodHolder::set_read_descriptor(DescriptorWrapper* read_desc) {
   if (read_desc != read_desc_) {
     deinit();
@@ -35,7 +98,8 @@ void MethodHolder::handleData(
     return;
   }
   Scope scope(v4);
-  ScopedArrayObject js_data(scope, read_desc_->v4()->messageToJsValue(v4, *msg));
+  ScopedArrayObject js_data(scope,
+                            read_desc_->v4()->messageToJsValue(v4, *msg));
   if (!js_data) {
     qWarning() << "No data to handle";
     return;
@@ -45,39 +109,34 @@ void MethodHolder::handleData(
 
 void UnaryMethodHolder::write(QQmlV4Function* args) {
   if (!ensureInit()) {
-    args->setReturnValue(QV4::Encode(false));
+    args->setReturnValue(Encode(false));
     return;
   }
-  auto v4 = args->v4engine();
-  Scope scope(v4);
-  ScopedValue arg_tag(scope, (*args)[0]);
-  if (!arg_tag || !arg_tag->isNumber()) {
-    // TODO: throw error
-    qWarning() << "tag argument is invalid";
-    args->setReturnValue(QV4::Encode(false));
-    return;
-  }
-  auto tag = arg_tag->toInt32();
-  ScopedArrayObject arg_data(scope, (*args)[1]);
-  if (!arg_data) {
-    qWarning() << "data argument is invalid";
-    args->setReturnValue(QV4::Encode(false));
-    return;
-  }
-  auto msg = write_descriptor()->v4()->jsValueToMessage(v4, *arg_data);
-  if (!msg) {
-    qWarning() << "Failed to create message object";
-    args->setReturnValue(QV4::Encode(false));
-    return;
-  }
-  ScopedValue arg_timeout(scope, (*args)[2]);
-  int timeout = -1;
-  if (arg_timeout && arg_timeout->isInteger()) {
-    timeout = arg_timeout->toInt32();
-  }
+  v4write_with_timeout(this, impl_.get(), args);
+}
 
-  auto result = impl_->write(tag, std::move(msg), timeout);
-  args->setReturnValue(QV4::Encode(result));
+void WriterMethodHolder::write(QQmlV4Function* args) {
+  if (!ensureInit()) {
+    args->setReturnValue(QV4::Encode(false));
+    return;
+  }
+  v4write(this, impl_.get(), args);
+}
+
+void ReaderMethodHolder::write(QQmlV4Function* args) {
+  if (!ensureInit()) {
+    args->setReturnValue(QV4::Encode(false));
+    return;
+  }
+  v4write_with_timeout(this, impl_.get(), args);
+}
+
+void ReaderWriterMethodHolder::write(QQmlV4Function* args) {
+  if (!ensureInit()) {
+    args->setReturnValue(QV4::Encode(false));
+    return;
+  }
+  v4write(this, impl_.get(), args);
 }
 
 bool UnaryMethodHolder::ensureInit() {

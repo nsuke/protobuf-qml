@@ -138,9 +138,8 @@ WriterCallData* WriterMethod::ensureCallData(int tag) {
   return call;
 }
 
-bool WriterMethod::write(int tag, const QVariant& data) {
-  std::unique_ptr<google::protobuf::Message> request(
-      write_->dataToMessage(data));
+bool WriterMethod::write(int tag,
+                         std::unique_ptr<google::protobuf::Message> request) {
   if (!request) {
     unknownError(tag, "Failed to convert to message object.");
     return false;

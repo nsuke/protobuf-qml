@@ -190,7 +190,9 @@ class PROTOBUF_QML_DLLEXPORT WriterMethod : public MethodBase {
 public:
   explicit WriterMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~WriterMethod() {}
-  virtual bool write(int tag, const QVariant& data) { return false; }
+  virtual bool write(int tag, std::unique_ptr<google::protobuf::Message>) {
+    return false;
+  }
   virtual bool writesDone(int tag) { return false; }
   virtual int timeout(int tag) const { return -1; }
   virtual void set_timeout(int tag, int milliseconds) {}
@@ -203,12 +205,7 @@ public:
   explicit WriterMethodHolder(QObject* p = nullptr) : ClientMethodHolder(p) {}
   ~WriterMethodHolder() {}
 
-  Q_INVOKABLE bool write(int tag, const QVariant& data) {
-    if (!ensureInit()) {
-      return false;
-    }
-    return impl_->write(tag, data);
-  }
+  Q_INVOKABLE void write(QQmlV4Function*);
 
   Q_INVOKABLE bool writesDone(int tag) {
     if (!ensureInit()) {
@@ -252,7 +249,9 @@ public:
   explicit ReaderMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~ReaderMethod() {}
 
-  virtual bool write(int tag, const QVariant& data, int timeout) {
+  virtual bool write(int tag,
+                     std::unique_ptr<google::protobuf::Message>,
+                     int timeout) {
     return false;
   }
 };
@@ -267,12 +266,7 @@ public:
   explicit ReaderMethodHolder(QObject* p = nullptr) : ClientMethodHolder(p) {}
   ~ReaderMethodHolder() {}
 
-  Q_INVOKABLE bool write(int tag, const QVariant& data, int timeout) {
-    if (!ensureInit()) {
-      return false;
-    }
-    return impl_->write(tag, data, timeout);
-  }
+  Q_INVOKABLE void write(QQmlV4Function*);
 
 protected:
   void deinit() final {
@@ -296,7 +290,9 @@ public:
   explicit ReaderWriterMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~ReaderWriterMethod() {}
   virtual bool call(int tag) { return false; }
-  virtual bool write(int tag, const QVariant& data) { return false; }
+  virtual bool write(int tag, std::unique_ptr<google::protobuf::Message>) {
+    return false;
+  }
   virtual bool writesDone(int tag) { return false; }
   virtual int timeout(int tag) const { return -1; }
   virtual void set_timeout(int tag, int milliseconds) {}
@@ -321,12 +317,7 @@ public:
     return impl_->call(tag);
   }
 
-  Q_INVOKABLE bool write(int tag, const QVariant& data) {
-    if (!ensureInit()) {
-      return false;
-    }
-    return impl_->write(tag, data);
-  }
+  Q_INVOKABLE void write(QQmlV4Function*);
 
   Q_INVOKABLE bool writesDone(int tag) {
     if (!ensureInit()) {

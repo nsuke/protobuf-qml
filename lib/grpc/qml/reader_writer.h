@@ -24,7 +24,7 @@ public:
   ~ReaderWriterCallData();
 
   void process(bool ok) final;
-  void resume(const QVariant& data);
+  void resume(std::unique_ptr<google::protobuf::Message> data);
 
   bool write(std::unique_ptr<google::protobuf::Message> request);
   bool writesDone();
@@ -83,7 +83,7 @@ public:
              channel_->RegisterMethod(name.c_str())) {}
 
   bool call(int tag) final;
-  bool write(int tag, const QVariant& data) final;
+  bool write(int tag, std::unique_ptr<google::protobuf::Message> data) final;
   bool writesDone(int tag) final;
   void deleteCall(int tag);
   int timeout(int tag) const final;

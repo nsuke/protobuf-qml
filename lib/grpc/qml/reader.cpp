@@ -62,9 +62,9 @@ void ReaderCallData::process(bool ok) {
   }
 }
 
-bool ReaderMethod::write(int tag, const QVariant& data, int timeout) {
-  std::unique_ptr<google::protobuf::Message> request(
-      write_->dataToMessage(data));
+bool ReaderMethod::write(int tag,
+                         std::unique_ptr<google::protobuf::Message> request,
+                         int timeout) {
   if (!request) {
     unknownError(tag, "Failed to convert to message object.");
     return false;

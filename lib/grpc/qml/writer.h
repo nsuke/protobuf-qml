@@ -78,7 +78,7 @@ public:
              grpc::RpcMethod::CLIENT_STREAMING,
              channel_->RegisterMethod(name.c_str())) {}
 
-  bool write(int tag, const QVariant& data) final;
+  bool write(int tag, std::unique_ptr<google::protobuf::Message> data) final;
 
   bool writesDone(int tag) final;
 
