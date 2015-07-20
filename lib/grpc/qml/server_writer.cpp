@@ -24,14 +24,15 @@ void ServerWriterMethod::onRequest(
   data(tag, v);
 }
 
-bool ServerWriterMethod::respond(int tag, const QVariant& data) {
+bool ServerWriterMethod::respond(
+    int tag, std::unique_ptr<google::protobuf::Message> msg) {
   auto lk = lock();
   auto cdata = getUnsafe(tag);
   if (!cdata) {
     qWarning() << "";
     return false;
   }
-  cdata->write(data);
+  cdata->write(std::move(msg));
   return true;
 }
 
@@ -129,11 +130,12 @@ void ServerWriterCallData::processQueuedData() {
   }
 }
 
-void ServerWriterCallData::write(const QVariant& data) {
+void ServerWriterCallData::write(
+    std::unique_ptr<google::protobuf::Message> msg) {
   std::lock_guard<std::mutex> lock(mutex_);
   if (status_ == Status::FROZEN) {
     // Since it's been frozen, we can safely delete existing response object.
-    response_.reset(write_->dataToMessage(data));
+    response_.swap(msg);
     if (!response_) {
       // TODO: Should we abort this call ?
       qWarning() << "Failed to create message object to write.";
@@ -142,7 +144,7 @@ void ServerWriterCallData::write(const QVariant& data) {
     status_ = Status::WRITE;
     writer_.Write(*response_, this);
   } else {
-    enqueueData(data);
+    enqueueData(std::move(msg));
   }
 }
 
@@ -158,14 +160,14 @@ void ServerWriterCallData::abort(int code, const QString& message) {
 }
 
 // Should only be called from inside locked scope.
-void ServerWriterCallData::enqueueData(const QVariant& data) {
-  auto rsp = write_->dataToMessage(data);
+void ServerWriterCallData::enqueueData(
+    std::unique_ptr<google::protobuf::Message> rsp) {
   if (!rsp) {
     qWarning() << "Failed to create message object to store to send later."
                << "The message is ignored.";
     return;
   }
-  queue_.emplace(rsp);
+  queue_.emplace(std::move(rsp));
 }
 
 void ServerWriterCallData::end() {

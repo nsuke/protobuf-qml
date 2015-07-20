@@ -33,7 +33,7 @@ public:
   void onDataEnd(ServerBidiCallData* cdata);
 
   void startProcessing() final;
-  bool respond(int tag, const QVariant& data) final;
+  bool respond(int tag, std::unique_ptr<google::protobuf::Message>) final;
   bool abort(int tag, int code, const QString& message) final;
   bool end(int tag) final;
 
@@ -55,7 +55,7 @@ public:
                      ::protobuf::qml::DescriptorWrapper* write);
 
   void process(bool ok) final;
-  void write(const QVariant& data);
+  void write(std::unique_ptr<google::protobuf::Message>);
   void writesDone();
   void abort(int code, const QString& message);
   int tag = 0;

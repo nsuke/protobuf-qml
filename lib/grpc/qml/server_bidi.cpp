@@ -33,14 +33,15 @@ void ServerBidiMethod::onDataEnd(ServerBidiCallData* cdata) {
   }
 }
 
-bool ServerBidiMethod::respond(int tag, const QVariant& data) {
+bool ServerBidiMethod::respond(int tag,
+                               std::unique_ptr<google::protobuf::Message> msg) {
   auto lk = lock();
   auto cdata = getUnsafe(tag);
   if (!cdata) {
     qWarning() << "Tag not found for" << __func__ << ":" << tag;
     return false;
   }
-  cdata->write(data);
+  cdata->write(std::move(msg));
   return true;
 }
 
@@ -95,7 +96,6 @@ void ServerBidiCallData::decrementRef(unique_lock<std::mutex>& lock,
 void ServerBidiCallData::process(bool ok) {
   std::unique_lock<std::mutex> lock(mutex_);
   if (status_ == Status::INIT) {
-    request_.reset(read_->newMessage());
     service_->raw()->RequestClientStreaming(index_, &context_, &stream_, cq_,
                                             cq_, this);
     status_ = Status::REQUEST;
@@ -105,6 +105,7 @@ void ServerBidiCallData::process(bool ok) {
   } else if (status_ == Status::REQUEST) {
     // handleQueuedMessages();
     status_ = Status::READ;
+    request_.reset(read_->newMessage());
     stream_.Read(request_.get(), this);
   } else if (status_ == Status::READ && ok) {
     method_->onData(this, request_);
@@ -147,10 +148,10 @@ void ServerBidiCallData::handleQueuedMessages() {
   }
 }
 
-void ServerBidiCallData::write(const QVariant& data) {
+void ServerBidiCallData::write(std::unique_ptr<google::protobuf::Message> msg) {
   std::lock_guard<std::mutex> lock(mutex_);
   if (status_ == Status::FROZEN) {
-    response_.reset(write_->dataToMessage(data));
+    response_.swap(msg);
     if (!response_) {
       qWarning() << "Failed to serialize message to send.";
       return;
@@ -158,7 +159,7 @@ void ServerBidiCallData::write(const QVariant& data) {
     status_ = Status::WRITE;
     stream_.Write(*response_, this);
   } else {
-    queue_.emplace(write_->dataToMessage(data));
+    queue_.emplace(std::move(msg));
   }
 }
 

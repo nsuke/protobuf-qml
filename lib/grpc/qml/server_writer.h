@@ -34,7 +34,8 @@ public:
                  const std::shared_ptr<google::protobuf::Message>&);
 
   void startProcessing() final;
-  bool respond(int tag, const QVariant& data) final;
+  bool respond(int tag,
+               std::unique_ptr<google::protobuf::Message>) final;
   bool abort(int tag, int code, const QString& message) final;
   bool end(int tag) final;
 
@@ -56,7 +57,7 @@ public:
                        ::protobuf::qml::DescriptorWrapper* write);
 
   void process(bool ok) final;
-  void write(const QVariant& data);
+  void write(std::unique_ptr<google::protobuf::Message>);
   void abort(int code, const QString& message);
   void end();
 
@@ -69,7 +70,7 @@ private:
     DONE,
   };
 
-  void enqueueData(const QVariant& data);
+  void enqueueData(std::unique_ptr<google::protobuf::Message>);
   void processQueuedData();
 
   std::mutex mutex_;

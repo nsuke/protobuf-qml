@@ -21,13 +21,14 @@ void ServerUnaryMethod::onRequest(ServerUnaryCallData* cdata) {
   data(tag, cdata->data());
 }
 
-bool ServerUnaryMethod::respond(int tag, const QVariant& data) {
+bool ServerUnaryMethod::respond(
+    int tag, std::unique_ptr<google::protobuf::Message> msg) {
   auto cdata = remove(tag);
   if (!cdata) {
     qWarning() << "Unknown tag: " << tag;
     return false;
   }
-  cdata->resume(data);
+  cdata->resume(std::move(msg));
   return true;
 }
 
@@ -86,13 +87,14 @@ void ServerUnaryCallData::process(bool ok) {
   }
 }
 
-void ServerUnaryCallData::resume(const QVariant& data) {
+void ServerUnaryCallData::resume(
+    std::unique_ptr<google::protobuf::Message> msg) {
   if (status_ != Status::FROZEN) {
     qWarning() << "Resume called for non-frozen call data.";
     Q_ASSERT(false);
     return;
   }
-  response_.reset(write_->dataToMessage(data));
+  response_.swap(msg);
   if (!response_) {
     // TODO: how to abort from here ?
   }

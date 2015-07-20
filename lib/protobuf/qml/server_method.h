@@ -17,7 +17,9 @@ public:
   explicit ServerMethod(QObject* p = nullptr) : MethodBase(p) {}
   virtual ~ServerMethod() {}
 
-  virtual bool respond(int tag, const QVariant& data) { return false; }
+  virtual bool respond(int tag, std::unique_ptr<google::protobuf::Message>) {
+    return false;
+  }
 
   virtual bool abort(int tag, int error_code, const QString& error_message) {
     return false;
@@ -52,13 +54,7 @@ public:
 
   virtual ServerMethod* impl() const { return nullptr; }
 
-  Q_INVOKABLE bool respond(int tag, const QVariant& data) {
-    if (!impl()) {
-      qWarning() << "Server method is not initialized.";
-      return false;
-    }
-    return impl()->respond(tag, data);
-  }
+  Q_INVOKABLE void respond(QQmlV4Function*);
 
   Q_INVOKABLE bool abort(int tag, int error_code, const QString& message) {
     if (!impl()) {

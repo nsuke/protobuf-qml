@@ -35,13 +35,14 @@ void ServerReaderMethod::onDataEnd(ServerReaderCallData* cdata) {
   }
 }
 
-bool ServerReaderMethod::respond(int tag, const QVariant& data) {
+bool ServerReaderMethod::respond(
+    int tag, std::unique_ptr<google::protobuf::Message> msg) {
   auto cdata = remove(tag);
   if (!cdata) {
     qWarning() << "Unknown tag to respond: " << tag;
     return false;
   }
-  cdata->resume(data);
+  cdata->resume(std::move(msg));
   return true;
 }
 
@@ -104,12 +105,13 @@ void ServerReaderCallData::process(bool ok) {
   }
 }
 
-void ServerReaderCallData::resume(const QVariant& data) {
+void ServerReaderCallData::resume(
+    std::unique_ptr<google::protobuf::Message> msg) {
   if (status_ != Status::FROZEN) {
     qWarning() << "Resume called for non-frozen call data.";
     return;
   }
-  response_.reset(write_->dataToMessage(data));
+  response_.swap(msg);
   if (!response_) {
     // TODO: how to abort from here ?
   }

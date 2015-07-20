@@ -31,7 +31,7 @@ public:
   void onRequest(ServerUnaryCallData* cdata);
 
   void startProcessing() final;
-  bool respond(int tag, const QVariant& data) final;
+  bool respond(int tag, std::unique_ptr<google::protobuf::Message>) final;
   bool abort(int tag, int error_code, const QString& error_message) final;
 
 private:
@@ -52,7 +52,7 @@ public:
                       ::protobuf::qml::DescriptorWrapper* write);
 
   void process(bool ok) final;
-  void resume(const QVariant& data);
+  void resume(std::unique_ptr<google::protobuf::Message>);
   void abort(int error_code, const QString& error_message);
   const std::shared_ptr<google::protobuf::Message>& data() const {
     return request_;
