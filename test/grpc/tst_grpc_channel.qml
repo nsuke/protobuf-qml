@@ -1,6 +1,6 @@
 // To run this test, you need to run test-hello-async-server program beforehand
 
-import QtQuick 2.4
+import QtQuick 2.5
 import QtTest 1.1
 import Grpc 1.0 as G
 import 'hello.pb.js' as Hello

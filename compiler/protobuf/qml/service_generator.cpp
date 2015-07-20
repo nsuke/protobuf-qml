@@ -20,7 +20,7 @@ ServiceGenerator::ServiceGenerator(const google::protobuf::ServiceDescriptor* t)
 
 void ServiceGenerator::generateImports(google::protobuf::io::Printer& p) {
   p.Print(
-      "import QtQuick 2.4\n"
+      "import QtQuick 2.5\n"
       "import Protobuf 1.0 as PB\n"
       "\n");
 

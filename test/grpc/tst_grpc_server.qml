@@ -1,4 +1,4 @@
-import QtQuick 2.4
+import QtQuick 2.5
 import QtTest 1.1
 import Protobuf 1.0 as PB
 import Grpc 1.0 as G
