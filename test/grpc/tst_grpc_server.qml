@@ -63,9 +63,9 @@ Item {
           callback(err);
           return;
         }
-        callback(null, callback(null, {
+        callback(null, {
           greet: msg,
-        }));
+        });
       });
     }
 
