@@ -42,7 +42,7 @@ QtObject {
 
     function removeCallback(tag) {
       'use strict';
-      callbackStorage.shift(tag, 1);
+      delete callbackStorage[tag];
     }
 
     function getCallback(tag) {
