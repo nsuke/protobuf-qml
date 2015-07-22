@@ -11,11 +11,11 @@ ReaderCallData::ReaderCallData(
     ::protobuf::qml::DescriptorWrapper* read,
     std::unique_ptr<google::protobuf::Message> request,
     int timeout)
-    : tag_(tag),
+    : cq_(cq),
       channel_(channel),
-      cq_(cq),
-      method_(method),
       read_(read),
+      method_(method),
+      tag_(tag),
       request_(std::move(request)),
       response_(read_->newMessage()) {
   if (timeout >= 0) {

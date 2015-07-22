@@ -35,8 +35,8 @@ private:
   void generateMessagePrototype(google::protobuf::io::Printer& p);
   void generateNestedAlias(google::protobuf::io::Printer& p);
 
-  std::string name_;
   const google::protobuf::Descriptor* t_;
+  std::string name_;
   std::vector<MessageGenerator> message_generators_;
   std::vector<EnumGenerator> enum_generators_;
   std::vector<FieldGenerator> field_generators_;

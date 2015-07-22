@@ -41,7 +41,6 @@ private:
   UnaryMethod* method_;
   grpc::ChannelInterface* channel_;
   ::protobuf::qml::DescriptorWrapper* read_;
-  ::protobuf::qml::DescriptorWrapper* write_;
   std::unique_ptr<google::protobuf::Message> request_;
   std::shared_ptr<google::protobuf::Message> response_;
   grpc::Status grpc_status_;
@@ -69,12 +68,9 @@ public:
 
   ::protobuf::qml::DescriptorWrapper* readDescriptor() { return read_; }
 
-  ::protobuf::qml::DescriptorWrapper* writeDescriptor() { return write_; }
-
 private:
   std::string name_;
   ::protobuf::qml::DescriptorWrapper* read_;
-  ::protobuf::qml::DescriptorWrapper* write_;
   grpc::CompletionQueue* cq_;
   std::shared_ptr<grpc::ChannelInterface> channel_;
   grpc::RpcMethod raw_;

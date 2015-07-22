@@ -100,7 +100,6 @@ private:
     DONE,
   };
   Status status = Status::INIT;
-  bool done_ = false;
   grpc::ServerContext context_;
   grpc::ServerCompletionQueue* cq_;
   Hello::AsyncService* service_;

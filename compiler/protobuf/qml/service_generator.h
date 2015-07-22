@@ -35,8 +35,7 @@ struct IOType {
 
 namespace std {
 template <>
-class hash<protobuf::qml::IOType> {
-public:
+struct hash<protobuf::qml::IOType> {
   size_t operator()(const protobuf::qml::IOType& x) const {
     return hash<std::string>()(x.file_path);
   }

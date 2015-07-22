@@ -47,16 +47,16 @@ private:
   bool read_done_ = false;
   bool write_done_ = false;
   bool write_done_queued_ = false;
-  std::queue<std::unique_ptr<google::protobuf::Message>> requests_;
   int timeout_ = -1;
   grpc::ClientContext context_;
+  grpc::CompletionQueue* cq_;
+  grpc::ChannelInterface* channel_;
   ::protobuf::qml::DescriptorWrapper* read_;
+  ReaderWriterMethod* method_;
+  int tag_;
+  std::queue<std::unique_ptr<google::protobuf::Message>> requests_;
   std::unique_ptr<google::protobuf::Message> request_;
   std::shared_ptr<google::protobuf::Message> response_;
-  ReaderWriterMethod* method_;
-  grpc::CompletionQueue* cq_;
-  int tag_;
-  grpc::ChannelInterface* channel_;
   grpc::Status grpc_status_;
   grpc::ClientAsyncReaderWriter<google::protobuf::Message,
                                 google::protobuf::Message> stream_;
@@ -76,8 +76,8 @@ public:
         name_(name),
         read_(read),
         write_(write),
-        channel_(std::move(channel)),
         cq_(cq),
+        channel_(std::move(channel)),
         raw_(name.c_str(),
              grpc::RpcMethod::BIDI_STREAMING,
              channel_->RegisterMethod(name.c_str())) {}

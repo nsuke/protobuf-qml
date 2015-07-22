@@ -12,12 +12,11 @@ class BufferChannel;
 
 class PROTOBUF_QML_DLLEXPORT SerializeMethod : public UnaryMethod {
 public:
-  SerializeMethod(BufferChannel* channel, DescriptorWrapper* descriptor);
+  SerializeMethod(BufferChannel* channel);
   bool write(int tag, std::unique_ptr<google::protobuf::Message>, int timeout) final;
 
 private:
   BufferChannel* channel_;
-  DescriptorWrapper* descriptor_;
 };
 
 class PROTOBUF_QML_DLLEXPORT ParseMethod : public UnaryMethod {

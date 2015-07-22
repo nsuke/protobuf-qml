@@ -34,7 +34,6 @@ void Channel::startThread() {
   thread_.reset(new std::thread([this] {
     void* tag = nullptr;
     bool ok = false;
-    bool handled = false;
     for (;;) {
       if (!cq_->Next(&tag, &ok)) {
         cq_.reset();

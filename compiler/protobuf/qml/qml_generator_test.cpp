@@ -12,7 +12,6 @@ using namespace google::protobuf;
 
 int main() {
   auto file = google::protobuf::Any::descriptor()->file();
-  auto path = "test_tmp";
 
   std::unique_ptr<io::ZeroCopyOutputStream> out(
       new io::OstreamOutputStream(&std::cout));

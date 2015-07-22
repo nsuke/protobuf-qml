@@ -10,11 +10,11 @@ WriterCallData::WriterCallData(int tag,
                                ::grpc::CompletionQueue* cq,
                                WriterMethod* method,
                                ::protobuf::qml::DescriptorWrapper* read)
-    : tag_(tag),
+    : cq_(cq),
       channel_(channel),
-      cq_(cq),
-      method_(method),
       read_(read),
+      method_(method),
+      tag_(tag),
       response_(read_->newMessage()),
       writer_(channel_, cq_, method_->raw(), &context_, response_.get(), this) {
 }

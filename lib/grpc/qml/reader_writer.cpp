@@ -9,11 +9,11 @@ ReaderWriterCallData::ReaderWriterCallData(
     grpc::CompletionQueue* cq,
     ReaderWriterMethod* method,
     ::protobuf::qml::DescriptorWrapper* read)
-    : tag_(tag),
+    : cq_(cq),
       channel_(channel),
-      cq_(cq),
-      method_(method),
       read_(read),
+      method_(method),
+      tag_(tag),
       response_(read_->newMessage()),
       stream_(channel_, cq_, method_->raw(), &context_, this) {
 }

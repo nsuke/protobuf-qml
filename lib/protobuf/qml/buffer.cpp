@@ -8,9 +8,8 @@ namespace qml {
 
 using namespace ::google::protobuf;
 
-SerializeMethod::SerializeMethod(BufferChannel* channel,
-                                 DescriptorWrapper* descriptor)
-    : channel_(channel), descriptor_(descriptor) {
+SerializeMethod::SerializeMethod(BufferChannel* channel)
+    : channel_(channel) {
 }
 
 bool SerializeMethod::write(int tag,
@@ -75,7 +74,7 @@ UnaryMethod* BufferChannel::registerUnaryMethod(const QString& name,
                                                 DescriptorWrapper* write) {
   auto method_name = name.split("/").back();
   if (method_name == "Serialize") {
-    return new SerializeMethod(this, write);
+    return new SerializeMethod(this);
   } else if (method_name == "Parse") {
     return new ParseMethod(this, read);
   }

@@ -37,13 +37,13 @@ private:
 
   Status status_ = Status::WRITE;
   grpc::ClientContext context_;
+  grpc::CompletionQueue* cq_;
+  grpc::ChannelInterface* channel_;
   ::protobuf::qml::DescriptorWrapper* read_;
+  ReaderMethod* method_;
+  int tag_;
   std::unique_ptr<google::protobuf::Message> request_;
   std::shared_ptr<google::protobuf::Message> response_;
-  ReaderMethod* method_;
-  grpc::CompletionQueue* cq_;
-  int tag_;
-  grpc::ChannelInterface* channel_;
   grpc::Status grpc_status_;
   std::unique_ptr<grpc::ClientAsyncReader<google::protobuf::Message>> reader_;
 };
@@ -61,9 +61,8 @@ public:
       : ::protobuf::qml::ReaderMethod(p),
         name_(name),
         read_(read),
-        write_(write),
-        channel_(std::move(channel)),
         cq_(cq),
+        channel_(std::move(channel)),
         raw_(name.c_str(),
              grpc::RpcMethod::SERVER_STREAMING,
              channel_->RegisterMethod(name.c_str())) {}
@@ -77,7 +76,6 @@ public:
 private:
   std::string name_;
   ::protobuf::qml::DescriptorWrapper* read_;
-  ::protobuf::qml::DescriptorWrapper* write_;
   grpc::CompletionQueue* cq_;
   std::shared_ptr<grpc::ChannelInterface> channel_;
   grpc::RpcMethod raw_;

@@ -150,8 +150,8 @@ bool Descriptor::jsValueToMessage(ExecutionEngine* v4,
   }
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
-  auto field_count = descriptor->field_count();
-  for (int i = 0; i < field_count && i < field_values->getLength(); ++i) {
+  size_t field_count = descriptor->field_count();
+  for (size_t i = 0; i < field_count && i < field_values->getLength(); ++i) {
     auto field = descriptor->field(i);
     auto oneof = field->containing_oneof();
     if (oneof) {
