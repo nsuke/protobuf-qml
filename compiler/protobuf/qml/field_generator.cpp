@@ -68,7 +68,7 @@ std::string FieldGenerator::defaultValue() {
 
     case FieldDescriptor::CPPTYPE_STRING:
       if (t_->type() == FieldDescriptor::TYPE_BYTES) {
-        return "(typeof ArrayBuffer == 'undefined') ? undefined : new ArrayBuffer()";
+        return " new ArrayBuffer()";
       } else {
         return "'" + t_->default_value_string() + "'";
       }
@@ -293,7 +293,14 @@ void FieldGenerator::genSet(google::protobuf::io::Printer& p,
             "$indent$this._$name$ = msg;\n"
             "$indent$this._raw[FIELD][$index$] = msg._raw;\n");
   } else {
-    p.Print(v, "$indent$this._raw[FIELD][$index$] = value;\n");
+    // We reject undefined and treat it as default value.
+    // TODO: Emit error if the argument is not of correct type.
+    p.Print(v,
+            "if (typeof value == 'undefined') {\n"
+            "  $indent$this._raw[FIELD][$index$] = $default$;\n"
+            "} else {\n"
+            "  $indent$this._raw[FIELD][$index$] = value;\n"
+            "}\n");
   }
 }
 
@@ -321,12 +328,14 @@ void FieldGenerator::generateOptionalProperty(
             "        return undefined;\n"
             "      } else {\n");
     genGet(p, "        ");
+    // TODO: Currently, if undefined is passed to oneof field, the entire oneof
+    // is cleared. It may better to ignore undefined value if the4 field is not
+    // the active value at the time.
     p.Print(variables_,
             "      }\n"
             "  };\n"
             "  $type$.prototype.set$capital_name$ = function(value) {\n"
             "      this.clear$oneof_capital$();\n"
-
             "      this._raw[ONEOF][$oneof_index$] = "
             "type.$oneof_capital$Case.$all_capital_name$;\n");
   } else {
