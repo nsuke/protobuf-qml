@@ -252,11 +252,22 @@ ReturnedValue Descriptor::getFieldValue(
   if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT32) {
     v = Primitive::fromInt32(ref.GetInt32(msg, field));
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT64) {
-    v = v4->fromVariant(qint64(ref.GetInt64(msg, field)));
+    auto value = ref.GetInt64(msg, field);
+    if (value <= std::numeric_limits<int32_t>::max() &&
+        value >= std::numeric_limits<int32_t>::lowest()) {
+      v = Primitive::fromInt32(value);
+    } else {
+      v = v4->fromVariant(qint64(value));
+    }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
     v = Primitive::fromUInt32(ref.GetUInt32(msg, field));
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT64) {
-    v = v4->fromVariant(quint64(ref.GetUInt64(msg, field)));
+    auto value = ref.GetUInt64(msg, field);
+    if (value <= std::numeric_limits<uint32_t>::max()) {
+      v = Primitive::fromUInt32(value);
+    } else {
+      v = v4->fromVariant(quint64(ref.GetUInt64(msg, field)));
+    }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
     v = Primitive::fromDouble(ref.GetDouble(msg, field));
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_FLOAT) {
@@ -295,8 +306,15 @@ ReturnedValue Descriptor::getRepeatedFieldValue(
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT64) {
     for (int i = 0; i < size; i++) {
-      v = v4->fromVariant(qint64(ref.GetRepeatedInt64(msg, field, i)));
-      vs->putIndexed(i, v);
+      auto value = ref.GetRepeatedInt64(msg, field, i);
+      if (value <= std::numeric_limits<int32_t>::max() &&
+          value >= std::numeric_limits<int32_t>::lowest()) {
+        v = Primitive::fromInt32(value);
+        vs->putIndexed(i, v);
+      } else {
+        v = v4->fromVariant(qint64());
+        vs->putIndexed(i, v);
+      }
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
     for (int i = 0; i < size; i++) {
@@ -305,8 +323,14 @@ ReturnedValue Descriptor::getRepeatedFieldValue(
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT64) {
     for (int i = 0; i < size; i++) {
-      v = v4->fromVariant(quint64(ref.GetRepeatedUInt64(msg, field, i)));
-      vs->putIndexed(i, v);
+      auto value = ref.GetRepeatedUInt64(msg, field, i);
+      if (value <= std::numeric_limits<uint32_t>::max()) {
+        v = Primitive::fromUInt32(value);
+        vs->putIndexed(i, v);
+      } else {
+        v = v4->fromVariant(quint64(ref.GetRepeatedUInt64(msg, field, i)));
+        vs->putIndexed(i, v);
+      }
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
     for (int i = 0; i < size; i++) {
@@ -365,15 +389,23 @@ void Descriptor::setFieldValue(ExecutionEngine* v4,
   if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT32) {
     ref.SetInt32(&msg, field, v->toInt32());
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT64) {
-    auto var = v4->toVariant(v, 0, false);
-    Q_ASSERT(var.isValid());
-    ref.SetInt64(&msg, field, static_cast<int64>(var.value<qint64>()));
+    if (v->isInteger()) {
+      ref.SetInt64(&msg, field, v->toInt32());
+    } else {
+      auto var = v4->toVariant(v, 0, false);
+      Q_ASSERT(var.isValid());
+      ref.SetInt64(&msg, field, static_cast<int64>(var.value<qint64>()));
+    }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
     ref.SetUInt32(&msg, field, v->toUInt32());
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT64) {
-    auto var = v4->toVariant(v, 0, false);
-    Q_ASSERT(var.isValid());
-    ref.SetUInt64(&msg, field, static_cast<uint64>(var.value<quint64>()));
+    if (v->isInteger()) {
+      ref.SetUInt64(&msg, field, v->toUInt32());
+    } else {
+      auto var = v4->toVariant(v, 0, false);
+      Q_ASSERT(var.isValid());
+      ref.SetUInt64(&msg, field, static_cast<uint64>(var.value<quint64>()));
+    }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
     ref.SetDouble(&msg, field, v->toNumber());
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_FLOAT) {
@@ -419,8 +451,12 @@ void Descriptor::setRepeatedFieldValue(
     for (int i = 0; i < size; i++) {
       v = list.getIndexed(i);
       if (!v->isNullOrUndefined()) {
-        auto var = v4->toVariant(v, 0, false);
-        ref.AddInt64(&msg, field, static_cast<int64>(var.value<qint64>()));
+        if (v->isInteger()) {
+          ref.AddInt64(&msg, field, v->toInt32());
+        } else {
+          auto var = v4->toVariant(v, 0, false);
+          ref.AddInt64(&msg, field, static_cast<int64>(var.value<qint64>()));
+        }
       }
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
@@ -434,8 +470,12 @@ void Descriptor::setRepeatedFieldValue(
     for (int i = 0; i < size; i++) {
       v = list.getIndexed(i);
       if (!v->isNullOrUndefined()) {
-        auto var = v4->toVariant(v, 0, false);
-        ref.AddUInt64(&msg, field, static_cast<uint64>(var.value<quint64>()));
+        if (v->isInteger()) {
+          ref.AddUInt64(&msg, field, v->toUInt32());
+        } else {
+          auto var = v4->toVariant(v, 0, false);
+          ref.AddUInt64(&msg, field, static_cast<uint64>(var.value<quint64>()));
+        }
       }
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
