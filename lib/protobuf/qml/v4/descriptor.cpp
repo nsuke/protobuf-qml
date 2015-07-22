@@ -414,9 +414,14 @@ void Descriptor::setFieldValue(ExecutionEngine* v4,
     ref.SetBool(&msg, field, v->toBoolean());
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_STRING &&
              field->type() == FieldDescriptor::TYPE_BYTES) {
-    Scoped<ArrayBuffer> v(scope, value);
-    Q_ASSERT(v);
-    ref.SetString(&msg, field, v->asByteArray().toStdString());
+    Scoped<ArrayBuffer> array(scope, value);
+    if (array) {
+      ref.SetString(&msg, field, array->asByteArray().toStdString());
+    } else {
+      auto var = v4->toVariant(v, 0, false);
+      Q_ASSERT(var.canConvert(QMetaType::QByteArray));
+      ref.SetString(&msg, field, var.value<QByteArray>().toStdString());
+    }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_STRING) {
     ScopedString v(scope, value);
     Q_ASSERT(v);
@@ -500,11 +505,19 @@ void Descriptor::setRepeatedFieldValue(
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_STRING &&
              field->type() == FieldDescriptor::TYPE_BYTES) {
-    Scoped<ArrayBuffer> v(scope);
+    ScopedValue v(scope);
+    Scoped<ArrayBuffer> array(scope);
     for (int i = 0; i < size; i++) {
+      array = list.getIndexed(i);
+      if (array) {
+        ref.AddString(&msg, field, array->asByteArray().toStdString());
+      } else {
+        v = list.getIndexed(i);
+        auto var = v4->toVariant(v, 0, false);
+        Q_ASSERT(var.canConvert(QMetaType::QByteArray));
+        ref.SetString(&msg, field, var.value<QByteArray>().toStdString());
+      }
       v = list.getIndexed(i);
-      if (!v->isNullOrUndefined())
-        ref.AddString(&msg, field, v->asByteArray().toStdString());
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_STRING) {
     ScopedString v(scope);
