@@ -34,6 +34,7 @@ bool SerializeMethod::write(int tag,
   // Flush before notifying "done".
   stream.reset();
   data(tag, 0);
+  closed(tag);
   return true;
 }
 
@@ -66,6 +67,7 @@ bool ParseMethod::write(int tag,
   }
   stream.reset();
   data(tag, msg);
+  closed(tag);
   return true;
 }
 
