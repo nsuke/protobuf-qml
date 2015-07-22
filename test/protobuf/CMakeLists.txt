@@ -3,6 +3,7 @@
 #
 copy(protobuf-qml-test
   ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/tst_serialization.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/tst_benchmark.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/tst_binary.qml
   ${CMAKE_CURRENT_SOURCE_DIR}/tst_jsobject.qml
@@ -18,6 +19,7 @@ copy(protobuf-qml-test
   )
 
 protobuf_generate_qml(${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/serialization_test.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/recursive_test.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/oneof_test.proto
   ${CMAKE_CURRENT_SOURCE_DIR}/ProtobufQmlTest.proto

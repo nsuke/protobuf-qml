@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+enum Enum2 {
+  ENUM_VALUE_1 = 0;
+  ENUM_VALUE_2 = 20;
+  ENUM_VALUE_3 = 30;
+  ENUM_VALUE_4 = 40;
+}
+
+message Message1 {
+  double double_field1 = 1;
+  float float_field1 = 2;
+  int32 int32_field1 = 3;
+  int64 int64_field1 = 4;
+  uint32 uint32_field1 = 5;
+  uint64 uint64_field1 = 6;
+  fixed32 fixed32_field1 = 7;
+  fixed64 fixed64_field1 = 8;
+  sfixed32 sfixed32_field1 = 9;
+  sfixed64 sfixed64_field1 = 10;
+  bool bool_field1 = 11;
+  string string_field1 = 12;
+  bytes bytes_field1 = 13;
+  Enum2 enum_field1 = 14;
+
+  double double_field2 = 31;
+  float float_field2 = 32;
+  int32 int32_field2 = 33;
+  int64 int64_field2 = 34;
+  uint32 uint32_field2 = 35;
+  uint64 uint64_field2 = 36;
+  fixed32 fixed32_field2 = 37;
+  fixed64 fixed64_field2 = 38;
+  sfixed32 sfixed32_field2 = 39;
+  sfixed64 sfixed64_field2 = 310;
+  bool bool_field2 = 311;
+  string string_field2 = 312;
+  bytes bytes_field2 = 313;
+  Enum2 enum_field2 = 314;
+
+  repeated double double_field3 = 51;
+  repeated float float_field3 = 52;
+  repeated int32 int32_field3 = 53;
+  repeated int64 int64_field3 = 54;
+  repeated uint32 uint32_field3 = 55;
+  repeated uint64 uint64_field3 = 56;
+  repeated fixed32 fixed32_field3 = 57;
+  repeated fixed64 fixed64_field3 = 58;
+  repeated sfixed32 sfixed32_field3 = 59;
+  repeated sfixed64 sfixed64_field3 = 510;
+  repeated bool bool_field3 = 511;
+  repeated string string_field3 = 512;
+  repeated bytes bytes_field3 = 513;
+  repeated Enum2 enum_field3 = 514;
+};
+
+message Message2 {
+  Message1 message_field1 = 1;
+  repeated Message1 message_field2 = 21;
+}
