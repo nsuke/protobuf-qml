@@ -410,6 +410,8 @@ void Descriptor::setFieldValue(ExecutionEngine* v4,
     ref.SetDouble(&msg, field, v->toNumber());
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_FLOAT) {
     ref.SetFloat(&msg, field, v->toNumber());
+  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_BOOL) {
+    ref.SetBool(&msg, field, v->toBoolean());
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_STRING &&
              field->type() == FieldDescriptor::TYPE_BYTES) {
     Scoped<ArrayBuffer> v(scope, value);
