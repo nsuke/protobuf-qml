@@ -55,7 +55,9 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   }
 
   p.Print(
-      "    Object.seal(this);\n"
+      // Sealing provides better coding error detection but degrades performance
+      // by 100% on benchmarks.
+      // "    Object.seal(this);\n"
       "    if (values instanceof $message_name$) {\n"
       "      this._mergeFromRawArray(values._raw);\n"
       "    } else if (values instanceof Array) {\n"

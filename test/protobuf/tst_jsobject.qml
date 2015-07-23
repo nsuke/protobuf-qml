@@ -67,6 +67,7 @@ Item {
 
       // Unable to make property access to throw.
       msg1.nonExistent = 42;
+      skip('Disabled Object.seal for performance reason.');
       verify(typeof msg1.nonExistent == 'undefined');
     }
 
@@ -78,6 +79,7 @@ Item {
     }
 
     function test_invalid_field_init() {
+      skip('Disabled Object.seal for performance reason.');
       shouldThrow(function() {
         var msg1 = new Test1.Msg1({
           nonExistent: 42,
