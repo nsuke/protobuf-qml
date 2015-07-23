@@ -160,14 +160,13 @@ void FieldGenerator::generateRepeatedProperty(
             "       var msg = new "
             "$message_scope$$message_type$(values[i]);\n"
             "       this._$name$[i] = msg;\n"
-            "       this._raw[FIELD][$index$][i] = msg._raw;\n");
+            "       this._raw[FIELD][$index$][i] = msg._raw;\n"
+            "     }\n");
   } else {
     p.Print(variables_,
-            "     for (var i in values) {\n"
-            "       this._raw[FIELD][$index$][i] = values[i];\n");
+            "       this._raw[FIELD][$index$] = values.slice();\n");
   }
   p.Print(variables_,
-          "     }\n"
           "  };\n"
           "  // Single value setter\n"
           "  $type$.prototype.set$capital_name$At = function(index, value) {\n"
