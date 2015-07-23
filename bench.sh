@@ -11,6 +11,12 @@ fi
 
 OUT=$(cd $(dirname ${BASH_SOURCE[0]}) && pwd)/out
 
+$OUT/bin/test-protobuf-qml -input $OUT/test/protobuf/tst_benchmark.qml JsonBenchmark::benchmark_json_ctor $QPB_BENCH_EXTRA_ARG
+
+$OUT/bin/test-protobuf-qml -input $OUT/test/protobuf/tst_benchmark.qml JsonBenchmark::benchmark_json $QPB_BENCH_EXTRA_ARG
+
+$OUT/bin/test-protobuf-qml -input $OUT/test/protobuf/tst_benchmark.qml SerializationBenchmark::benchmark_ctor $QPB_BENCH_EXTRA_ARG
+
 $OUT/bin/test-protobuf-qml -input $OUT/test/protobuf/tst_benchmark.qml SerializationBenchmark::benchmark_v4cb $QPB_BENCH_EXTRA_ARG
 
 $OUT/bin/test-protobuf-qml -input $OUT/test/protobuf/tst_benchmark.qml SerializationBenchmark::benchmark_v4 $QPB_BENCH_EXTRA_ARG
