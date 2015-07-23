@@ -14,6 +14,8 @@ message Message1 {
   int64 int64_field1 = 4;
   uint32 uint32_field1 = 5;
   uint64 uint64_field1 = 6;
+  sint32 sint32_field1 = 15;
+  sint64 sint64_field1 = 16;
   fixed32 fixed32_field1 = 7;
   fixed64 fixed64_field1 = 8;
   sfixed32 sfixed32_field1 = 9;
@@ -29,6 +31,8 @@ message Message1 {
   int64 int64_field2 = 34;
   uint32 uint32_field2 = 35;
   uint64 uint64_field2 = 36;
+  sint32 sint32_field2 = 315;
+  sint64 sint64_field2 = 316;
   fixed32 fixed32_field2 = 37;
   fixed64 fixed64_field2 = 38;
   sfixed32 sfixed32_field2 = 39;
@@ -44,6 +48,8 @@ message Message1 {
   repeated int64 int64_field3 = 54;
   repeated uint32 uint32_field3 = 55;
   repeated uint64 uint64_field3 = 56;
+  repeated sint32 sint32_field3 = 515;
+  repeated sint64 sint64_field3 = 516;
   repeated fixed32 fixed32_field3 = 57;
   repeated fixed64 fixed64_field3 = 58;
   repeated sfixed32 sfixed32_field3 = 59;
