@@ -200,6 +200,14 @@ void FieldGenerator::generateRepeatedProperty(
   } else {
     p.Print(variables_, "    return this._raw[FIELD][$index$][index];\n");
   }
+  p.Print(variables_,
+          "  };\n"
+          "  $type$.prototype.get$capital_name$AsArray = function() {\n");
+  if (is_message_) {
+    p.Print(variables_, "    return this._$name$.slice();\n");
+  } else {
+    p.Print(variables_, "    return this._raw[FIELD][$index$].slice();\n");
+  }
   p.Print("  };\n");
 
   p.Print(variables_,
