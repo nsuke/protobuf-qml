@@ -44,22 +44,9 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "  var ONEOF = 1;\n"
       "  var type = function(values) {\n"
       "    this._raw = [new Array($field_count$), new "
-      "Array($oneof_count$)];\n\n"
-      "    this._mergeFromRawArray = function(rawArray) {\n"
-      "      if (rawArray && rawArray instanceof Array) {\n",
+      "Array($oneof_count$)];\n\n",
       "message_name", name_, "field_count", std::to_string(t_->field_count()),
       "oneof_count", std::to_string(t_->oneof_decl_count()));
-  for (auto& g : field_generators_) {
-    if (!g.is_oneof()) {
-      g.generateMerge(p, "rawArray");
-    }
-  }
-  for (auto& g : oneof_generators_) {
-    g.generateMerge(p, "rawArray");
-  }
-  p.Print(
-      "      };\n"
-      "    };\n\n");
   for (auto& g : field_generators_) {
     g.generateInit(p);
   }
@@ -98,6 +85,26 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
       "  Protobuf.Message.createMessageType(type, "
       "_file.descriptor.messageType($message_index$));\n\n",
       "message_name", name_, "message_index", std::to_string(t_->index()));
+
+
+  p.Print(
+      "  type.prototype._mergeFromRawArray = function(rawArray) {\n"
+      "    if (rawArray && rawArray instanceof Array) {\n",
+      "message_name", name_, "field_count", std::to_string(t_->field_count()),
+      "oneof_count", std::to_string(t_->oneof_decl_count()));
+  for (auto& g : field_generators_) {
+    if (!g.is_oneof()) {
+      g.generateMerge(p, "rawArray");
+    }
+  }
+  for (auto& g : oneof_generators_) {
+    g.generateMerge(p, "rawArray");
+  }
+  p.Print(
+      "      };\n"
+      "    };\n\n");
+
+
   for (auto& g : oneof_generators_) {
     g.generate(p);
   }
