@@ -25,8 +25,8 @@ before_install:
 script:
   - if [ $CC == gcc ]; then export CC=gcc-4.8; export CXX=g++-4.8; fi
   - . tools/setup_env.sh
-  - tools/build_dependencies.py -j4 --shared --debug --cc=$CC --cxx=$CXX
-  - tools/bootstrap.py --cc=$CC --cxx=$CXX --qt5dir=/opt/qt55/lib/cmake
+  - tools/build_dependencies.py -j4 --shared --cc=$CC --cxx=$CXX
+  - tools/bootstrap.py --cc=$CC --cxx=$CXX --qt5dir=/opt/qt55/lib/cmake -C Release
   - ninja -j4 -C out
   - cd out && ctest -VV
   - cd ${TRAVIS_BUILD_DIR} && tools/run_test.py
