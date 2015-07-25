@@ -9,6 +9,7 @@
 #include <private/qv4variantobject_p.h>
 
 using namespace QV4;
+using namespace ::google::protobuf;
 
 namespace protobuf {
 namespace qml {
@@ -53,8 +54,7 @@ void Descriptor::serialize(QQmlV4Function* args) {
   }
 }
 
-google::protobuf::Message* Descriptor::parseToNewMessage(const char* data,
-                                                         int size) {
+Message* Descriptor::parseToNewMessage(const char* data, int size) {
   auto msg = message_factory_.GetPrototype(descriptor_)->New();
   if (!msg->ParseFromArray(data, size)) {
     qmlInfo(this) << "Failed to parse message";
@@ -125,11 +125,9 @@ void Descriptor::parse(QQmlV4Function* args) {
   }
 }
 
-using namespace ::google::protobuf;
-
-std::unique_ptr<google::protobuf::Message> Descriptor::jsValueToMessage(
-    ExecutionEngine* v4, ArrayObject& value) {
-  std::unique_ptr<google::protobuf::Message> msg(
+std::unique_ptr<Message> Descriptor::jsValueToMessage(ExecutionEngine* v4,
+                                                      ArrayObject& value) {
+  std::unique_ptr<Message> msg(
       message_factory_.GetPrototype(descriptor_)->New());
   if (!msg) {
     qmlInfo(this) << __func__ << " Failed to create message protobuf object.";
@@ -181,7 +179,7 @@ bool typed_put_indexed(ArrayBuffer* buffer, int index, T value) {
 
 bool Descriptor::jsValueToMessage(ExecutionEngine* v4,
                                   ArrayObject& root,
-                                  google::protobuf::Message& msg) {
+                                  Message& msg) {
   Scope scope(v4);
   ScopedArrayObject field_values(scope, root.getIndexed(0));
   Scoped<ArrayBuffer> oneof_cases(scope, root.getIndexed(1));
@@ -218,8 +216,8 @@ bool Descriptor::jsValueToMessage(ExecutionEngine* v4,
   return true;
 }
 
-ReturnedValue Descriptor::messageToJsValue(
-    ExecutionEngine* v4, const google::protobuf::Message& msg) {
+ReturnedValue Descriptor::messageToJsValue(ExecutionEngine* v4,
+                                           const Message& msg) {
   Scope scope(v4);
   auto message = msg.GetDescriptor();
   ScopedArrayObject field_values(scope,
@@ -297,11 +295,10 @@ ReturnedValue Descriptor::messageToJsValue(
   return Encode::undefined();
 }
 
-ReturnedValue Descriptor::getFieldValue(
-    ExecutionEngine* v4,
-    const google::protobuf::Reflection& ref,
-    const google::protobuf::Message& msg,
-    const google::protobuf::FieldDescriptor* field) {
+ReturnedValue Descriptor::getFieldValue(ExecutionEngine* v4,
+                                        const Reflection& ref,
+                                        const Message& msg,
+                                        const FieldDescriptor* field) {
   Scope scope(v4);
   ScopedValue v(scope);
   if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT32) {
@@ -345,44 +342,104 @@ ReturnedValue Descriptor::getFieldValue(
   return v->asReturnedValue();
 }
 
-ReturnedValue Descriptor::getRepeatedFieldValue(
-    ExecutionEngine* v4,
-    const google::protobuf::Reflection& ref,
-    const google::protobuf::Message& msg,
-    const google::protobuf::FieldDescriptor* field,
-    int size) {
+template <int>
+struct PBTraits {};
+
+#define DEFINE_PB_TRAITS(ENUM, TYPE, NAME, CONV)                \
+  template <>                                                   \
+  struct PBTraits<ENUM> {                                       \
+    typedef TYPE ValueType;                                     \
+    static void set(const Reflection& ref,                      \
+                    Message* msg,                               \
+                    const FieldDescriptor* field,               \
+                    ValueType value) {                          \
+      ref.Set##NAME(msg, field, value);                         \
+    }                                                           \
+    static ValueType get(const Reflection& ref,                 \
+                         const Message& msg,                    \
+                         const FieldDescriptor* field,          \
+                         ValueType value) {                     \
+      return ref.Get##NAME(msg, field);                         \
+    }                                                           \
+    static ValueType getRepeated(const Reflection& ref,         \
+                                 const Message& msg,            \
+                                 const FieldDescriptor* field,  \
+                                 int i) {                       \
+      return ref.GetRepeated##NAME(msg, field, i);              \
+    }                                                           \
+    static void add(const Reflection& ref,                      \
+                    Message* msg,                               \
+                    const FieldDescriptor* field,               \
+                    ValueType value) {                          \
+      ref.Add##NAME(msg, field, value);                         \
+    }                                                           \
+    static bool canConvert(Value& v) { return v.is##CONV(); }   \
+    static ValueType convert(Value& v) { return v.to##CONV(); } \
+  }
+
+DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_INT32, int32_t, Int32, Int32);
+DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_INT64, int64_t, Int64, Int32);
+DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_UINT32, uint32_t, UInt32, Int32);
+DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_UINT64, uint64_t, UInt64, Int32);
+DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_FLOAT, float, Float, Number);
+DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_DOUBLE, double, Double, Number);
+DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_BOOL, bool, Bool, Boolean);
+// DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_STRING, std::string, String);
+// DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_ENUM, int, Enum);
+// DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_MESSAGE, Message*, Message);
+
+template <int CppType>
+ReturnedValue getRepeatedNumber(ExecutionEngine* v4,
+                                const Reflection& ref,
+                                const Message& msg,
+                                const FieldDescriptor* field,
+                                int size) {
+  typedef PBTraits<CppType> T;
+  typedef typename T::ValueType ValueType;
+  Scope scope(v4);
+
+  // Cannot construct TypedArray because Heap::TypedArray symbol is not
+  // exposed.
+  // Scoped<TypedArray> vs(scope, v4->memoryManager->alloc<TypedArray>(
+  //                                  v4, QV4::Heap::TypedArray::Int32Array));
+  // if (!vs) {
+  //   return Encode::null();
+  // }
+  // Scoped<ArrayBuffer> buffer(
+  //     scope, v4->memoryManager->alloc<ArrayBuffer>(
+  //                v4, ((size - 1) / 8 + 1) * 8 * sizeof(int32_t)));
+  // if (!buffer) {
+  //   return Encode::null();
+  // }
+  // vs->d()->buffer = buffer->d();
+  // vs->d()->byteLength = size * sizeof(int32_t);
+  // vs->d()->byteOffset = 0;
+
+  // We set buffer.byteLength to what is exactly needed so that JS side code
+  // knows actual typed array length to construct.
+  Scoped<ArrayBuffer> vs(scope, v4->memoryManager->alloc<ArrayBuffer>(
+                                    v4, size * sizeof(ValueType)));
+  if (!vs) {
+    qWarning() << "Failed to allocate ArrayBuffer";
+    return Encode::null();
+  }
+  for (int i = 0; i < size; i++) {
+    auto res = typed_put_indexed(vs, i, T::getRepeated(ref, msg, field, i));
+    Q_ASSERT(res);
+  }
+  return vs->asReturnedValue();
+}
+
+ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
+                                                const Reflection& ref,
+                                                const Message& msg,
+                                                const FieldDescriptor* field,
+                                                int size) {
   Scope scope(v4);
   ScopedValue v(scope);
   if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT32) {
-    // Cannot construct TypedArray because Heap::TypedArray symbol is not
-    // exposed.
-    // Scoped<TypedArray> vs(scope, v4->memoryManager->alloc<TypedArray>(
-    //                                  v4, QV4::Heap::TypedArray::Int32Array));
-    // if (!vs) {
-    //   return Encode::null();
-    // }
-    // Scoped<ArrayBuffer> buffer(
-    //     scope, v4->memoryManager->alloc<ArrayBuffer>(
-    //                v4, ((size - 1) / 8 + 1) * 8 * sizeof(int32_t)));
-    // if (!buffer) {
-    //   return Encode::null();
-    // }
-    // vs->d()->buffer = buffer->d();
-    // vs->d()->byteLength = size * sizeof(int32_t);
-    // vs->d()->byteOffset = 0;
-
-    // We set buffer.byteLength to what is exactly needed so that JS side code
-    // knows actual typed array length to construct.
-    Scoped<ArrayBuffer> vs(scope, v4->memoryManager->alloc<ArrayBuffer>(
-                                      v4, size * sizeof(int32_t)));
-    if (!vs) {
-      return Encode::null();
-    }
-    for (int i = 0; i < size; i++) {
-      auto res = typed_put_indexed(vs, i, ref.GetRepeatedInt32(msg, field, i));
-      Q_ASSERT(res);
-    }
-    return vs->asReturnedValue();
+    return getRepeatedNumber<FieldDescriptor::CPPTYPE_INT32>(v4, ref, msg,
+                                                             field, size);
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT64) {
     ScopedArrayObject vs(scope, v4->newArrayObject(size));
     for (int i = 0; i < size; i++) {
@@ -475,9 +532,9 @@ ReturnedValue Descriptor::getRepeatedFieldValue(
 }
 
 void Descriptor::setFieldValue(ExecutionEngine* v4,
-                               const google::protobuf::Reflection& ref,
-                               google::protobuf::Message& msg,
-                               const google::protobuf::FieldDescriptor* field,
+                               const Reflection& ref,
+                               Message& msg,
+                               const FieldDescriptor* field,
                                ReturnedValue value) {
   Scope scope(v4);
   ScopedValue v(scope, value);
@@ -537,94 +594,54 @@ void Descriptor::setFieldValue(ExecutionEngine* v4,
   }
 }
 
-void Descriptor::setRepeatedFieldValue(
-    ExecutionEngine* v4,
-    const google::protobuf::Reflection& ref,
-    google::protobuf::Message& msg,
-    const google::protobuf::FieldDescriptor* field,
-    QV4::ReturnedValue value) {
+template <int CppType>
+bool setRepeatedNumber(ExecutionEngine* v4,
+                       const Reflection& ref,
+                       Message& msg,
+                       const FieldDescriptor* field,
+                       ReturnedValue value) {
+  typedef PBTraits<CppType> T;
   Scope scope(v4);
-  if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT32) {
-    Scoped<TypedArray> list(scope, value);
-    if (!list) return;
-    auto size = list->length();
+
+  Scoped<TypedArray> typed(scope, value);
+  if (typed) {
+    auto size = typed->length();
     ScopedValue v(scope);
     for (int i = 0; i < size; i++) {
-      int32_t v;
-      if (typed_get_indexed(list, i, &v)) {
-        ref.AddInt32(&msg, field, v);
+      typename T::ValueType v;
+      if (typed_get_indexed(typed, i, &v)) {
+        T::add(ref, &msg, field, v);
       }
     }
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT64) {
-    ScopedArrayObject list(scope, value);
-    if (!list) return;
+    return true;
+  }
+
+  ScopedArrayObject list(scope, value);
+  if (list) {
     auto size = list->getLength();
     ScopedValue v(scope);
     for (int i = 0; i < size; i++) {
       v = list->getIndexed(i);
       if (!v->isNullOrUndefined()) {
-        if (v->isInteger()) {
-          ref.AddInt64(&msg, field, v->toInt32());
+        if (T::canConvert(*v)) {
+          T::add(ref, &msg, field, T::convert(*v));
         } else {
           auto var = v4->toVariant(v, 0, false);
-          ref.AddInt64(&msg, field, static_cast<int64>(var.value<qint64>()));
+          T::add(ref, &msg, field, var.value<typename T::ValueType>());
         }
       }
     }
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
-    ScopedArrayObject list(scope, value);
-    if (!list) return;
-    auto size = list->getLength();
-    ScopedValue v(scope);
-    for (int i = 0; i < size; i++) {
-      v = list->getIndexed(i);
-      if (!v->isNullOrUndefined()) ref.AddUInt32(&msg, field, v->toUInt32());
-    }
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT64) {
-    ScopedArrayObject list(scope, value);
-    if (!list) return;
-    auto size = list->getLength();
-    ScopedValue v(scope);
-    for (int i = 0; i < size; i++) {
-      v = list->getIndexed(i);
-      if (!v->isNullOrUndefined()) {
-        if (v->isInteger()) {
-          ref.AddUInt64(&msg, field, v->toUInt32());
-        } else {
-          auto var = v4->toVariant(v, 0, false);
-          ref.AddUInt64(&msg, field, static_cast<uint64>(var.value<quint64>()));
-        }
-      }
-    }
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
-    ScopedArrayObject list(scope, value);
-    if (!list) return;
-    auto size = list->getLength();
-    ScopedValue v(scope);
-    for (int i = 0; i < size; i++) {
-      v = list->getIndexed(i);
-      if (!v->isNullOrUndefined()) ref.AddDouble(&msg, field, v->toNumber());
-    }
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_FLOAT) {
-    ScopedArrayObject list(scope, value);
-    if (!list) return;
-    auto size = list->getLength();
-    ScopedValue v(scope);
-    for (int i = 0; i < size; i++) {
-      v = list->getIndexed(i);
-      if (!v->isNullOrUndefined()) ref.AddFloat(&msg, field, v->toNumber());
-    }
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_BOOL) {
-    ScopedArrayObject list(scope, value);
-    if (!list) return;
-    auto size = list->getLength();
-    ScopedValue v(scope);
-    for (int i = 0; i < size; i++) {
-      v = list->getIndexed(i);
-      if (!v->isNullOrUndefined()) ref.AddBool(&msg, field, v->toBoolean());
-    }
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_STRING &&
-             field->type() == FieldDescriptor::TYPE_BYTES) {
+  }
+}
+
+void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
+                                       const Reflection& ref,
+                                       Message& msg,
+                                       const FieldDescriptor* field,
+                                       QV4::ReturnedValue value) {
+  Scope scope(v4);
+  if (field->cpp_type() == FieldDescriptor::CPPTYPE_STRING &&
+      field->type() == FieldDescriptor::TYPE_BYTES) {
     ScopedArrayObject list(scope, value);
     if (!list) return;
     auto size = list->getLength();
@@ -673,12 +690,28 @@ void Descriptor::setRepeatedFieldValue(
       if (!v->isNullOrUndefined())
         jsValueToMessage(v4, *v, *ref.AddMessage(&msg, field));
     }
-  } else {
+  }
+
+#define HANDLE_REPEATED_NUMBER(TYPE)                                        \
+  else if (field->cpp_type() == FieldDescriptor::CPPTYPE_##TYPE) {          \
+    setRepeatedNumber<FieldDescriptor::CPPTYPE_##TYPE>(v4, ref, msg, field, \
+                                                       value);              \
+  }
+
+  HANDLE_REPEATED_NUMBER(INT32)
+  HANDLE_REPEATED_NUMBER(INT64)
+  HANDLE_REPEATED_NUMBER(UINT32)
+  HANDLE_REPEATED_NUMBER(UINT64)
+  HANDLE_REPEATED_NUMBER(FLOAT)
+  HANDLE_REPEATED_NUMBER(DOUBLE)
+  HANDLE_REPEATED_NUMBER(BOOL)
+
+  else {
     Q_ASSERT(false);
   }
 }
 
-SerializeTask::SerializeTask(std::unique_ptr<google::protobuf::Message> msg,
+SerializeTask::SerializeTask(std::unique_ptr<Message> msg,
                              QV4::ExecutionEngine* v4,
                              const QV4::Value& callback)
     : msg_(std::move(msg)), v4_(v4) {
@@ -716,7 +749,7 @@ void SerializeTask::onDone(const QByteArray& ba) {
 }
 
 ParseTask::ParseTask(Descriptor* p,
-                     google::protobuf::Message* msg,
+                     Message* msg,
                      QByteArray buf,
                      QV4::ExecutionEngine* v4,
                      const QV4::Value& callback)
