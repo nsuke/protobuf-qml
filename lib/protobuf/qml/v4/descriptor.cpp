@@ -529,6 +529,7 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
   } else {
     Q_ASSERT(false);
   }
+  return Encode::undefined();
 }
 
 void Descriptor::setFieldValue(ExecutionEngine* v4,
@@ -631,7 +632,9 @@ bool setRepeatedNumber(ExecutionEngine* v4,
         }
       }
     }
+    return true;
   }
+  return false;
 }
 
 void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
