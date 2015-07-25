@@ -229,7 +229,9 @@ void FieldGenerator::generateRepeatedProperty(
           "    }\n");
   if (is_message_) {
     p.Print(variables_,
-            "    var msg = new $message_scope$$message_type$(value);\n"
+            "    var msg = "
+            "this._maybeConvertToMessage($message_scope$$message_type$, "
+            "value);\n"
             "    this._$name$[index] = msg;\n"
             "    this._raw[FIELD][$index$][index] = msg._raw;\n");
   } else if (is_typed_array_) {
@@ -310,7 +312,9 @@ void FieldGenerator::generateRepeatedProperty(
 
   if (is_message_) {
     p.Print(variables_,
-            "    var msg = new $message_scope$$message_type$(value);\n"
+            "    var msg = "
+            "this._maybeConvertToMessage($message_scope$$message_type$, "
+            "value);\n"
             "    this._$name$.push(msg);\n"
             "    this._raw[FIELD][$index$].push(msg._raw);\n");
     messageAssertLength(p);
@@ -371,10 +375,12 @@ void FieldGenerator::genSet(google::protobuf::io::Printer& p,
   auto v = variables_;
   v.insert(std::make_pair("indent", indent));
   if (is_message_) {
-    p.Print(v,
-            "$indent$var msg = new $message_scope$$message_type$(value);\n"
-            "$indent$this._$name$ = msg;\n"
-            "$indent$this._raw[FIELD][$index$] = msg._raw;\n");
+    p.Print(
+        v,
+        "$indent$var msg = "
+        "this._maybeConvertToMessage($message_scope$$message_type$, value);\n"
+        "$indent$this._$name$ = msg;\n"
+        "$indent$this._raw[FIELD][$index$] = msg._raw;\n");
   } else {
     // We reject undefined and treat it as default value.
     // TODO: Emit error if the argument is not of correct type.

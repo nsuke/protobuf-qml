@@ -11,6 +11,10 @@ PB.ServerWriterMethodHolder {
   readDescriptor: (readType && readType.descriptor) || null
   writeDescriptor: (writeType && writeType.descriptor) || null
 
+  function toMessage(type, data) {
+    return data instanceof type ? data : new type(data);
+  }
+
   function getHandler(tag) {
     if (!root.handlers[tag]) {
       if (typeof root.handler !== 'function') {
@@ -28,7 +32,7 @@ PB.ServerWriterMethodHolder {
           return root.abort(tag, code, message);
         },
         write: function(response) {
-          root.respond(tag, new root.writeType(response)._raw);
+          root.respond(tag, toMessage(root.writeType, response)._raw);
         },
         end: function() {
           root.end(tag);
@@ -64,7 +68,7 @@ PB.ServerWriterMethodHolder {
       console.warn('Handler is not registered for data event.');
       return;
     }
-    fn(new root.readType(data));
+    fn(toMessage(root.readType, data));
   }
 
   onError: {
