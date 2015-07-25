@@ -140,7 +140,7 @@ std::unique_ptr<Message> Descriptor::jsValueToMessage(ExecutionEngine* v4,
 }
 
 template <typename T>
-bool typed_get_indexed(TypedArray* array, int index, T* value) {
+bool typed_get_indexed(TypedArray* array, size_t index, T* value) {
   if (array->length() <= index) {
     return false;
   }
@@ -150,7 +150,7 @@ bool typed_get_indexed(TypedArray* array, int index, T* value) {
 }
 
 template <typename T>
-bool typed_put_indexed(TypedArray* array, int index, T value) {
+bool typed_put_indexed(TypedArray* array, size_t index, T value) {
   if (array->length() <= index) {
     return false;
   }
@@ -160,7 +160,7 @@ bool typed_put_indexed(TypedArray* array, int index, T value) {
 }
 
 template <typename T>
-bool typed_get_indexed(ArrayBuffer* buffer, int index, T* value) {
+bool typed_get_indexed(ArrayBuffer* buffer, size_t index, T* value) {
   if (buffer->byteLength() < (index + 1) * sizeof(T)) {
     return false;
   }
@@ -169,7 +169,7 @@ bool typed_get_indexed(ArrayBuffer* buffer, int index, T* value) {
 }
 
 template <typename T>
-bool typed_put_indexed(ArrayBuffer* buffer, int index, T value) {
+bool typed_put_indexed(ArrayBuffer* buffer, size_t index, T value) {
   if (buffer->byteLength() < (index + 1) * sizeof(T)) {
     return false;
   }
@@ -196,7 +196,7 @@ bool Descriptor::jsValueToMessage(ExecutionEngine* v4,
     if (oneof) {
       OneofIndex oneof_case;
       if (!typed_get_indexed(oneof_cases, oneof->index(), &oneof_case) ||
-          oneof_case != field->number()) {
+          oneof_case != static_cast<size_t>(field->number())) {
         continue;
       }
     }
@@ -597,7 +597,7 @@ bool setRepeatedNumber(ExecutionEngine* v4,
   if (typed) {
     auto size = typed->length();
     ScopedValue v(scope);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       typename T::ValueType v;
       if (typed_get_indexed(typed, i, &v)) {
         T::add(ref, &msg, field, v);
@@ -610,7 +610,7 @@ bool setRepeatedNumber(ExecutionEngine* v4,
   if (list) {
     auto size = list->getLength();
     ScopedValue v(scope);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       v = list->getIndexed(i);
       if (!v->isNullOrUndefined()) {
         if (T::canConvert(*v)) {
@@ -639,7 +639,7 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
     auto size = list->getLength();
     ScopedValue v(scope);
     Scoped<ArrayBuffer> array(scope);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       array = list->getIndexed(i);
       if (array) {
         ref.AddString(&msg, field, array->asByteArray().toStdString());
@@ -656,7 +656,7 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
     if (!list) return;
     auto size = list->getLength();
     ScopedString v(scope);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       v = list->getIndexed(i);
       if (!v->isNullOrUndefined())
         ref.AddString(&msg, field, v->toQString().toStdString());
@@ -666,7 +666,7 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
     if (!list) return;
     auto size = list->getLength();
     ScopedValue v(scope);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       v = list->getIndexed(i);
       if (!v->isNullOrUndefined())
         ref.AddEnum(&msg, field,
@@ -677,7 +677,7 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
     if (!list) return;
     auto size = list->getLength();
     ScopedArrayObject v(scope);
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
       v = list->getIndexed(i);
       if (!v->isNullOrUndefined())
         jsValueToMessage(v4, *v, *ref.AddMessage(&msg, field));
