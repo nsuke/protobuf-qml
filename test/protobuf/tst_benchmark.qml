@@ -77,7 +77,7 @@ Item {
       var sint64Field3 = new Array(size);
       var fixed64Field3 = new Array(size);
       var sfixed64Field3 = new Array(size);
-      var boolField3 = new Array(size);
+      var boolField3 = new Int8Array(size);
       var stringField3 = new Array(size);
       var enumField3 = new Array(size);
 

@@ -464,13 +464,6 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
       }
     }
     return vs->asReturnedValue();
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_BOOL) {
-    ScopedArrayObject vs(scope, v4->newArrayObject(size));
-    for (int i = 0; i < size; i++) {
-      v = Primitive::fromBoolean(ref.GetRepeatedBool(msg, field, i));
-      vs->putIndexed(i, v);
-    }
-    return vs->asReturnedValue();
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_STRING &&
              field->type() == FieldDescriptor::TYPE_BYTES) {
     ScopedArrayObject vs(scope, v4->newArrayObject(size));
@@ -514,6 +507,7 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
   GET_REPEATED_NUMBER(UINT32)
   GET_REPEATED_NUMBER(FLOAT)
   GET_REPEATED_NUMBER(DOUBLE)
+  GET_REPEATED_NUMBER(BOOL)
 
   else {
     Q_ASSERT(false);

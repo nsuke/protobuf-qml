@@ -92,7 +92,9 @@ Item {
         compare(msg2.getFixed32Field3AsArray(), [442, 2, 442, 2]);
         compare(msg2.getFixed64Field3AsArray(), [442, 999999999992, 442, 999999999992]);
         compare(msg2.getSfixed32Field3AsArray(), [442, -2, 442, -2]);
-        compare(msg2.getBoolField3AsArray(), [true, false, true]);
+        verify(msg2.boolField3(0));
+        verify(!msg2.boolField3(1));
+        verify(msg2.boolField3(2));
         compare(msg2.getStringField3AsArray(), ['42', 'foo', 'bar']);
         compare(msg2.getEnumField3AsArray(), [Test1.Enum2.ENUM_VALUE_2, Test1.Enum2.ENUM_VALUE_4, Test1.Enum2.ENUM_VALUE_3]);
 

@@ -58,6 +58,9 @@ FieldGenerator::FieldGenerator(const FieldDescriptor* t)
   } else if (t_->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
     is_typed_array_ = true;
     variables_.insert(std::make_pair("typed_array", "Float64Array"));
+  } else if (t_->cpp_type() == FieldDescriptor::CPPTYPE_BOOL) {
+    is_typed_array_ = true;
+    variables_.insert(std::make_pair("typed_array", "Int8Array"));
   }
 }
 
