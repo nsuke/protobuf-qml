@@ -384,9 +384,37 @@ DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_UINT64, uint64_t, UInt64, Int32);
 DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_FLOAT, float, Float, Number);
 DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_DOUBLE, double, Double, Number);
 DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_BOOL, bool, Bool, Boolean);
-// DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_STRING, std::string, String);
-// DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_ENUM, int, Enum);
-// DEFINE_PB_TRAITS(FieldDescriptor::CPPTYPE_MESSAGE, Message*, Message);
+
+template <>
+struct PBTraits<FieldDescriptor::CPPTYPE_ENUM> {
+  typedef int ValueType;
+  static void set(const Reflection& ref,
+                  Message* msg,
+                  const FieldDescriptor* field,
+                  ValueType value) {
+    ref.SetEnum(msg, field, field->enum_type()->FindValueByNumber(value));
+  }
+  static ValueType get(const Reflection& ref,
+                       const Message& msg,
+                       const FieldDescriptor* field,
+                       ValueType value) {
+    return ref.GetEnum(msg, field)->number();
+  }
+  static ValueType getRepeated(const Reflection& ref,
+                               const Message& msg,
+                               const FieldDescriptor* field,
+                               int i) {
+    return ref.GetRepeatedEnum(msg, field, i)->number();
+  }
+  static void add(const Reflection& ref,
+                  Message* msg,
+                  const FieldDescriptor* field,
+                  ValueType value) {
+    ref.AddEnum(msg, field, field->enum_type()->FindValueByNumber(value));
+  }
+  static bool canConvert(Value& v) { return v.isInteger(); }
+  static ValueType convert(Value& v) { return v.toInteger(); }
+};
 
 template <int CppType>
 ReturnedValue getRepeatedNumber(ExecutionEngine* v4,
@@ -481,13 +509,6 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
       vs->putIndexed(i, v);
     }
     return vs->asReturnedValue();
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_ENUM) {
-    ScopedArrayObject vs(scope, v4->newArrayObject(size));
-    for (int i = 0; i < size; i++) {
-      v = Primitive::fromInt32(ref.GetRepeatedEnum(msg, field, i)->number());
-      vs->putIndexed(i, v);
-    }
-    return vs->asReturnedValue();
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE) {
     ScopedArrayObject vs(scope, v4->newArrayObject(size));
     for (int i = 0; i < size; i++) {
@@ -508,6 +529,7 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
   GET_REPEATED_NUMBER(FLOAT)
   GET_REPEATED_NUMBER(DOUBLE)
   GET_REPEATED_NUMBER(BOOL)
+  GET_REPEATED_NUMBER(ENUM)
 
   else {
     Q_ASSERT(false);
@@ -655,17 +677,6 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
       if (!v->isNullOrUndefined())
         ref.AddString(&msg, field, v->toQString().toStdString());
     }
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_ENUM) {
-    ScopedArrayObject list(scope, value);
-    if (!list) return;
-    auto size = list->getLength();
-    ScopedValue v(scope);
-    for (size_t i = 0; i < size; i++) {
-      v = list->getIndexed(i);
-      if (!v->isNullOrUndefined())
-        ref.AddEnum(&msg, field,
-                    field->enum_type()->FindValueByNumber(v->toInt32()));
-    }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE) {
     ScopedArrayObject list(scope, value);
     if (!list) return;
@@ -691,6 +702,7 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
   SET_REPEATED_NUMBER(FLOAT)
   SET_REPEATED_NUMBER(DOUBLE)
   SET_REPEATED_NUMBER(BOOL)
+  SET_REPEATED_NUMBER(ENUM)
 
   else {
     Q_ASSERT(false);

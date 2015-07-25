@@ -46,7 +46,8 @@ FieldGenerator::FieldGenerator(const FieldDescriptor* t)
     }
   }
 
-  if (t_->cpp_type() == FieldDescriptor::CPPTYPE_INT32) {
+  if (t_->cpp_type() == FieldDescriptor::CPPTYPE_INT32 ||
+      t_->cpp_type() == FieldDescriptor::CPPTYPE_ENUM) {
     is_typed_array_ = true;
     variables_.insert(std::make_pair("typed_array", "Int32Array"));
   } else if (t_->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
