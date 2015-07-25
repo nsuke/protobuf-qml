@@ -13,8 +13,6 @@ FieldGenerator::FieldGenerator(const FieldDescriptor* t)
     : t_(t),
       is_message_(t_ ? t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE
                      : false),
-      is_typed_array_(t_ ? t_->cpp_type() == FieldDescriptor::CPPTYPE_INT32
-                         : false),
       oneof_(t_ ? t_->containing_oneof() : nullptr),
       camel_name_(t_ ? camelize(t_->name()) : "") {
   capital_name_ = capitalizeFirstLetter(camel_name_);
@@ -46,6 +44,20 @@ FieldGenerator::FieldGenerator(const FieldDescriptor* t)
       variables_.insert(
           std::make_pair("oneof_index", std::to_string(oneof_->index())));
     }
+  }
+
+  if (t_->cpp_type() == FieldDescriptor::CPPTYPE_INT32) {
+    is_typed_array_ = true;
+    variables_.insert(std::make_pair("typed_array", "Int32Array"));
+  } else if (t_->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
+    is_typed_array_ = true;
+    variables_.insert(std::make_pair("typed_array", "Uint32Array"));
+  } else if (t_->cpp_type() == FieldDescriptor::CPPTYPE_FLOAT) {
+    is_typed_array_ = true;
+    variables_.insert(std::make_pair("typed_array", "Float32Array"));
+  } else if (t_->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
+    is_typed_array_ = true;
+    variables_.insert(std::make_pair("typed_array", "Float64Array"));
   }
 }
 
@@ -90,7 +102,7 @@ void FieldGenerator::generateInit(io::Printer& p) {
     if (is_typed_array_) {
       p.Print(variables_,
               "    var buffer = new ArrayBuffer(32);\n"
-              "    this._$name$ = new Int32Array(buffer, 0, 0);\n"
+              "    this._$name$ = new $typed_array$(buffer, 0, 0);\n"
               "    this._raw[FIELD][$index$] = this._$name$;\n");
     } else if (t_->message_type()) {
       p.Print(variables_, "    this._raw[FIELD][$index$] = new Array();\n");
@@ -106,9 +118,9 @@ void FieldGenerator::generateInit(io::Printer& p) {
 }
 
 void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
+  auto v = variables_;
+  v.insert(std::make_pair("arg", arg));
   if (t_->is_repeated() && t_->message_type()) {
-    auto v = variables_;
-    v.insert(std::make_pair("arg", arg));
     p.Print(v,
             "        if ($arg$[FIELD][$index$] && $arg$[FIELD][$index$] "
             "instanceof Array) {\n"
@@ -123,14 +135,13 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
             "          }\n"
             "        }\n");
   } else if (t_->is_repeated() && is_typed_array_) {
-    p.Print(
-        "        if ($arg$[FIELD][$index$] && ($arg$[FIELD][$index$] "
-        "instanceof "
-        "Array || $arg$[FIELD][$index$] instanceof Int32Array) || "
-        "$arg$[FIELD][$index$] instanceof ArrayBuffer) {\n"
-        "          this.$name$($arg$[FIELD][$index$]);\n"
-        "        }\n",
-        "name", camel_name_, "arg", arg, "index", std::to_string(t_->index()));
+    p.Print(v,
+            "        if ($arg$[FIELD][$index$] && ($arg$[FIELD][$index$] "
+            "instanceof Array || $arg$[FIELD][$index$] instanceof "
+            "$typed_array$) || $arg$[FIELD][$index$] instanceof ArrayBuffer) "
+            "{\n"
+            "          this.$name$($arg$[FIELD][$index$]);\n"
+            "        }\n");
   } else if (t_->is_repeated()) {
     p.Print(
         "        if ($arg$[FIELD][$index$] && $arg$[FIELD][$index$] instanceof "
@@ -166,22 +177,23 @@ void FieldGenerator::generateRepeatedProperty(
           "    // Replacement setter\n"
           "  $type$.prototype.set$capital_name$ = function(values) {\n");
   if (is_typed_array_) {
-    p.Print(variables_,
-            "    if (values instanceof Int32Array || values instanceof Array "
-            "|| values instanceof ArrayBuffer) {\n"
-            "      if (!(values instanceof Array) && !values.name) {\n"
-            "        values = new Int32Array(values);;\n"
-            "      }\n"
-            "      var newArray = this._ensureLength(this._$name$, "
-            "values.length);\n"
-            "      if (newArray) {\n"
-            "        this._$name$ = newArray;\n"
-            "        this._raw[FIELD][$index$] = this._$name$;\n"
-            "      }\n"
-            "      this._$name$.set(values);\n"
-            "    } else {\n"
-            "      throw new TypeError();\n"
-            "    }\n");
+    p.Print(
+        variables_,
+        "    if (values instanceof $typed_array$ || values instanceof Array "
+        "|| values instanceof ArrayBuffer) {\n"
+        "      if (!(values instanceof Array) && !values.name) {\n"
+        "        values = new $typed_array$(values);;\n"
+        "      }\n"
+        "      var newArray = this._ensureLength(this._$name$, "
+        "values.length);\n"
+        "      if (newArray) {\n"
+        "        this._$name$ = newArray;\n"
+        "        this._raw[FIELD][$index$] = this._$name$;\n"
+        "      }\n"
+        "      this._$name$.set(values);\n"
+        "    } else {\n"
+        "      throw new TypeError();\n"
+        "    }\n");
   } else {
     p.Print(variables_,
             "    if (!(values instanceof Array)) {\n"

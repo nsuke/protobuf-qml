@@ -64,25 +64,56 @@ Item {
       msg.setStringField3(['42', 'foo', 'bar']);
       msg.setEnumField3([Test1.Enum2.ENUM_VALUE_2, Test1.Enum2.ENUM_VALUE_4, Test1.Enum2.ENUM_VALUE_3]);
 
+      var doubleField3 = new Float64Array(size);
+      var floatField3 = new Float32Array(size);
       var int32Field3 = new Int32Array(size);
+      var uint32Field3 = new Uint32Array(size);
+      var sint32Field3 = new Int32Array(size);
+      var fixed32Field3 = new Uint32Array(size);
+      var sfixed32Field3 = new Int32Array(size);
+
+      var int64Field3 = new Array(size);
+      var uint64Field3 = new Array(size);
+      var sint64Field3 = new Array(size);
+      var fixed64Field3 = new Array(size);
+      var sfixed64Field3 = new Array(size);
+      var boolField3 = new Array(size);
+      var stringField3 = new Array(size);
+      var enumField3 = new Array(size);
+
       for (var i = 0; i < size; ++i) {
-        msg.addDoubleField3(1234134.1341234);
-        msg.addFloatField3(1234134.1341234);
+        doubleField3[i] = 1234134.1341234;
+        floatField3[i] = 1234134.1341234;
         int32Field3[i] = 442;
-        msg.addInt64Field3(442442442442442442442442442442442);
-        msg.addUint32Field3(442);
-        msg.addUint64Field3(442442442442442442442442442442442);
-        msg.addSint32Field3(888888888);
-        msg.addSint64Field3(-4242424242424242);
-        msg.addFixed32Field3(442);
-        msg.addFixed64Field3(442442442442442442442442442442442442442442442442442442442442442442);
-        msg.addSfixed32Field3(-888888888);
-        msg.addSfixed64Field3(442442442442442442442442442442442442442442442442442442442442442442);
-        msg.addBoolField3(true);
-        msg.addStringField3('42');
-        msg.addEnumField3(Test1.Enum2.ENUM_VALUE_2);
+        uint32Field3[i] = 442;
+        int64Field3[i] = 442442442442442442442442442442442;
+        uint64Field3[i] = 442442442442442442442442442442442;
+        sint32Field3[i] = 888888888;
+        sint64Field3[i] = -4242424242424242;
+        fixed32Field3[i] = 442;
+        fixed64Field3[i] = 442442442442442442442442442442442442442442442442442442442442442442;
+        sfixed32Field3[i] = -888888888;
+        sfixed64Field3[i] = 442442442442442442442442442442442442442442442442442442442442442442;
+        boolField3[i] = true;
+        stringField3[i] = '42';
+        enumField3[i] = Test1.Enum2.ENUM_VALUE_2;
       }
+      msg.doubleField3(doubleField3);
+      msg.floatField3(floatField3);
       msg.int32Field3(int32Field3);
+      msg.uint32Field3(uint32Field3);
+      msg.sint32Field3(sint32Field3);
+      msg.fixed32Field3(fixed32Field3);
+      msg.sfixed32Field3(sfixed32Field3);
+
+      msg.int64Field3(int64Field3);
+      msg.uint64Field3(uint64Field3);
+      msg.sint64Field3(sint64Field3);
+      msg.fixed64Field3(fixed64Field3);
+      msg.sfixed64Field3(sfixed64Field3);
+      msg.boolField3(boolField3);
+      msg.stringField3(stringField3);
+      msg.enumField3(enumField3);
 
       return msg;
     }
@@ -207,38 +238,38 @@ Item {
         setBoolField3: [true, false, true],
         setStringField3: ['42', 'foo', 'bar'],
         setEnumField3: [Test1.Enum2.ENUM_VALUE_2, Test1.Enum2.ENUM_VALUE_4, Test1.Enum2.ENUM_VALUE_3],
-        doubleField3: [],
-        floatField3: [],
+        doubleField3: new Array(size),
+        floatField3: new Array(size),
         int32Field3: new Array(size),
-        int64Field3: [],
-        uint32Field3: [],
-        uint64Field3: [],
-        sint32Field3: [],
-        sint64Field3: [],
-        fixed32Field3: [],
-        fixed64Field3: [],
-        sfixed32Field3: [],
-        sfixed64Field3: [],
-        boolField3: [],
-        stringField3: [],
-        enumField3: [],
+        int64Field3: new Array(size),
+        uint32Field3: new Array(size),
+        uint64Field3: new Array(size),
+        sint32Field3: new Array(size),
+        sint64Field3: new Array(size),
+        fixed32Field3: new Array(size),
+        fixed64Field3: new Array(size),
+        sfixed32Field3: new Array(size),
+        sfixed64Field3: new Array(size),
+        boolField3: new Array(size),
+        stringField3: new Array(size),
+        enumField3: new Array(size),
       };
       for (var i = 0; i < size; ++i) {
-        msg.doubleField3.push(1234134.1341234);
-        msg.floatField3.push(1234134.1341234);
+        msg.doubleField3[i] = 1234134.1341234;
+        msg.floatField3[i] = 1234134.1341234;
         msg.int32Field3[i] = 442;
-        msg.int64Field3.push(442442442442442442442442442442442);
-        msg.uint32Field3.push(442);
-        msg.uint64Field3.push(442442442442442442442442442442442);
-        msg.sint32Field3.push(888888888);
-        msg.sint64Field3.push(-4242424242424242);
-        msg.fixed32Field3.push(888888888);
-        msg.fixed64Field3.push(442442442442442442442442442442442442442442442442442442442442442442);
-        msg.sfixed32Field3.push(-888888888);
-        msg.sfixed64Field3.push(442442442442442442442442442442442442442442442442442442442442442442);
-        msg.boolField3.push(true);
-        msg.stringField3.push('42');
-        msg.enumField3.push(Test1.Enum2.ENUM_VALUE_2);
+        msg.int64Field3[i] = 442442442442442442442442442442442;
+        msg.uint32Field3[i] = 442;
+        msg.uint64Field3[i] = 442442442442442442442442442442442;
+        msg.sint32Field3[i] = 888888888;
+        msg.sint64Field3[i] = -4242424242424242;
+        msg.fixed32Field3[i] = 888888888;
+        msg.fixed64Field3[i] = 442442442442442442442442442442442442442442442442442442442442442442;
+        msg.sfixed32Field3[i] = -888888888;
+        msg.sfixed64Field3[i] = 442442442442442442442442442442442442442442442442442442442442442442;
+        msg.boolField3[i] = true;
+        msg.stringField3[i] = '42';
+        msg.enumField3[i] = Test1.Enum2.ENUM_VALUE_2;
       }
       return msg;
     }

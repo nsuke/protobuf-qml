@@ -437,10 +437,7 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
                                                 int size) {
   Scope scope(v4);
   ScopedValue v(scope);
-  if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT32) {
-    return getRepeatedNumber<FieldDescriptor::CPPTYPE_INT32>(v4, ref, msg,
-                                                             field, size);
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT64) {
+  if (field->cpp_type() == FieldDescriptor::CPPTYPE_INT64) {
     ScopedArrayObject vs(scope, v4->newArrayObject(size));
     for (int i = 0; i < size; i++) {
       auto value = ref.GetRepeatedInt64(msg, field, i);
@@ -454,13 +451,6 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
       }
     }
     return vs->asReturnedValue();
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
-    ScopedArrayObject vs(scope, v4->newArrayObject(size));
-    for (int i = 0; i < size; i++) {
-      v = Primitive::fromUInt32(ref.GetRepeatedUInt32(msg, field, i));
-      vs->putIndexed(i, v);
-    }
-    return vs->asReturnedValue();
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT64) {
     ScopedArrayObject vs(scope, v4->newArrayObject(size));
     for (int i = 0; i < size; i++) {
@@ -472,20 +462,6 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
         v = v4->fromVariant(quint64(ref.GetRepeatedUInt64(msg, field, i)));
         vs->putIndexed(i, v);
       }
-    }
-    return vs->asReturnedValue();
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
-    ScopedArrayObject vs(scope, v4->newArrayObject(size));
-    for (int i = 0; i < size; i++) {
-      v = Primitive::fromDouble(ref.GetRepeatedDouble(msg, field, i));
-      vs->putIndexed(i, v);
-    }
-    return vs->asReturnedValue();
-  } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_FLOAT) {
-    ScopedArrayObject vs(scope, v4->newArrayObject(size));
-    for (int i = 0; i < size; i++) {
-      v = Primitive::fromDouble(ref.GetRepeatedFloat(msg, field, i));
-      vs->putIndexed(i, v);
     }
     return vs->asReturnedValue();
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_BOOL) {
@@ -526,7 +502,20 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
       vs->putIndexed(i, v);
     }
     return vs->asReturnedValue();
-  } else {
+  }
+
+#define GET_REPEATED_NUMBER(NAME)                                           \
+  else if (field->cpp_type() == FieldDescriptor::CPPTYPE_##NAME) {          \
+    return getRepeatedNumber<FieldDescriptor::CPPTYPE_##NAME>(v4, ref, msg, \
+                                                              field, size); \
+  }
+
+  GET_REPEATED_NUMBER(INT32)
+  GET_REPEATED_NUMBER(UINT32)
+  GET_REPEATED_NUMBER(FLOAT)
+  GET_REPEATED_NUMBER(DOUBLE)
+
+  else {
     Q_ASSERT(false);
   }
   return Encode::undefined();
@@ -695,19 +684,19 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
     }
   }
 
-#define HANDLE_REPEATED_NUMBER(TYPE)                                        \
+#define SET_REPEATED_NUMBER(TYPE)                                           \
   else if (field->cpp_type() == FieldDescriptor::CPPTYPE_##TYPE) {          \
     setRepeatedNumber<FieldDescriptor::CPPTYPE_##TYPE>(v4, ref, msg, field, \
                                                        value);              \
   }
 
-  HANDLE_REPEATED_NUMBER(INT32)
-  HANDLE_REPEATED_NUMBER(INT64)
-  HANDLE_REPEATED_NUMBER(UINT32)
-  HANDLE_REPEATED_NUMBER(UINT64)
-  HANDLE_REPEATED_NUMBER(FLOAT)
-  HANDLE_REPEATED_NUMBER(DOUBLE)
-  HANDLE_REPEATED_NUMBER(BOOL)
+  SET_REPEATED_NUMBER(INT32)
+  SET_REPEATED_NUMBER(INT64)
+  SET_REPEATED_NUMBER(UINT32)
+  SET_REPEATED_NUMBER(UINT64)
+  SET_REPEATED_NUMBER(FLOAT)
+  SET_REPEATED_NUMBER(DOUBLE)
+  SET_REPEATED_NUMBER(BOOL)
 
   else {
     Q_ASSERT(false);
