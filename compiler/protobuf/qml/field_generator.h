@@ -32,6 +32,7 @@ private:
 
   const google::protobuf::FieldDescriptor* t_;
   bool is_message_;
+  bool is_typed_array_;
   const google::protobuf::OneofDescriptor* oneof_;
   std::string camel_name_;
   std::string capital_name_;

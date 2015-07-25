@@ -64,10 +64,11 @@ Item {
       msg.setStringField3(['42', 'foo', 'bar']);
       msg.setEnumField3([Test1.Enum2.ENUM_VALUE_2, Test1.Enum2.ENUM_VALUE_4, Test1.Enum2.ENUM_VALUE_3]);
 
+      var int32Field3 = new Int32Array(size);
       for (var i = 0; i < size; ++i) {
         msg.addDoubleField3(1234134.1341234);
         msg.addFloatField3(1234134.1341234);
-        msg.addInt32Field3(442);
+        int32Field3[i] = 442;
         msg.addInt64Field3(442442442442442442442442442442442);
         msg.addUint32Field3(442);
         msg.addUint64Field3(442442442442442442442442442442442);
@@ -81,6 +82,7 @@ Item {
         msg.addStringField3('42');
         msg.addEnumField3(Test1.Enum2.ENUM_VALUE_2);
       }
+      msg.int32Field3(int32Field3);
 
       return msg;
     }
@@ -207,7 +209,7 @@ Item {
         setEnumField3: [Test1.Enum2.ENUM_VALUE_2, Test1.Enum2.ENUM_VALUE_4, Test1.Enum2.ENUM_VALUE_3],
         doubleField3: [],
         floatField3: [],
-        int32Field3: [],
+        int32Field3: new Array(size),
         int64Field3: [],
         uint32Field3: [],
         uint64Field3: [],
@@ -224,7 +226,7 @@ Item {
       for (var i = 0; i < size; ++i) {
         msg.doubleField3.push(1234134.1341234);
         msg.floatField3.push(1234134.1341234);
-        msg.int32Field3.push(442);
+        msg.int32Field3[i] = 442;
         msg.int64Field3.push(442442442442442442442442442442442);
         msg.uint32Field3.push(442);
         msg.uint64Field3.push(442442442442442442442442442442442);

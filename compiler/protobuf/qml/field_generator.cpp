@@ -13,6 +13,8 @@ FieldGenerator::FieldGenerator(const FieldDescriptor* t)
     : t_(t),
       is_message_(t_ ? t_->cpp_type() == FieldDescriptor::CPPTYPE_MESSAGE
                      : false),
+      is_typed_array_(t_ ? t_->cpp_type() == FieldDescriptor::CPPTYPE_INT32
+                         : false),
       oneof_(t_ ? t_->containing_oneof() : nullptr),
       camel_name_(t_ ? camelize(t_->name()) : "") {
   capital_name_ = capitalizeFirstLetter(camel_name_);
@@ -85,9 +87,18 @@ void FieldGenerator::generateInit(io::Printer& p) {
     if (t_->message_type()) {
       p.Print("    this._$name$ = new Array();\n", "name", camel_name_);
     }
+    if (is_typed_array_) {
+      p.Print(variables_,
+              "    var buffer = new ArrayBuffer(32);\n"
+              "    this._$name$ = new Int32Array(buffer, 0, 0);\n"
+              "    this._raw[FIELD][$index$] = this._$name$;\n");
+    } else if (t_->message_type()) {
+      p.Print(variables_, "    this._raw[FIELD][$index$] = new Array();\n");
+    } else {
+      p.Print(variables_, "    this._raw[FIELD][$index$] = new Array();\n");
+    }
     p.Print(
         variables_,
-        "    this._raw[FIELD][$index$] = new Array();\n"
         "    if (values && values.$name$ && values.$name$ instanceof Array) {\n"
         "      this.$name$(values.$name$);\n"
         "    }\n");
@@ -107,13 +118,19 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
             "              this._$name$[i] = msg;\n"
             "              this._raw[FIELD][$index$][i] = msg._raw;\n"
             "            }\n"
-            "            if (typeof this._$name$[i] == 'undefined') {\n"
-            "              this.$name$({});\n"
-            "            }\n"
             "            "
             "this._$name$[i]._mergeFromRawArray($arg$[FIELD][$index$][i]);\n"
             "          }\n"
             "        }\n");
+  } else if (t_->is_repeated() && is_typed_array_) {
+    p.Print(
+        "        if ($arg$[FIELD][$index$] && ($arg$[FIELD][$index$] "
+        "instanceof "
+        "Array || $arg$[FIELD][$index$] instanceof Int32Array) || "
+        "$arg$[FIELD][$index$] instanceof ArrayBuffer) {\n"
+        "          this.$name$($arg$[FIELD][$index$]);\n"
+        "        }\n",
+        "name", camel_name_, "arg", arg, "index", std::to_string(t_->index()));
   } else if (t_->is_repeated()) {
     p.Print(
         "        if ($arg$[FIELD][$index$] && $arg$[FIELD][$index$] instanceof "
@@ -124,11 +141,12 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
   } else if (t_->message_type()) {
     auto v = variables_;
     v.insert(std::make_pair("arg", arg));
-    p.Print(v,
-            "        if (typeof this.$name$ == 'undefined') {\n"
-            "          this.$name$ = {};\n"
-            "        }\n"
-            "        this.$name$._mergeFromRawArray($arg$[FIELD][$index$]);\n");
+    p.Print(
+        v,
+        "        if (typeof this.$name$ == 'undefined') {\n"
+        "          this.$name$ = {};\n"
+        "        }\n"
+        "        this._$name$._mergeFromRawArray($arg$[FIELD][$index$]);\n");
   } else {
     p.Print("        this.set$capital_name$($arg$[FIELD][$index$]);\n",
             "capital_name", capital_name_, "arg", arg, "index",
@@ -146,13 +164,33 @@ void FieldGenerator::generateRepeatedProperty(
     google::protobuf::io::Printer& p) {
   p.Print(variables_,
           "    // Replacement setter\n"
-          "  $type$.prototype.set$capital_name$ = function(values) {\n"
-          "    if (!(values instanceof Array)) {\n"
-          "      throw new TypeError();\n"
-          "    }\n"
-          "    this._raw[FIELD][$index$].length = values.length;\n");
+          "  $type$.prototype.set$capital_name$ = function(values) {\n");
+  if (is_typed_array_) {
+    p.Print(variables_,
+            "    if (values instanceof Int32Array || values instanceof Array "
+            "|| values instanceof ArrayBuffer) {\n"
+            "      if (!(values instanceof Array) && !values.name) {\n"
+            "        values = new Int32Array(values);;\n"
+            "      }\n"
+            "      var newArray = this._ensureLength(this._$name$, "
+            "values.length);\n"
+            "      if (newArray) {\n"
+            "        this._$name$ = newArray;\n"
+            "        this._raw[FIELD][$index$] = this._$name$;\n"
+            "      }\n"
+            "      this._$name$.set(values);\n"
+            "    } else {\n"
+            "      throw new TypeError();\n"
+            "    }\n");
+  } else {
+    p.Print(variables_,
+            "    if (!(values instanceof Array)) {\n"
+            "      throw new TypeError();\n"
+            "    }\n");
+  }
   if (is_message_) {
     p.Print(variables_,
+            "    this._raw[FIELD][$index$].length = values.length;\n"
             "     this._$name$.length = values.length;\n"
             "     for (var i in values) {\n"
             "       var msg = new "
@@ -160,17 +198,18 @@ void FieldGenerator::generateRepeatedProperty(
             "       this._$name$[i] = msg;\n"
             "       this._raw[FIELD][$index$][i] = msg._raw;\n"
             "     }\n");
-  } else {
-    p.Print(variables_, "       this._raw[FIELD][$index$] = values.slice();\n");
+  } else if (!is_typed_array_) {
+    p.Print(variables_, "      this._raw[FIELD][$index$] = values.slice();\n");
   }
   p.Print(variables_,
           "  };\n"
           "  // Single value setter\n"
           "  $type$.prototype.set$capital_name$At = function(index, value) {\n"
-          "    if (typeof index !== 'number') {\n"
-          "      throw new TypeError();\n"
+          "    if (typeof index != 'number') {\n"
+          "      throw new TypeError('Index should be a number: ' + typeof "
+          "index);\n"
           "    }\n"
-          "    if(this._raw[FIELD][$index$].length < index) {\n"
+          "    if(this.$name$Size < index) {\n"
           "      throw new RangeError();\n"
           "    }\n");
   if (is_message_) {
@@ -178,6 +217,8 @@ void FieldGenerator::generateRepeatedProperty(
             "    var msg = new $message_scope$$message_type$(value);\n"
             "    this._$name$[index] = msg;\n"
             "    this._raw[FIELD][$index$][index] = msg._raw;\n");
+  } else if (is_typed_array_) {
+    p.Print(variables_, "    this._$name$[index] = value;\n");
   } else {
     p.Print(variables_, "    this._raw[FIELD][$index$][index] = value;\n");
   }
@@ -185,13 +226,14 @@ void FieldGenerator::generateRepeatedProperty(
           "  };\n"
           "  // Getter\n"
           "  $type$.prototype.get$capital_name$At = function(index) {\n"
-          "    if (typeof index !== 'number') {\n"
-          "      throw new TypeError();\n"
+          "    if (typeof index != 'number') {\n"
+          "      throw new TypeError('Index should be a number: ' + typeof "
+          "index);\n"
           "    }\n"
           "    if(this._raw[FIELD][$index$].length < index) {\n"
           "      throw new RangeError();\n"
           "    }\n");
-  if (is_message_) {
+  if (is_message_ || is_typed_array_) {
     p.Print(variables_, "    return this._$name$[index];\n");
   } else {
     p.Print(variables_, "    return this._raw[FIELD][$index$][index];\n");
@@ -201,6 +243,13 @@ void FieldGenerator::generateRepeatedProperty(
           "  $type$.prototype.get$capital_name$AsArray = function() {\n");
   if (is_message_) {
     p.Print(variables_, "    return this._$name$.slice();\n");
+  } else if (is_typed_array_) {
+    p.Print(variables_,
+            "    var array = [];\n"
+            "    for (var i = 0; i < this._$name$.length; ++i) {\n"
+            "      array.push(this._$name$[i]);\n"
+            "    }\n"
+            "    return array;\n");
   } else {
     p.Print(variables_, "    return this._raw[FIELD][$index$].slice();\n");
   }
@@ -209,23 +258,27 @@ void FieldGenerator::generateRepeatedProperty(
   p.Print(variables_,
           "  $type$.prototype.$name$ = function(indexOrValues, value) {\n"
           "    if (typeof indexOrValues == 'undefined') {\n"
-          "      throw new TypeError();\n"
-          "    } else if (indexOrValues instanceof Array) {\n"
-          "      this.set$capital_name$(indexOrValues);\n"
-          "    } else if (typeof value == 'undefined') {\n"
-          "      return this.get$capital_name$At(indexOrValues);\n"
+          "      throw new TypeError('Not enough arguments');\n"
+          "    } else if (typeof indexOrValues == 'number') {\n"
+          "      if (typeof value == 'undefined') {\n"
+          "        return this.get$capital_name$At(indexOrValues);\n"
+          "      } else {\n"
+          "        this.set$capital_name$At(indexOrValues, value);\n"
+          "      }\n"
           "    } else {\n"
-          "      this.set$capital_name$At(indexOrValues, value);\n"
+          "      this.set$capital_name$(indexOrValues);\n"
           "    }\n"
           "  };\n"
           "  var $name$Count = function() {\n");
 
-  if (is_message_) {
-    messageAssertLength(p);
+  if (is_typed_array_ || is_message_) {
+    if (is_message_) messageAssertLength(p);
+    p.Print(variables_, "    return this._$name$.length;\n");
+  } else {
+    p.Print(variables_, "    return this._raw[FIELD][$index$].length;\n");
   }
 
   p.Print(variables_,
-          "    return this._raw[FIELD][$index$].length;\n"
           "  };\n"
           "  Object.defineProperties($type$.prototype, {\n"
           "    $name$Count: { get: $name$Count },\n"
@@ -246,6 +299,14 @@ void FieldGenerator::generateRepeatedProperty(
             "    this._$name$.push(msg);\n"
             "    this._raw[FIELD][$index$].push(msg._raw);\n");
     messageAssertLength(p);
+  } else if (is_typed_array_) {
+    p.Print(variables_,
+            "    var newArray = this._ensureLength(this._$name$);\n"
+            "    if (newArray) {\n"
+            "      this._$name$ = newArray;\n"
+            "      this._raw[FIELD][$index$] = this._$name$;\n"
+            "    }\n"
+            "    this._$name$[this._$name$.length - 1] = value;\n");
   } else {
     p.Print(variables_, "    this._raw[FIELD][$index$].push(value);\n");
   }
@@ -254,7 +315,8 @@ void FieldGenerator::generateRepeatedProperty(
           "  };\n"
           "  $type$.prototype.remove$capital_name$ = function(index) {\n"
           "    if (typeof index != 'number') {\n"
-          "      throw new TypeError('Index should be a number.');\n"
+          "      throw new TypeError('Index should be a number: ' + typeof "
+          "index);\n"
           "    }\n"
           "    this._raw[FIELD][$index$].splice(index, 1);\n");
 
@@ -342,7 +404,7 @@ void FieldGenerator::generateOptionalProperty(
             "  };\n"
             "  $type$.prototype.set$capital_name$ = function(value) {\n"
             "      this.clear$oneof_capital$();\n"
-            "      this._raw[ONEOF][$oneof_index$] = "
+            "      this._oneofs[$oneof_index$] = "
             "type.$oneof_capital$Case.$all_capital_name$;\n");
   } else {
     genGet(p, "    ");
@@ -359,7 +421,7 @@ void FieldGenerator::generateOptionalProperty(
     p.Print(variables_,
             "    if (this.$oneof_camel$Case == "
             "type.$oneof_capital$Case.$all_capital_name$) {\n"
-            "      this._raw[ONEOF][$oneof_index$] = "
+            "      this._oneofs[$oneof_index$] = "
             "type.$oneof_capital$Case.$oneof_all_capital$_NOT_SET;\n"
             "    }\n");
   }

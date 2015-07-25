@@ -70,8 +70,7 @@ private:
                              const google::protobuf::Reflection& ref,
                              google::protobuf::Message& msg,
                              const google::protobuf::FieldDescriptor* field,
-                             QV4::ArrayObject& list,
-                             int size);
+                             QV4::ReturnedValue list);
 
   const google::protobuf::Descriptor* descriptor_;
   google::protobuf::DynamicMessageFactory message_factory_;

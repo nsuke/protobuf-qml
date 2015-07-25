@@ -28,7 +28,7 @@ void OneofGenerator::generateMerge(google::protobuf::io::Printer& p,
                                    const std::string& arg) {
   auto v = variables_;
   v.insert(std::make_pair("arg", arg));
-  p.Print(v, "    switch ($arg$[ONEOF][$index$]) {\n");
+  p.Print(v, "    switch (oneofs[$index$]) {\n");
 
   for (int i = 0; i < t_->field_count(); ++i) {
     p.Print("      case $oneof_number$: {\n", "oneof_number",
@@ -76,12 +76,12 @@ void OneofGenerator::generateCase(io::Printer& p) {
           "  Object.defineProperties($type$.prototype, {\n"
           "    $name$Case: {\n"
           "      get: function() {\n"
-          "        return this._raw[ONEOF][$index$];\n"
+          "        return this._oneofs[$index$];\n"
           "      },\n"
           "    },\n"
           "    $name$: {\n"
           "      get: function() {\n"
-          "        switch (this._raw[ONEOF][$index$]) {\n");
+          "        switch (this._oneofs[$index$]) {\n");
   for (int i = 0; i < t_->field_count(); ++i) {
     auto f = t_->field(i);
     p.Print(
@@ -138,11 +138,8 @@ void OneofGenerator::generateClear(google::protobuf::io::Printer& p) {
     }
   }
   p.Print(variables_,
-          // "      case $capital_name$Case.$all_capital_name$_NOT_SET: {\n"
-          // "        break;\n"
-          // "      }\n"
           "    }\n"
-          "    this._raw[ONEOF][$index$] = "
+          "    this._oneofs[$index$] = "
           "$type$.$capital_name$Case.$all_capital_name$_NOT_SET;\n"
           "  };\n\n");
 }
