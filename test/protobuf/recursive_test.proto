@@ -5,6 +5,13 @@ message SimpleRecurse {
   int32 value = 2;
 }
 
+message OneofRecurse {
+  oneof msg_or_value {
+    OneofRecurse next = 1;
+    int32 value = 2;
+  }
+}
+
 message RepeatedRecurse {
   repeated RepeatedRecurse children = 1;
   int32 value = 2;

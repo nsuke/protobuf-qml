@@ -91,8 +91,6 @@ void FieldGenerator::generateInit(io::Printer& p) {
         "    if (values && values.$name$ && values.$name$ instanceof Array) {\n"
         "      this.$name$(values.$name$);\n"
         "    }\n");
-  } else {
-    p.Print(variables_, "    this.set$capital_name$($default$);\n");
   }
 }
 
@@ -163,8 +161,7 @@ void FieldGenerator::generateRepeatedProperty(
             "       this._raw[FIELD][$index$][i] = msg._raw;\n"
             "     }\n");
   } else {
-    p.Print(variables_,
-            "       this._raw[FIELD][$index$] = values.slice();\n");
+    p.Print(variables_, "       this._raw[FIELD][$index$] = values.slice();\n");
   }
   p.Print(variables_,
           "  };\n"
@@ -286,7 +283,9 @@ void FieldGenerator::genGet(google::protobuf::io::Printer& p,
   if (is_message_) {
     p.Print(v, "$indent$return this._$name$;\n");
   } else {
-    p.Print(v, "$indent$return this._raw[FIELD][$index$];\n");
+    p.Print(v,
+            "$indent$return typeof this._raw[FIELD][$index$] == 'undefined' ? "
+            "$default$ : this._raw[FIELD][$index$];\n");
   }
 }
 
