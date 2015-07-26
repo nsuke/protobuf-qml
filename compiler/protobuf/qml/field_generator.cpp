@@ -224,6 +224,25 @@ void FieldGenerator::addMethod(google::protobuf::io::Printer& p) {
   p.Print(variables_, "$i$};\n");
 }
 
+void FieldGenerator::reserveMethod(google::protobuf::io::Printer& p) {
+  p.Print(variables_,
+          "$i$$type$.prototype.reserve$capital_name$ = function(len) {\n");
+
+  if (is_typed_array_) {
+    p.Print(variables_,
+            "$i$  var blen = len * this._$name$.BYTES_PER_ELEMENT;\n"
+            "$i$  if (this._$name$.buffer.byteLength < blen) {\n"
+            "$i$    var buf = new ArrayBuffer(blen);\n"
+            "$i$    this._$name$ = new $typed_array$(buf);\n"
+            "$i$    this._$name$.set(this._raw[FIELD][$index$]);\n"
+            "$i$    this._raw[FIELD][$index$] = this._$name$;\n"
+            "$i$  }\n");
+  } else {
+    p.Print(variables_, "$i$  // NOOP");
+  }
+  p.Print(variables_, "$i$};\n");
+}
+
 void FieldGenerator::generateRepeatedProperty(
     google::protobuf::io::Printer& p) {
   p.Print(variables_,
@@ -341,6 +360,9 @@ void FieldGenerator::generateRepeatedProperty(
 
   countMethod(p);
   addMethod(p);
+  if (is_typed_array_) {
+    reserveMethod(p);
+  }
 
   p.Print(variables_,
           "$i$$type$.prototype.remove$capital_name$ = function(index) {\n"
