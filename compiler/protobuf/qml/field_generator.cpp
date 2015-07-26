@@ -425,6 +425,10 @@ void FieldGenerator::genClear(google::protobuf::io::Printer& p) {
     p.Print(variables_,
             "$i$this._raw[FIELD][$index$] = undefined;\n"
             "$i$this._$name$ = undefined;\n");
+  } else if (is_typed_array_) {
+    p.Print(variables_,
+            "$i$this._$name$ = new $typed_array$(this._$name$.buffer, 0, 0);\n"
+            "$i$this._raw[FIELD][$index$] = this._$name$;\n");
   } else {
     p.Print(variables_, "$i$this._raw[FIELD][$index$] = $default$;\n");
   }
