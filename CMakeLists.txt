@@ -23,8 +23,10 @@ find_package(Qt5Quick COMPONENTS Private REQUIRED)
 include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIRS})
 include_directories(compiler)
 
-include_directories(
+include_directories(SYSTEM
   ${Qt5Qml_PRIVATE_INCLUDE_DIRS})
+
+set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:QT_QML_DEBUG>)
 
 find_package(GRPC++)
 include(CMakeDependentOption)
