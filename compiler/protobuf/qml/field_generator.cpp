@@ -172,7 +172,29 @@ void FieldGenerator::messageAssertLength(google::protobuf::io::Printer& p) {
           "this._raw[FIELD][$index$].length);\n");
 }
 
-void genAdd(google::protobuf::io::Printer& p) {
+void FieldGenerator::countMethod(google::protobuf::io::Printer& p) {
+  p.Print(variables_, "$i$var $name$Count = function() {\n");
+
+  if (is_typed_array_ || is_message_) {
+    if (is_message_) messageAssertLength(p);
+    p.Print(variables_, "$i$  return this._$name$.length;\n");
+  } else {
+    p.Print(variables_, "$i$  return this._raw[FIELD][$index$].length;\n");
+  }
+
+  p.Print(variables_,
+          "$i$};\n"
+          "$i$Object.defineProperties($type$.prototype, {\n"
+          "$i$  $name$Count: { get: $name$Count },\n"
+          "$i$  $name$Size: { get: $name$Count },\n"
+          "$i$  $name$Length: { get: $name$Count },\n"
+          "$i$});\n"
+          "$i$$type$.prototype.get$capital_name$Count = $name$Count;\n"
+          "$i$$type$.prototype.get$capital_name$Size = $name$Count;\n"
+          "$i$$type$.prototype.get$capital_name$Length = $name$Count;\n");
+}
+
+void FieldGenerator::addMethod(google::protobuf::io::Printer& p) {
   p.Print(variables_,
           "$i$$type$.prototype.add$capital_name$ = function(value) {\n"
           "$i$  if (typeof value == 'undefined') {\n"
@@ -230,19 +252,20 @@ void FieldGenerator::generateRepeatedProperty(
             "$i$  if (!(values instanceof Array)) {\n"
             "$i$    throw new TypeError();\n"
             "$i$  }\n");
-  }
-  if (is_message_) {
-    p.Print(variables_,
-            "$i$  this._raw[FIELD][$index$].length = values.length;\n"
-            "$i$   this._$name$.length = values.length;\n"
-            "$i$   for (var i in values) {\n"
-            "$i$     var msg = new "
-            "$message_scope$$message_type$(values[i]);\n"
-            "$i$     this._$name$[i] = msg;\n"
-            "$i$     this._raw[FIELD][$index$][i] = msg._raw;\n"
-            "$i$   }\n");
-  } else if (!is_typed_array_) {
-    p.Print(variables_, "$i$    this._raw[FIELD][$index$] = values.slice();\n");
+    if (is_message_) {
+      p.Print(variables_,
+              "$i$  this._raw[FIELD][$index$].length = values.length;\n"
+              "$i$   this._$name$.length = values.length;\n"
+              "$i$   for (var i in values) {\n"
+              "$i$     var msg = new "
+              "$message_scope$$message_type$(values[i]);\n"
+              "$i$     this._$name$[i] = msg;\n"
+              "$i$     this._raw[FIELD][$index$][i] = msg._raw;\n"
+              "$i$   }\n");
+    } else {
+      p.Print(variables_,
+              "$i$    this._raw[FIELD][$index$] = values.slice();\n");
+    }
   }
   p.Print(variables_,
           "$i$};\n"
@@ -314,53 +337,12 @@ void FieldGenerator::generateRepeatedProperty(
           "$i$  } else {\n"
           "$i$    this.set$capital_name$(indexOrValues);\n"
           "$i$  }\n"
-          "$i$};\n"
-          "$i$var $name$Count = function() {\n");
+          "$i$};\n");
 
-  if (is_typed_array_ || is_message_) {
-    if (is_message_) messageAssertLength(p);
-    p.Print(variables_, "$i$  return this._$name$.length;\n");
-  } else {
-    p.Print(variables_, "$i$  return this._raw[FIELD][$index$].length;\n");
-  }
+  countMethod(p);
+  addMethod(p);
 
   p.Print(variables_,
-          "$i$};\n"
-          "$i$Object.defineProperties($type$.prototype, {\n"
-          "$i$  $name$Count: { get: $name$Count },\n"
-          "$i$  $name$Size: { get: $name$Count },\n"
-          "$i$  $name$Length: { get: $name$Count },\n"
-          "$i$});\n"
-          "$i$$type$.prototype.get$capital_name$Count = $name$Count;\n"
-          "$i$$type$.prototype.get$capital_name$Size = $name$Count;\n"
-          "$i$$type$.prototype.get$capital_name$Length = $name$Count;\n"
-          "$i$$type$.prototype.add$capital_name$ = function(value) {\n"
-          "$i$  if (typeof value == 'undefined') {\n"
-          "$i$    throw new TypeError('Cannot add undefined.');\n"
-          "$i$  }\n");
-
-  if (is_message_) {
-    p.Print(variables_,
-            "$i$  var msg = "
-            "this._maybeConvertToMessage($message_scope$$message_type$, "
-            "value);\n"
-            "$i$  this._$name$.push(msg);\n"
-            "$i$  this._raw[FIELD][$index$].push(msg._raw);\n");
-    messageAssertLength(p);
-  } else if (is_typed_array_) {
-    p.Print(variables_,
-            "$i$  var newArray = this._ensureLength(this._$name$);\n"
-            "$i$  if (newArray) {\n"
-            "$i$    this._$name$ = newArray;\n"
-            "$i$    this._raw[FIELD][$index$] = this._$name$;\n"
-            "$i$  }\n"
-            "$i$  this._$name$[this._$name$.length - 1] = value;\n");
-  } else {
-    p.Print(variables_, "$i$  this._raw[FIELD][$index$].push(value);\n");
-  }
-
-  p.Print(variables_,
-          "$i$};\n"
           "$i$$type$.prototype.remove$capital_name$ = function(index) {\n"
           "$i$  if (typeof index != 'number') {\n"
           "$i$    throw new TypeError('Index should be a number: ' + typeof "
