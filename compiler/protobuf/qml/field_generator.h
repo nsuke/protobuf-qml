@@ -35,6 +35,7 @@ private:
   void countMethod(google::protobuf::io::Printer& p);
   void addMethod(google::protobuf::io::Printer& p);
   void reserveMethod(google::protobuf::io::Printer& p);
+  void resizeMethod(google::protobuf::io::Printer& p);
 
   const google::protobuf::FieldDescriptor* t_;
   bool is_message_;

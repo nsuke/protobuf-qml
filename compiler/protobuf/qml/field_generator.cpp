@@ -105,14 +105,11 @@ void FieldGenerator::generateInit(io::Printer& p) {
       p.Print(variables_, "$i$this._$name$ = new Array();\n");
     }
     if (is_typed_array_) {
-      p.Print(variables_,
-              "$i$var buffer = new ArrayBuffer(32);\n"
-              "$i$this._$name$ = new $typed_array$(buffer, 0, 0);\n"
-              "$i$this._raw[FIELD][$index$] = this._$name$;\n");
+      p.Print(variables_, "$i$this._fields[$index$] = new $typed_array$();\n");
     } else if (t_->message_type()) {
-      p.Print(variables_, "$i$this._raw[FIELD][$index$] = new Array();\n");
+      p.Print(variables_, "$i$this._fields[$index$] = new Array();\n");
     } else {
-      p.Print(variables_, "$i$this._raw[FIELD][$index$] = new Array();\n");
+      p.Print(variables_, "$i$this._fields[$index$] = new Array();\n");
     }
     p.Print(variables_,
             "$i$if (values && values.$name$ && values.$name$ instanceof "
@@ -127,59 +124,54 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
   v.insert(std::make_pair("arg", arg));
   if (t_->is_repeated() && t_->message_type()) {
     p.Print(v,
-            "$i$if ($arg$[FIELD][$index$] && $arg$[FIELD][$index$] "
-            "instanceof Array) {\n"
-            "$i$  for (var i in $arg$[FIELD][$index$]) {\n"
+            "$i$field = $arg$[0][$index$];\n"
+            "$i$if (field instanceof Array) {\n"
+            "$i$  for (var i in field) {\n"
             "$i$    if (typeof this._$name$[i] == 'undefined') {\n"
             "$i$      var msg = new $message_scope$$message_type$();\n"
             "$i$      this._$name$[i] = msg;\n"
-            "$i$      this._raw[FIELD][$index$][i] = msg._raw;\n"
+            "$i$      this._fields[$index$][i] = msg._raw;\n"
             "$i$    }\n"
-            "$i$    "
-            "this._$name$[i]._mergeFromRawArray($arg$[FIELD][$index$][i]);\n"
+            "$i$    this._$name$[i]._mergeFromRawArray(field[i]);\n"
             "$i$  }\n"
             "$i$}\n");
   } else if (t_->is_repeated() && is_typed_array_) {
     p.Print(v,
-            "$i$if ($arg$[FIELD][$index$] && ($arg$[FIELD][$index$] "
-            "instanceof Array || $arg$[FIELD][$index$] instanceof "
-            "$typed_array$) || $arg$[FIELD][$index$] instanceof ArrayBuffer) "
-            "{\n"
-            "$i$  this.$name$($arg$[FIELD][$index$]);\n"
+            "$i$field = $arg$[0][$index$];\n"
+            "$i$if (field instanceof Array || field instanceof "
+            "$typed_array$ || field instanceof ArrayBuffer) {\n"
+            "$i$  this.set$capital_name$(field);\n"
             "$i$}\n");
   } else if (t_->is_repeated()) {
     p.Print(v,
-            "$i$if ($arg$[FIELD][$index$] && $arg$[FIELD][$index$] instanceof "
-            "Array) {\n"
-            "$i$  this.$name$($arg$[FIELD][$index$]);\n"
+            "$i$if ($arg$[0][$index$] instanceof Array) {\n"
+            "$i$  this.$name$($arg$[0][$index$]);\n"
             "$i$}\n");
   } else if (t_->message_type()) {
-    auto v = variables_;
-    v.insert(std::make_pair("arg", arg));
     p.Print(v,
             "$i$if (typeof this.$name$ == 'undefined') {\n"
-            "$i$  this.$name$ = {};\n"
+            "$i$  this.set$capital_name$({});\n"
             "$i$}\n"
-            "$i$this._$name$._mergeFromRawArray($arg$[FIELD][$index$]);\n");
+            "$i$this._$name$._mergeFromRawArray($arg$[0][$index$]);\n");
   } else {
-    p.Print(v, "$i$this.set$capital_name$($arg$[FIELD][$index$]);\n");
+    p.Print(v, "$i$this.set$capital_name$($arg$[0][$index$]);\n");
   }
 }
 
 void FieldGenerator::messageAssertLength(google::protobuf::io::Printer& p) {
   p.Print(variables_,
           "$i$console.assert(this._$name$.length == "
-          "this._raw[FIELD][$index$].length);\n");
+          "this._fields[$index$].length);\n");
 }
 
 void FieldGenerator::countMethod(google::protobuf::io::Printer& p) {
   p.Print(variables_, "$i$var $name$Count = function() {\n");
 
-  if (is_typed_array_ || is_message_) {
+  if (is_message_) {
     if (is_message_) messageAssertLength(p);
     p.Print(variables_, "$i$  return this._$name$.length;\n");
   } else {
-    p.Print(variables_, "$i$  return this._raw[FIELD][$index$].length;\n");
+    p.Print(variables_, "$i$  return this._fields[$index$].length;\n");
   }
 
   p.Print(variables_,
@@ -207,18 +199,18 @@ void FieldGenerator::addMethod(google::protobuf::io::Printer& p) {
             "this._maybeConvertToMessage($message_scope$$message_type$, "
             "value);\n"
             "$i$  this._$name$.push(msg);\n"
-            "$i$  this._raw[FIELD][$index$].push(msg._raw);\n");
+            "$i$  this._fields[$index$].push(msg._raw);\n");
     messageAssertLength(p);
   } else if (is_typed_array_) {
     p.Print(variables_,
-            "$i$  var newArray = this._ensureLength(this._$name$);\n"
+            "$i$  var newArray = this._ensureLength(this._fields[$index$]);\n"
             "$i$  if (newArray) {\n"
-            "$i$    this._$name$ = newArray;\n"
-            "$i$    this._raw[FIELD][$index$] = this._$name$;\n"
+            "$i$    this._fields[$index$] = newArray;\n"
             "$i$  }\n"
-            "$i$  this._$name$[this._$name$.length - 1] = value;\n");
+            "$i$  this._fields[$index$][this._fields[$index$].length - 1] "
+            "= value;\n");
   } else {
-    p.Print(variables_, "$i$  this._raw[FIELD][$index$].push(value);\n");
+    p.Print(variables_, "$i$  this._fields[$index$].push(value);\n");
   }
 
   p.Print(variables_, "$i$};\n");
@@ -230,13 +222,35 @@ void FieldGenerator::reserveMethod(google::protobuf::io::Printer& p) {
 
   if (is_typed_array_) {
     p.Print(variables_,
-            "$i$  var blen = len * this._$name$.BYTES_PER_ELEMENT;\n"
-            "$i$  if (this._$name$.buffer.byteLength < blen) {\n"
+            "$i$  var blen = len * $typed_array$.BYTES_PER_ELEMENT;\n"
+            "$i$  if (this._fields[$index$].buffer.byteLength < blen) {\n"
             "$i$    var buf = new ArrayBuffer(blen);\n"
-            "$i$    this._$name$ = new $typed_array$(buf);\n"
-            "$i$    this._$name$.set(this._raw[FIELD][$index$]);\n"
-            "$i$    this._raw[FIELD][$index$] = this._$name$;\n"
+            "$i$    var newArray = new $typed_array$(buf, 0, "
+            "this._fields[$index$].length);\n"
+            "$i$    newArray.set(this._fields[$index$]);\n"
+            "$i$    this._fields[$index$] = newArray;\n"
             "$i$  }\n");
+  } else {
+    p.Print(variables_, "$i$  // NOOP");
+  }
+  p.Print(variables_, "$i$};\n");
+}
+
+void FieldGenerator::resizeMethod(google::protobuf::io::Printer& p) {
+  p.Print(variables_,
+          "$i$$type$.prototype.resize$capital_name$ = function(len) {\n");
+
+  if (is_typed_array_) {
+    p.Print(
+        variables_,
+        "$i$  var newArray = this._ensureLength(this._fields[$index$], len);\n"
+        "$i$  if (newArray) {\n"
+        "$i$    newArray.set(this._fields[$index$]);\n"
+        "$i$    this._fields[$index$] = newArray;\n"
+        "$i$  }\n"
+        "$i$  console.assert(this._fields[$index$].length >= len);\n");
+  } else if (!is_message_) {
+    p.Print(variables_, "$i$  this._fields[$index$].length = values.length;\n");
   } else {
     p.Print(variables_, "$i$  // NOOP");
   }
@@ -250,22 +264,23 @@ void FieldGenerator::generateRepeatedProperty(
           "$i$$type$.prototype.set$capital_name$ = function(values) {\n");
   if (is_typed_array_) {
     p.Print(variables_,
-            "$i$  if (values instanceof $typed_array$ || values "
-            "instanceof Array "
-            "|| values instanceof ArrayBuffer) {\n"
-            "$i$    if (!(values instanceof Array) && !values.name) {\n"
+            // Omit type checks for performance
+            // "$i$  if (values instanceof $typed_array$ || values "
+            // "instanceof Array "
+            // "|| values instanceof ArrayBuffer) {\n"
+            "$i$    if (!values.BYTES_PER_ELEMENT) {\n"
             "$i$      values = new $typed_array$(values);;\n"
             "$i$    }\n"
-            "$i$    var newArray = this._ensureLength(this._$name$, "
+            "$i$    var newArray = this._ensureLength(this._fields[$index$], "
             "values.length);\n"
             "$i$    if (newArray) {\n"
-            "$i$      this._$name$ = newArray;\n"
-            "$i$      this._raw[FIELD][$index$] = this._$name$;\n"
+            "$i$      this._fields[$index$] = newArray;\n"
             "$i$    }\n"
-            "$i$    this._$name$.set(values);\n"
-            "$i$  } else {\n"
-            "$i$    throw new TypeError();\n"
-            "$i$  }\n");
+            "$i$    this._fields[$index$].set(values);\n"
+            // "$i$  } else {\n"
+            // "$i$    throw new TypeError();\n"
+            // "$i$  }\n"
+            );
   } else {
     p.Print(variables_,
             "$i$  if (!(values instanceof Array)) {\n"
@@ -273,17 +288,16 @@ void FieldGenerator::generateRepeatedProperty(
             "$i$  }\n");
     if (is_message_) {
       p.Print(variables_,
-              "$i$  this._raw[FIELD][$index$].length = values.length;\n"
+              "$i$  this._fields[$index$].length = values.length;\n"
               "$i$   this._$name$.length = values.length;\n"
               "$i$   for (var i in values) {\n"
               "$i$     var msg = new "
               "$message_scope$$message_type$(values[i]);\n"
               "$i$     this._$name$[i] = msg;\n"
-              "$i$     this._raw[FIELD][$index$][i] = msg._raw;\n"
+              "$i$     this._fields[$index$][i] = msg._raw;\n"
               "$i$   }\n");
     } else {
-      p.Print(variables_,
-              "$i$    this._raw[FIELD][$index$] = values.slice();\n");
+      p.Print(variables_, "$i$    this._fields[$index$] = values.slice();\n");
     }
   }
   p.Print(variables_,
@@ -291,24 +305,26 @@ void FieldGenerator::generateRepeatedProperty(
           "$i$// Single value setter\n"
           "$i$$type$.prototype.set$capital_name$At = function(index, value) "
           "{\n"
-          "$i$  if (typeof index != 'number') {\n"
-          "$i$    throw new TypeError('Index should be a number: ' + typeof "
-          "index);\n"
-          "$i$  }\n"
-          "$i$  if(this.$name$Size < index) {\n"
-          "$i$    throw new RangeError();\n"
-          "$i$  }\n");
+          // Type checks are expensive for V4 engine.
+          //"$i$  if (typeof index != 'number') {\n"
+          //"$i$    throw new TypeError('Index should be a number: ' + typeof "
+          //"index);\n"
+          //"$i$  }\n"
+          //"$i$  if(this._fields[$index$].length <= index) {\n"
+          //"$i$    throw new RangeError();\n"
+          //"$i$  }\n");
+          );
   if (is_message_) {
     p.Print(variables_,
             "$i$  var msg = "
             "this._maybeConvertToMessage($message_scope$$message_type$, "
             "value);\n"
             "$i$  this._$name$[index] = msg;\n"
-            "$i$  this._raw[FIELD][$index$][index] = msg._raw;\n");
+            "$i$  this._fields[$index$][index] = msg._raw;\n");
   } else if (is_typed_array_) {
-    p.Print(variables_, "$i$  this._$name$[index] = value;\n");
+    p.Print(variables_, "$i$  this._fields[$index$][index] = value;\n");
   } else {
-    p.Print(variables_, "$i$  this._raw[FIELD][$index$][index] = value;\n");
+    p.Print(variables_, "$i$  this._fields[$index$][index] = value;\n");
   }
   p.Print(variables_,
           "$i$};\n"
@@ -318,13 +334,13 @@ void FieldGenerator::generateRepeatedProperty(
           "$i$    throw new TypeError('Index should be a number: ' + typeof "
           "index);\n"
           "$i$  }\n"
-          "$i$  if(this._raw[FIELD][$index$].length < index) {\n"
+          "$i$  if(this._fields[$index$].length < index) {\n"
           "$i$    throw new RangeError();\n"
           "$i$  }\n");
-  if (is_message_ || is_typed_array_) {
+  if (is_message_) {
     p.Print(variables_, "$i$  return this._$name$[index];\n");
   } else {
-    p.Print(variables_, "$i$  return this._raw[FIELD][$index$][index];\n");
+    p.Print(variables_, "$i$  return this._fields[$index$][index];\n");
   }
   p.Print(variables_,
           "$i$};\n"
@@ -334,12 +350,12 @@ void FieldGenerator::generateRepeatedProperty(
   } else if (is_typed_array_) {
     p.Print(variables_,
             "$i$  var array = [];\n"
-            "$i$  for (var i = 0; i < this._$name$.length; ++i) {\n"
-            "$i$    array.push(this._$name$[i]);\n"
+            "$i$  for (var i = 0; i < this._fields[$index$].length; ++i) {\n"
+            "$i$    array.push(this._fields[$index$][i]);\n"
             "$i$  }\n"
             "$i$  return array;\n");
   } else {
-    p.Print(variables_, "$i$  return this._raw[FIELD][$index$].slice();\n");
+    p.Print(variables_, "$i$  return this._fields[$index$].slice();\n");
   }
   p.Print(variables_, "$i$};\n");
 
@@ -363,6 +379,9 @@ void FieldGenerator::generateRepeatedProperty(
   if (is_typed_array_) {
     reserveMethod(p);
   }
+  if (!is_message_) {
+    resizeMethod(p);
+  }
 
   p.Print(variables_,
           "$i$$type$.prototype.remove$capital_name$ = function(index) {\n"
@@ -370,7 +389,7 @@ void FieldGenerator::generateRepeatedProperty(
           "$i$    throw new TypeError('Index should be a number: ' + typeof "
           "index);\n"
           "$i$  }\n"
-          "$i$  this._raw[FIELD][$index$].splice(index, 1);\n");
+          "$i$  this._fields[$index$].splice(index, 1);\n");
 
   if (is_message_) {
     p.Print(variables_, "$i$  this._$name$.splice(index, 1);\n");
@@ -379,12 +398,19 @@ void FieldGenerator::generateRepeatedProperty(
 
   p.Print(variables_,
           "$i$};\n"
-          "$i$$type$.prototype.clear$capital_name$ = function() {\n"
-          "$i$  this._raw[FIELD][$index$].length = 0;\n");
+          "$i$$type$.prototype.clear$capital_name$ = function() {\n");
 
-  if (is_message_) {
-    p.Print(variables_, "$i$  this._$name$.length = 0;\n");
-    messageAssertLength(p);
+  if (is_typed_array_) {
+    p.Print(variables_,
+            "$i$  this._fields[$index$] = new "
+            "$typed_array$(this._fields[$index$].buffer, 0, 0);\n");
+  } else {
+    p.Print(variables_, "$i$  this._fields[$index$].length = 0;\n");
+
+    if (is_message_) {
+      p.Print(variables_, "$i$  this._$name$.length = 0;\n");
+      messageAssertLength(p);
+    }
   }
 
   p.Print(variables_, "$i$};\n");
@@ -395,8 +421,8 @@ void FieldGenerator::genGet(google::protobuf::io::Printer& p) {
     p.Print(variables_, "$i$return this._$name$;\n");
   } else {
     p.Print(variables_,
-            "$i$return typeof this._raw[FIELD][$index$] == 'undefined' ? "
-            "$default$ : this._raw[FIELD][$index$];\n");
+            "$i$return typeof this._fields[$index$] == 'undefined' ? "
+            "$default$ : this._fields[$index$];\n");
   }
 }
 
@@ -407,30 +433,27 @@ void FieldGenerator::genSet(google::protobuf::io::Printer& p) {
         "$i$var msg = "
         "this._maybeConvertToMessage($message_scope$$message_type$, value);\n"
         "$i$this._$name$ = msg;\n"
-        "$i$this._raw[FIELD][$index$] = msg._raw;\n");
+        "$i$this._fields[$index$] = msg._raw;\n");
   } else {
-    // We reject undefined and treat it as default value.
     // TODO: Emit error if the argument is not of correct type.
     p.Print(variables_,
-            "$i$if (typeof value == 'undefined') {\n"
-            "$i$  this._raw[FIELD][$index$] = $default$;\n"
-            "$i$} else {\n"
-            "$i$  this._raw[FIELD][$index$] = value;\n"
-            "$i$}\n");
+            // We check for undefined in getters
+            //"$i$if (typeof value == 'undefined') {\n"
+            //"$i$  this._fields[$index$] = $default$;\n"
+            //"$i$} else {\n"
+            //"$i$  this._fields[$index$] = value;\n"
+            //"$i$}\n");
+            "$i$  this._fields[$index$] = value;\n");
   }
 }
 
 void FieldGenerator::genClear(google::protobuf::io::Printer& p) {
   if (is_message_) {
     p.Print(variables_,
-            "$i$this._raw[FIELD][$index$] = undefined;\n"
+            "$i$this._fields[$index$] = undefined;\n"
             "$i$this._$name$ = undefined;\n");
-  } else if (is_typed_array_) {
-    p.Print(variables_,
-            "$i$this._$name$ = new $typed_array$(this._$name$.buffer, 0, 0);\n"
-            "$i$this._raw[FIELD][$index$] = this._$name$;\n");
   } else {
-    p.Print(variables_, "$i$this._raw[FIELD][$index$] = $default$;\n");
+    p.Print(variables_, "$i$this._fields[$index$] = $default$;\n");
   }
 }
 

@@ -40,10 +40,10 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
 
   p.Print(
       "$i$var $message_name$ = (function() {\n"
-      "$i$  var FIELD = 0;\n"
       "$i$  var type = function(values) {\n"
+      "$i$    this._fields = new Array($field_count$);\n"
       "$i$    this._oneofs = new Uint32Array($oneof_count$);\n"
-      "$i$    this._raw = [new Array($field_count$), this._oneofs.buffer];\n",
+      "$i$    this._raw = [this._fields, this._oneofs.buffer];\n",
       "message_name", name_, "field_count", std::to_string(t_->field_count()),
       "oneof_count", std::to_string(t_->oneof_decl_count()), "i", indent_);
   for (auto& g : field_generators_) {
@@ -94,7 +94,8 @@ void MessageGenerator::generateMessageConstructor(io::Printer& p) {
   p.Print(
       "$i$  type.prototype._mergeFromRawArray = function(rawArray) {\n"
       "$i$    if (rawArray && rawArray instanceof Array) {\n"
-      "$i$      var oneofs = new Uint32Array(rawArray[1]);\n",
+      "$i$      var oneofs = new Uint32Array(rawArray[1]);\n"
+      "$i$      var field;\n",
       "message_name", name_, "field_count", std::to_string(t_->field_count()),
       "oneof_count", std::to_string(t_->oneof_decl_count()), "i", indent_);
   for (auto& g : field_generators_) {
