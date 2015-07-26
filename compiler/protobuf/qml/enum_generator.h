@@ -11,8 +11,9 @@ namespace qml {
 
 class EnumGenerator {
 public:
-  EnumGenerator(const google::protobuf::EnumDescriptor* t)
-      : t_(t) {
+  EnumGenerator(const google::protobuf::EnumDescriptor* t,
+                std::string indent = "")
+      : t_(t), indent_(indent) {
     if (!t) {
       throw std::invalid_argument("Null descriptor");
     }
@@ -22,6 +23,7 @@ public:
 
 private:
   const google::protobuf::EnumDescriptor* t_;
+  std::string indent_;
 };
 }
 }

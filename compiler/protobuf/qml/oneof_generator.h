@@ -1,6 +1,7 @@
 #ifndef PROTOBUF_QML_ONEOF_GENERATOR_H
 #define PROTOBUF_QML_ONEOF_GENERATOR_H
 
+#include "protobuf/qml/compiler_common.h"
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/io/printer.h>
 
@@ -13,6 +14,8 @@ public:
   void generateMerge(google::protobuf::io::Printer&, const std::string& arg);
   void generateInit(google::protobuf::io::Printer&);
   void generate(google::protobuf::io::Printer&);
+
+  PBQML_USE_INDENT
 
 private:
   void generateCaseEnum(google::protobuf::io::Printer&);

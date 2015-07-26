@@ -13,7 +13,8 @@ class EnumGenerator;
 
 class MessageGenerator {
 public:
-  MessageGenerator(const google::protobuf::Descriptor* t = nullptr);
+  MessageGenerator(const google::protobuf::Descriptor* t = nullptr,
+                   std::string indent = "");
 
   MessageGenerator(MessageGenerator&& other) : t_(other.t_) {
     name_ = std::move(other.name_);
@@ -37,6 +38,7 @@ private:
 
   const google::protobuf::Descriptor* t_;
   std::string name_;
+  std::string indent_;
   std::vector<MessageGenerator> message_generators_;
   std::vector<EnumGenerator> enum_generators_;
   std::vector<FieldGenerator> field_generators_;

@@ -1,6 +1,7 @@
 #ifndef PROTOBUF_QML_FIELD_GENERATOR_H
 #define PROTOBUF_QML_FIELD_GENERATOR_H
 
+#include "protobuf/qml/compiler_common.h"
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/io/printer.h>
 
@@ -20,15 +21,17 @@ public:
   void generateProperty(google::protobuf::io::Printer&);
   bool is_oneof() const { return t_->containing_oneof(); }
 
+  PBQML_USE_INDENT
+
 private:
   std::string defaultValue();
   void generateRepeatedProperty(google::protobuf::io::Printer&);
   void generateOptionalProperty(google::protobuf::io::Printer&);
   void messageAssertLength(google::protobuf::io::Printer& p);
 
-  void genSet(google::protobuf::io::Printer& p, std::string indent);
-  void genGet(google::protobuf::io::Printer& p, std::string indent);
-  void genClear(google::protobuf::io::Printer& p, std::string indent);
+  void genSet(google::protobuf::io::Printer& p);
+  void genGet(google::protobuf::io::Printer& p);
+  void genClear(google::protobuf::io::Printer& p);
 
   const google::protobuf::FieldDescriptor* t_;
   bool is_message_;

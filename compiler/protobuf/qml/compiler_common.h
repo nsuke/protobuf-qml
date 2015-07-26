@@ -1,6 +1,16 @@
 #ifndef PROTOBUF_QML_COMPILER_H
 #define PROTOBUF_QML_COMPILER_H
 
+#define PBQML_USE_INDENT                                        \
+  void indentUp() { variables_["i"] = variables_["i"] + "  "; } \
+  void indentDown() {                                           \
+    auto& i = variables_["i"];                                  \
+    PBQML_ASSERT(i.size() >= 2);                                \
+    variables_["i"] = i.substr(0, i.size() - 2);                \
+  }                                                             \
+  const std::string& indent() { return variables_["i"]; } \
+  void indent(const std::string& v) { variables_["i"] = v; }
+
 #if PBQML_COMPILER_HAS_QT
 
 #include <QtGlobal>
@@ -15,7 +25,7 @@
 #include <exception>
 #include <iostream>
 
-#define PBQML_ASSERT(cond)                   \
+#define PBQML_ASSERT(cond)                     \
   do {                                         \
     if (!cond) {                               \
       std::cerr << "ASSERT failure: " << cond; \
