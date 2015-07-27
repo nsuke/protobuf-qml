@@ -8,7 +8,7 @@
     PBQML_ASSERT(i.size() >= 2);                                \
     variables_["i"] = i.substr(0, i.size() - 2);                \
   }                                                             \
-  const std::string& indent() { return variables_["i"]; } \
+  const std::string& indent() { return variables_["i"]; }       \
   void indent(const std::string& v) { variables_["i"] = v; }
 
 #if PBQML_COMPILER_HAS_QT
@@ -25,11 +25,11 @@
 #include <exception>
 #include <iostream>
 
-#define PBQML_ASSERT(cond)                     \
-  do {                                         \
-    if (!cond) {                               \
-      std::cerr << "ASSERT failure: " << cond; \
-    }                                          \
+#define PBQML_ASSERT(cond)                      \
+  do {                                          \
+    if (!cond) {                                \
+      std::cerr << "ASSERT failure: " << #cond; \
+    }                                           \
   } while (false)
 
 #define PBQML_ASSERT_X(cond, where, what)                                \
