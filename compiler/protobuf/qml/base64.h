@@ -32,7 +32,6 @@ inline std::vector<unsigned char> base64Buffer(size_t size) {
   return std::vector<unsigned char>(size);
 }
 
-// TODO: Provide default implementation
 std::string toBase64(std::vector<unsigned char>& buf);
 }
 }

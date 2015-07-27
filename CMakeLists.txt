@@ -100,9 +100,12 @@ set(protoc-gen-qml-core_SOURCES
   compiler/protobuf/qml/service_generator.cpp
   compiler/protobuf/qml/qml_generator.cpp
   compiler/protobuf/qml/compiler_util.cpp)
+option(PROTOBUF_COMPILER_HAS_QT "Allow compiler plugin dependency on Qt" OFF)
+if(NOT PROTOBUF_COMPILER_HAS_QT)
+  list(APPEND protoc-gen-qml-core_SOURCES compiler/protobuf/qml/base64.cpp)
+endif()
 add_library(protoc-gen-qml-core
   ${protoc-gen-qml-core_SOURCES})
-target_compile_definitions(protoc-gen-qml-core PRIVATE PBQML_COMPILER_HAS_QT)
 target_link_libraries(protoc-gen-qml-core
   protobuf-qml
   ${PROTOBUF_PROTOC_LIBRARIES}
@@ -113,10 +116,13 @@ set(protoc-gen-qml_SOURCES
   compiler/protobuf/qml/main.cpp)
 add_executable(protoc-gen-qml ${protoc-gen-qml_SOURCES})
 protobuf_qml_target(protoc-gen-qml)
-option(PROTOBUF_COMPILER_HAS_QT "Allow compiler plugin dependency on Qt" ON)
+
+option(PROTOBUF_COMPILER_HAS_QT "Allow compiler plugin dependency on Qt" OFF)
 if(PROTOBUF_COMPILER_HAS_QT)
+  target_compile_definitions(protoc-gen-qml-core PRIVATE PBQML_COMPILER_HAS_QT)
   target_compile_definitions(protoc-gen-qml PRIVATE PBQML_COMPILER_HAS_QT)
 endif()
+
 target_link_libraries(protoc-gen-qml
   protoc-gen-qml-core
   protobuf-qml
