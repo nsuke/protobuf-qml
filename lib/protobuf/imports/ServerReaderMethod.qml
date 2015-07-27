@@ -43,7 +43,8 @@ PB.ServerReaderMethodHolder {
           root.abort(tag, code, message);
           return;
         }
-        root.respond(tag, new root.writeType(response)._raw);
+        var msg = response instanceof root.writeType ? response : new root.writeType(response);
+        root.respond(tag, msg._raw);
       });
     }
     return root.handlers[tag];
@@ -76,7 +77,8 @@ PB.ServerReaderMethodHolder {
       console.warn('Handler is not registered for data event.');
       return;
     }
-    fn(new root.readType(data));
+    var msg = data instanceof root.readType ? data : new root.readType(data);
+    fn(msg);
   }
 
   onError: {

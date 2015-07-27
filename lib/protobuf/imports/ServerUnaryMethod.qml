@@ -16,7 +16,8 @@ PB.ServerUnaryMethodHolder {
       console.warn('[' + root.methodName + ']: Service handler is not available. Please provide handler implementation.');
       return;
     }
-    handler(new root.readType(data), function(err, response) {
+    var msg = data instanceof root.readType ? data : new root.readType(data);
+    handler(msg, function(err, response) {
       if (err) {
         if (err instanceof Error) {
           root.abort(tag, err.code || PB.StatusCode.UNKNOWN, err.message);
@@ -24,7 +25,8 @@ PB.ServerUnaryMethodHolder {
           root.abort(tag, PB.StatusCode.UNKNOWN, err);
         }
       } else {
-        root.respond(tag, new root.writeType(response)._raw);
+        var msg = response instanceof root.writeType ? response : new root.writeType(response);
+        root.respond(tag, msg._raw);
       }
     });
   }
