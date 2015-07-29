@@ -22,6 +22,7 @@ ReaderCallData::ReaderCallData(
     context_.set_deadline(std::chrono::system_clock::now() +
                           std::chrono::milliseconds(timeout));
   }
+  std::lock_guard<std::mutex> lock(mutex_);
   reader_.reset(new grpc::ClientAsyncReader<google::protobuf::Message>(
       channel_, cq_, method_->raw(), &context_, *request_, this));
 }
@@ -31,6 +32,9 @@ ReaderCallData::~ReaderCallData() {
 
 void ReaderCallData::process(bool ok) {
   if (status_ == Status::WRITE) {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+    }
     if (!ok) {
       method_->unknownError(tag_, "Failed to send request.");
       // TODO: need to call Finish or not ?

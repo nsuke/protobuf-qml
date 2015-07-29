@@ -46,6 +46,7 @@ private:
   std::shared_ptr<google::protobuf::Message> response_;
   grpc::Status grpc_status_;
   std::unique_ptr<grpc::ClientAsyncReader<google::protobuf::Message>> reader_;
+  std::mutex mutex_;
 };
 
 class ReaderMethod : public ::protobuf::qml::ReaderMethod {
