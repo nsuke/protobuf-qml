@@ -30,11 +30,11 @@ public:
 
 private:
   enum class Status {
-    INIT,
+    READ,
     DONE,
   };
 
-  Status status_ = Status::INIT;
+  Status status_ = Status::READ;
   ::grpc::CompletionQueue* cq_;
   ::grpc::ClientContext context_;
   int tag_;
@@ -44,7 +44,9 @@ private:
   std::unique_ptr<google::protobuf::Message> request_;
   std::shared_ptr<google::protobuf::Message> response_;
   grpc::Status grpc_status_;
-  grpc::ClientAsyncResponseReader<google::protobuf::Message> reader_;
+  std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Message>>
+      reader_;
+  std::mutex mutex_;
 };
 
 class UnaryMethod : public ::protobuf::qml::UnaryMethod {

@@ -18,12 +18,13 @@ UnaryCallData::UnaryCallData(int tag,
       channel_(channel),
       read_(read),
       request_(std::move(request)),
-      response_(read_->newMessage()),
-      reader_(channel_, cq_, method_->raw(), &context_, *request_) {
+      response_(read_->newMessage()) {
   if (timeout >= 0) {
     context_.set_deadline(std::chrono::system_clock::now() +
                           std::chrono::milliseconds(timeout));
   }
+  reader_.reset(new grpc::ClientAsyncResponseReader<google::protobuf::Message>(
+      channel_, cq_, method_->raw(), &context_, *request_));
   process(true);
 }
 
@@ -31,9 +32,9 @@ UnaryCallData::~UnaryCallData() {
 }
 
 void UnaryCallData::process(bool ok) {
-  if (status_ == Status::INIT) {
+  if (status_ == Status::READ) {
     status_ = Status::DONE;
-    reader_.Finish(response_.get(), &grpc_status_, this);
+    reader_->Finish(response_.get(), &grpc_status_, this);
   } else if (status_ == Status::DONE) {
     if (ok) {
       method_->data(tag_, response_);
