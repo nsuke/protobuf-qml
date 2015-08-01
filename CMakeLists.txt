@@ -16,9 +16,21 @@ endif()
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 find_package(Protobuf REQUIRED)
-find_package(Qt5Core COMPONENTS Private REQUIRED)
-find_package(Qt5Qml COMPONENTS Private REQUIRED)
-find_package(Qt5Quick COMPONENTS Private REQUIRED)
+find_package(GRPC++)
+
+include(CMakeDependentOption)
+option(BUILD_COMPILER_PLUGIN "Build protoc compiler plugin" ON)
+option(BUILD_PROTOBUF "Build Protocol Buffers QML module" ON)
+cmake_dependent_option(BUILD_GRPC "Build gRPC QML module" ON
+  "GRPC++_FOUND" OFF)
+cmake_dependent_option(BUILD_GRPC_TEST_SERVER "Build gRPC test server" ON
+  "GRPC++_FOUND" OFF)
+
+if(BUILD_PROTOBUF OR BUILD_GRPC)
+  find_package(Qt5Core COMPONENTS Private REQUIRED)
+  find_package(Qt5Qml COMPONENTS Private REQUIRED)
+  find_package(Qt5Quick COMPONENTS Private REQUIRED)
+endif()
 
 include_directories(SYSTEM ${PROTOBUF_INCLUDE_DIRS})
 include_directories(compiler)
@@ -28,10 +40,6 @@ include_directories(SYSTEM
 
 set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<CONFIG:Debug>:QT_QML_DEBUG>)
 
-find_package(GRPC++)
-include(CMakeDependentOption)
-cmake_dependent_option(BUILD_GRPC "Build gRPC QML module" ON
-  "GRPC++_FOUND" OFF)
 if(BUILD_GRPC)
   include_directories(SYSTEM ${GRPC++_INCLUDE_DIRS})
 endif()
@@ -82,68 +90,21 @@ endfunction()
 set(PROTOBUF_QML_TARGETS protobuf-qml protoc-gen-qml)
 
 include_directories(lib)
-add_subdirectory(lib/protobuf)
+
+if(BUILD_PROTOBUF)
+  add_subdirectory(lib/protobuf)
+endif()
 
 if(BUILD_GRPC)
   add_subdirectory(lib/grpc)
 endif()
 
-#
-# protobuf compiler plugin for QML/JS
-#
-set(protoc-gen-qml-core_SOURCES
-  compiler/protobuf/qml/util.cpp
-  compiler/protobuf/qml/enum_generator.cpp
-  compiler/protobuf/qml/field_generator.cpp
-  compiler/protobuf/qml/message_generator.cpp
-  compiler/protobuf/qml/oneof_generator.cpp
-  compiler/protobuf/qml/service_generator.cpp
-  compiler/protobuf/qml/qml_generator.cpp
-  compiler/protobuf/qml/compiler_util.cpp)
-option(PROTOBUF_COMPILER_HAS_QT "Allow compiler plugin dependency on Qt" OFF)
-if(NOT PROTOBUF_COMPILER_HAS_QT)
-  list(APPEND protoc-gen-qml-core_SOURCES compiler/protobuf/qml/base64.cpp)
+if(BUILD_COMPILER_PLUGIN)
+  add_subdirectory(compiler)
 endif()
-add_library(protoc-gen-qml-core
-  ${protoc-gen-qml-core_SOURCES})
-target_link_libraries(protoc-gen-qml-core
-  protobuf-qml
-  ${PROTOBUF_PROTOC_LIBRARIES}
-  ${PROTOBUF_LIBRARIES}
-  Qt5::Core)
-
-set(protoc-gen-qml_SOURCES
-  compiler/protobuf/qml/main.cpp)
-add_executable(protoc-gen-qml ${protoc-gen-qml_SOURCES})
-protobuf_qml_target(protoc-gen-qml)
-
-option(PROTOBUF_COMPILER_HAS_QT "Allow compiler plugin dependency on Qt" OFF)
-if(PROTOBUF_COMPILER_HAS_QT)
-  target_compile_definitions(protoc-gen-qml-core PRIVATE PBQML_COMPILER_HAS_QT)
-  target_compile_definitions(protoc-gen-qml PRIVATE PBQML_COMPILER_HAS_QT)
-endif()
-
-target_link_libraries(protoc-gen-qml
-  protoc-gen-qml-core
-  protobuf-qml
-  ${PROTOBUF_PROTOC_LIBRARIES}
-  ${PROTOBUF_LIBRARIES}
-  Qt5::Core)
-if(BUILD_GRPC)
-  target_link_libraries(protoc-gen-qml ${GRPC++_LIBRARIES})
-endif()
-
-#
-# protobuf compiler sample (to run with valgrind)
-#
-add_executable(test-protoc-gen-qml
-  compiler/protobuf/qml/qml_generator_test.cpp)
-protobuf_qml_target(test-protoc-gen-qml)
-target_link_libraries(test-protoc-gen-qml
-  protoc-gen-qml-core)
 
 include(CTest)
-if(BUILD_TESTING)
+if(BUILD_TESTING OR BUILD_GRPC_TEST_SERVER)
   find_package(Qt5QuickTest REQUIRED)
   enable_testing()
   add_subdirectory(test)
