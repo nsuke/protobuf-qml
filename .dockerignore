@@ -1,0 +1,10 @@
+.git
+.vagrant
+*Dockerfile
+docker*
+.dockerignore
+*.swp
+*.swo
+build
+out
+tmp
