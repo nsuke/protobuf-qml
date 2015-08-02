@@ -98,13 +98,15 @@ Item {
         compare(msg2.getStringField3AsArray(), ['42', 'foo', 'bar']);
         compare(msg2.getEnumField3AsArray(), [Test1.Enum2.ENUM_VALUE_2, Test1.Enum2.ENUM_VALUE_4, Test1.Enum2.ENUM_VALUE_3]);
 
-        skip();
+        fuzzyCompare(msg2.getDoubleField3At(0), 442.42, 0.001);
+        fuzzyCompare(msg2.getDoubleField3At(1), -2.42, 0.001);
+        fuzzyCompare(msg2.getDoubleField3At(2), 442.42, 0.001);
+        fuzzyCompare(msg2.getDoubleField3At(3), -2.42, 0.001);
+        fuzzyCompare(msg2.getFloatField3At(0), 442.42, 0.001);
+        fuzzyCompare(msg2.getFloatField3At(1), -2.42, 0.001);
+        fuzzyCompare(msg2.getFloatField3At(2), 442.42, 0.001);
+        fuzzyCompare(msg2.getFloatField3At(3), -2.42, 0.001);
 
-        // TODO: Do fuzzyCompare for array
-        compare(msg2.getDoubleField3AsArray(), [442.42, -2.42, 442.42, -2.42]);
-        compare(msg2.getFloatField3AsArray(), [442.42, -2.42, 442.42, -2.42]);
-
-        // TODO: signed 32+bit value does not work
         compare(msg2.getInt64Field3AsArray(), [442, -999999999992, 442, -999999999992]);
         compare(msg2.getSint64Field3AsArray(), [442, -999999999992, 442, -999999999992]);
         compare(msg2.getSfixed64Field3AsArray(), [442, -999999999992, 442, -999999999992]);

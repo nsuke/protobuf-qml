@@ -474,7 +474,7 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
         v = Primitive::fromInt32(value);
         vs->putIndexed(i, v);
       } else {
-        v = v4->fromVariant(qint64());
+        v = v4->fromVariant(static_cast<qint64>(value));
         vs->putIndexed(i, v);
       }
     }
@@ -487,7 +487,7 @@ ReturnedValue Descriptor::getRepeatedFieldValue(ExecutionEngine* v4,
         v = Primitive::fromUInt32(value);
         vs->putIndexed(i, v);
       } else {
-        v = v4->fromVariant(quint64(ref.GetRepeatedUInt64(msg, field, i)));
+        v = v4->fromVariant(static_cast<quint64>(value));
         vs->putIndexed(i, v);
       }
     }
