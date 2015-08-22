@@ -2,18 +2,18 @@
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 
-#include <fstream>
-#include <sstream>
 #include <cerrno>
 #include <cstdio>
 #include <cstring>
+#include <fcntl.h>
+#include <fstream>
+#include <sstream>
 
 #ifdef _MSC_VER
 #include <io.h>
 #else
 #define O_BINARY 0
 #include <unistd.h>
-#include <fcntl.h>
 #include <linux/stat.h>
 #endif
 
@@ -72,7 +72,11 @@ io::ZeroCopyOutputStream* FileChannel::openOutput(int tag, int hint) {
     // serializeError(tag, "Path is empty");
     return nullptr;
   }
-  constexpr int mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
+#ifdef _MSC_VER
+  constexpr auto mode = _S_IREAD | _S_IWRITE;
+#else
+  constexpr auto mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
+#endif
   file_ = open(cPath(), O_BINARY | O_WRONLY | O_CREAT | O_TRUNC, mode);
   if (file_ <= 0) {
     file_ = 0;

@@ -64,16 +64,18 @@ function(protobuf_generate_qml QML_OUT)
     add_custom_target("protobuf_generate_qml_${FIL_WE}" ALL
       DEPENDS ${ABS_FIL} protoc-gen-qml
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-      --plugin=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/protoc-gen-qml
+      --plugin=protoc-gen-qml=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/protoc-gen-qml${CMAKE_EXECUTABLE_SUFFIX}
       -I ${FIL_DIR}
       --qml_out  ${QML_OUT} ${ABS_FIL})
   endforeach()
 endfunction()
 
-if(CMAKE_VERSION VERSION_LESS 3.1.0)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+if(NOT MSVC)
+  if(CMAKE_VERSION VERSION_LESS 3.1.0)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+  endif()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter")
 endif()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-unused-parameter")
 
 function(PROTOBUF_QML_TARGET TARGET)
   if(NOT CMAKE_VERSION VERSION_LESS 3.1.0)

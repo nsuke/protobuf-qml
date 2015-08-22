@@ -2,6 +2,7 @@
 
 import argparse
 import os
+import platform
 import subprocess
 import sys
 
@@ -9,15 +10,15 @@ import buildenv
 
 
 def main(argv):
+  win = platform.system() == 'Windows'
   p = argparse.ArgumentParser()
-  p.add_argument('--generator', '-G', default='Ninja', help='CMake generator')
+  p.add_argument('--generator', '-G', default='NMake Makefiles' if win else 'Ninja', help='CMake generator')
   p.add_argument('--configuration', '-C', default='Debug', help='CMake build type')
-  p.add_argument('--qt5dir', help='directory that has Qt5<module>/Qt5<module>Config.cmake files')
+  p.add_argument('--qt5dir', '-Q', help='directory that has Qt5<module>/Qt5<module>Config.cmake files')
   p.add_argument('--clang', action='store_true', help='use clang')
   p.add_argument('--cc', help='C compiler')
   p.add_argument('--cxx', help='C++ compiler')
   p.add_argument('--out', '-o', default=buildenv.DEFAULT_OUT, help='build directory path')
-  # p.add_argument('--qt5dir', '-Q', default='/usr/lib/qt5', help='Qt5 directory path')
   args, other_args = p.parse_known_args(argv)
   deps_dir = buildenv.DEFAULT_DEPS
   buildenv.setup_env(deps_dir)

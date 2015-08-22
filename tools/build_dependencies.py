@@ -6,6 +6,7 @@ import json
 import mako.template
 import multiprocessing
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -24,22 +25,32 @@ def concurrency():
 
 
 class BuildConf(object):
-  def __init__(self, cc, cxx, shared, debug):
+  def __init__(self, cc, cxx, shared, debug, jobs=1):
+    self.win = platform.system() == 'Windows'
+    self.make = ['nmake'] if self.win else ['ninja', '-j', '%d' % jobs]
     self.cc = cc
     self.cxx = cxx
     self.shared = shared
     self.debug = debug
-    self.libext = '.so' if shared else '.a'
+    if self.win:
+      self.libprefix = ''
+      self.libext = '.dll' if shared else '.lib'
+      self.execext = '.exe'
+    else:
+      self.libprefix = 'lib'
+      self.libext = '.so' if shared else '.a'
+      self.execext = ''
     self.shared_on = 'ON' if self.shared else 'OFF'
     self.build_type = 'Debug' if self.debug else 'Release'
 
   def cmake_cmd(self, extra_args, cmake_dir='.'):
     cmd = [
       'cmake',
-      '-GNinja',
       '-DBUILD_SHARED_LIBS=' + self.shared_on,
       '-DCMAKE_BUILD_TYPE=' + self.build_type,
     ] + extra_args
+    generator = 'NMake Makefiles' if self.win else 'Ninja'
+    cmd.append('-G' + generator)
     if self.cc:
       cmd.append('-DCMAKE_C_COMPILER=' + self.cc)
     if self.cxx:
@@ -108,6 +119,20 @@ def prepend_common_envpaths(installdir):
 
 
 def download_source_archive(url, arc, path, check_path=None):
+  # work around for extract failures on windows
+  def remove_duplicate(tf):
+    names = set()
+    members = []
+    while True:
+      member = tf.next()
+      if not member:
+        break
+      # skip all non-files and duplicate members
+      if member.isfile() and member.name not in names:
+        names.add(member.name)
+        members.append(member)
+    return members
+
   check_path = check_path or path
   if os.path.exists(arc):
     print('Skip downloading: %s exists.' % arc)
@@ -119,14 +144,18 @@ def download_source_archive(url, arc, path, check_path=None):
       print('Failed to download source archive.')
       raise
     with open(arc, 'wb+') as fp:
-      fp.write(rsp.read())
+      while True:
+        s = rsp.read(65536)
+        if not s:
+          break
+        fp.write(s)
+      rsp.close()
     print('Successfully downloaded soruce archive to [%s].' % arc)
   if os.path.exists(check_path):
     print('Skip extracting: %s exists.' % check_path)
   else:
     print('Extracting archive.')
-    tf = tarfile.open(arc, mode='r|*')
-    tf.extractall(path)
+    tarfile.open(arc, mode='r|*').extractall(path, remove_duplicate(tarfile.open(arc, mode='r|*')))
     print('Successfully extracted to [%s].' % path)
 
 
@@ -137,7 +166,7 @@ def download_from_github(cwd, user, proj, commit, check_path=None):
   download_source_archive(url, arc, os.path.dirname(arc), check_path)
 
 
-def build_protobuf3(wd, installdir, jobs, conf):
+def build_protobuf3(wd, installdir, conf):
   # version = 'v3.0.0-alpha-3'
   # repodir = os.path.join(wd, 'protobuf-%s' % version)
   # # archive for protobuf tag does not have 'v' prefix
@@ -147,15 +176,19 @@ def build_protobuf3(wd, installdir, jobs, conf):
   repodir = os.path.join(wd, 'protobuf-%s' % version)
   download_from_github(wd, 'google', 'protobuf', version)
 
+  if conf.win:
+    cxxflags = '-DCMAKE_CXX_FLAGS=-DLANG_CXX11 -EHsc'
+  else:
+    cxxflags = '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11 -DLANG_CXX11'
   cmake_cmd = conf.cmake_cmd([
     '-DBUILD_TESTING=OFF',
-    '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11 -DLANG_CXX11',
+    cxxflags,
   ], 'cmake')
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
-    # (['ninja', '-C%s' % repodir, 'clean'], {}),
-    (['ninja', '-j%s' % jobs, '-C%s' % repodir], {}),
+    # (conf.make + ['clean'], {'cwd': repodir}),
+    (conf.make, {'cwd': repodir}),
   ]
   if execute_tasks(workflow):
     shutil.copy(os.path.join(repodir, 'LICENSE'), os.path.join(installdir, 'LICENSE-protobuf'))
@@ -164,32 +197,65 @@ def build_protobuf3(wd, installdir, jobs, conf):
     if os.path.exists(dst_include_dir):
       shutil.rmtree(dst_include_dir)
     shutil.copytree(src_include_dir, dst_include_dir)
-    shutil.copy(os.path.join(repodir, 'protoc'), os.path.join(installdir, 'bin'))
+    shutil.copy(os.path.join(repodir, 'protoc%s' % conf.execext), os.path.join(installdir, 'bin'))
     shutil.copy(os.path.join(repodir, 'libprotoc%s' % conf.libext), os.path.join(installdir, 'lib'))
     shutil.copy(os.path.join(repodir, 'libprotobuf%s' % conf.libext), os.path.join(installdir, 'lib'))
     return True
 
 
-def prepare_boringssl(wd):
-  version = '2357'
+def build_zlib(wd, installdir, conf):
+  version = '1.2.8'
+  extract_dir = os.path.join(wd, 'v' + version)
+  archive = extract_dir + '.tar.gz'
+  url = 'https://github.com/madler/zlib/archive/v%s.tar.gz' % version
+  download_source_archive(url, archive, extract_dir)
+
+  repodir = os.path.join(extract_dir, 'zlib-' + version)
+  workflow = [
+    (conf.make + [
+      '-f',
+      'win32/Makefile.msc',
+      'AS=ml64',
+      'LOC=-DASMV -DASMINF -I.',
+      'OBJA=inffasx64.obj gvmat64.obj inffas8664.obj',
+    ], {'cwd': repodir}),
+  ]
+  if execute_tasks(workflow):
+    for f in glob.iglob(os.path.join(repodir, '*.h')):
+      shutil.copy(f, os.path.join(installdir, 'include'))
+    for f in glob.iglob(os.path.join(repodir, '*.lib')):
+      shutil.copy(f, os.path.join(installdir, 'lib'))
+    for f in glob.iglob(os.path.join(repodir, '*.dll')):
+      shutil.copy(f, os.path.join(installdir, 'lib'))
+    return True
+
+
+def prepare_boringssl(wd, conf):
+  version = '685402fadd8e90f1cd70ded7f7590600128d7d89'
   repodir = os.path.join(wd, version)
   archive = repodir + '.tar.gz'
   url = 'https://boringssl.googlesource.com/boringssl/+archive/%s.tar.gz' % version
   download_source_archive(url, archive, repodir)
-  # Ignore harmless warning for clang
-  subprocess.call(['sed', '-i', 's/-Werror//g', os.path.join(repodir, 'CMakeLists.txt')])
+  if conf.win:
+    subprocess.call(['sed', '-i', 's/-WX//g', os.path.join(repodir, 'CMakeLists.txt')])
+  else:
+    subprocess.call(['sed', '-i', 's/-Werror//g', os.path.join(repodir, 'CMakeLists.txt')])
   return version
 
 
-def build_boringssl(wd, installdir, jobs, conf):
-  version = prepare_boringssl(wd)
+def build_boringssl(wd, installdir, conf):
+  version = prepare_boringssl(wd, conf)
   repodir = os.path.join(wd, str(version))
-  cmake_cmd = conf.cmake_cmd(['-DCMAKE_C_FLAGS=-fPIC'])
+  if conf.win:
+    cmake_args = []
+  else:
+    cmake_args = ['-DCMAKE_C_FLAGS=-fPIC']
+  cmake_cmd = conf.cmake_cmd(cmake_args)
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
-    # (['ninja', '-C%s' % repodir, 'clean'], {}),
-    (['ninja', '-j%s' % jobs, '-C%s' % repodir], {}),
+    # (conf.make + ['clean'], {'cwd': repodir}),
+    (conf.make, {'cwd': repodir}),
   ]
   if execute_tasks(workflow):
     src_include_dir = os.path.join(repodir, 'include', 'openssl')
@@ -197,8 +263,10 @@ def build_boringssl(wd, installdir, jobs, conf):
     if os.path.exists(dst_include_dir):
       shutil.rmtree(dst_include_dir)
     shutil.copytree(src_include_dir, dst_include_dir)
-    shutil.copy(os.path.join(repodir, 'ssl', 'libssl%s' % conf.libext), os.path.join(installdir, 'lib'))
-    shutil.copy(os.path.join(repodir, 'crypto', 'libcrypto%s' % conf.libext), os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'ssl', '%sssl%s' % (conf.libprefix, conf.libext)),
+                os.path.join(installdir, 'lib'))
+    shutil.copy(os.path.join(repodir, 'crypto', '%scrypto%s' % (conf.libprefix, conf.libext)),
+                os.path.join(installdir, 'lib'))
     return True
 
 
@@ -211,7 +279,7 @@ class GrpcTarget(object):
     self.secure = secure
 
 
-def build_grpc(wd, installdir, jobs, conf):
+def build_grpc(wd, installdir, conf):
   def find_in_json(arr, name):
     for elem in arr:
       if elem['name'] == name:
@@ -248,26 +316,25 @@ def build_grpc(wd, installdir, jobs, conf):
   collect_grpc_targets(acc, dic, 'grpc++')
   collect_grpc_targets(acc, dic, 'grpc_cpp_plugin', True)
 
-  boringssl_dir = prepare_boringssl(wd)
-
   cmake_template = os.path.join(buildenv.ROOT_DIR, 'tools', 'CMakeLists.txt.grpc.template')
   cmake_out = os.path.join(repodir, 'CMakeLists.txt')
   with open(cmake_out, 'w+') as fp:
-    fp.write(mako.template.Template(filename=cmake_template).render(boringssl_dir=boringssl_dir, **acc))
+    fp.write(mako.template.Template(filename=cmake_template).render(**acc))
 
-  cmake_cmd = conf.cmake_cmd([
-    '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11',
+  cmake_args = [
     '-DCMAKE_PREFIX_PATH=%s' % installdir,
-  ])
+  ]
+  if not conf.win:
+    cmake_args.append('-DCMAKE_CXX_FLAGS=-fPIC -std=c++11')
+  cmake_cmd = conf.cmake_cmd(cmake_args)
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
-    # (['ninja', '-C%s' % repodir, 'clean'], {}),
-    (['ninja', '-j%s' % jobs, '-C%s' % repodir], {}),
+    # (conf.make + ['clean'], {'cwd': repodir}),
+    (conf.make, {'cwd': repodir}),
   ]
   if execute_tasks(workflow):
     include_dirs = [
-      (os.path.join(wd, boringssl_dir), 'openssl'),
       (repodir, 'grpc'),
       (repodir, 'grpc++'),
     ]
@@ -278,15 +345,13 @@ def build_grpc(wd, installdir, jobs, conf):
         shutil.rmtree(dst_include_dir)
       shutil.copytree(src_include_dir, dst_include_dir)
     libs = [
-      os.path.join('openssl', 'ssl', 'libssl%s' % conf.libext),
-      os.path.join('openssl', 'crypto', 'libcrypto%s' % conf.libext),
-      'libgpr%s' % conf.libext,
-      'libgrpc%s' % conf.libext,
-      'libgrpc++%s' % conf.libext,
+      '%sgpr%s' % (conf.libprefix, conf.libext),
+      '%sgrpc%s' % (conf.libprefix, conf.libext),
+      '%sgrpc++%s' % (conf.libprefix, conf.libext),
     ]
     for lib in libs:
       shutil.copy(os.path.join(repodir, lib), os.path.join(installdir, 'lib'))
-    shutil.copy(os.path.join(repodir, 'grpc_cpp_plugin'), os.path.join(installdir, 'bin'))
+    shutil.copy(os.path.join(repodir, 'grpc_cpp_plugin%s' % conf.execext), os.path.join(installdir, 'bin'))
     return True
 
 
@@ -295,7 +360,7 @@ def main(argv):
   p.add_argument('--debug', action='store_true', help='build with debug symbols')
   p.add_argument('--shared', action='store_true', help='build shared libraries')
   p.add_argument('--clean', action='store_true', help='cleanup intermediate directory')
-  p.add_argument('--jobs', '-j', type=int, default=concurrency())
+  p.add_argument('--jobs', '-j', type=int, default=concurrency(), help='number of concurrent compilation jobs (no effect on Windows)')
   p.add_argument('--clang', action='store_true', help='use clang')
   p.add_argument('--cc', help='C compiler')
   p.add_argument('--cxx', help='C++ compiler')
@@ -305,7 +370,7 @@ def main(argv):
 
   cc = args.cc or (args.clang and 'clang')
   cxx = args.cxx or (args.clang and 'clang++')
-  conf = BuildConf(cc, cxx, args.shared, args.debug)
+  conf = BuildConf(cc, cxx, args.shared, args.debug, args.jobs)
 
   buildenv.setup_env(args.out)
   installdir = args.out
@@ -328,9 +393,13 @@ def main(argv):
       return
 
     prepend_common_envpaths(installdir)
-    if not build_protobuf3(wd, installdir, args.jobs, conf):
+    if conf.win and not build_zlib(wd, installdir, conf):
       return -1
-    if not build_grpc(wd, installdir, args.jobs, conf):
+    if not build_protobuf3(wd, installdir, conf):
+      return -1
+    if not build_boringssl(wd, installdir, conf):
+      return -1
+    if not build_grpc(wd, installdir, conf):
       return -1
     return 0
   except:

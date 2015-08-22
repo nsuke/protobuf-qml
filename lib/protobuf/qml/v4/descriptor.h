@@ -1,6 +1,7 @@
 #ifndef PROTOBUF_QML_V4_DESCRIPTOR_H
 #define PROTOBUF_QML_V4_DESCRIPTOR_H
 
+#include "protobuf/qml/common.h"
 #include <google/protobuf/descriptor.h>
 #include <google/protobuf/message.h>
 #include <google/protobuf/dynamic_message.h>
@@ -12,7 +13,7 @@
 namespace protobuf {
 namespace qml {
 
-class Descriptor : public QObject {
+class PROTOBUF_QML_DLLEXPORT Descriptor : public QObject {
   Q_OBJECT
 
 public:

@@ -46,6 +46,23 @@ find_library(GRPCXX_LIBRARY
   PATHS ${GRPC_ROOT}/lib)
 mark_as_advanced(GRPCXX_LIBRARY)
 
+if(MSVC)
+  find_library(SSL_LIBRARY
+    NAMES ssl
+    PATHS ${GRPC_ROOT}/lib)
+  mark_as_advanced(SSL_LIBRARY)
+
+  find_library(CRYPTO_LIBRARY
+    NAMES crypto
+    PATHS ${GRPC_ROOT}/lib)
+  mark_as_advanced(CRYPTO_LIBRARY)
+
+  find_library(Z_LIBRARY
+    NAMES zlib
+    PATHS ${GRPC_ROOT}/lib)
+  mark_as_advanced(Z_LIBRARY)
+endif()
+
 find_program(GRPCXX_PLUGIN_EXECUTABLE
   NAMES grpc_cpp_plugin
   PATHS ${GRPC_ROOT}/bin)
@@ -57,5 +74,9 @@ find_package_handle_standard_args(GRPC++ DEFAULT_MSG
 if(GRPC++_FOUND)
   set(GRPC++_INCLUDE_DIRS ${GRPC_INCLUDE_DIR})
   set(GRPC++_INCLUDE_DIRS ${GRPC_INCLUDE_DIR})
-  set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY})
+  if(MSVC)
+    set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY} ${SSL_LIBRARY} ${CRYPTO_LIBRARY} ${Z_LIBRARY} ws2_32)
+  else()
+    set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY})
+  endif()
 endif()

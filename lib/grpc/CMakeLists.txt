@@ -20,9 +20,11 @@ set(grpc-qml_SOURCES
 add_library(grpc-qml SHARED ${grpc-qml_SOURCES})
 protobuf_qml_target(grpc-qml)
 
+target_compile_definitions(grpc-qml PRIVATE GRPC_QML_EXPORT)
 set_target_properties(
   grpc-qml
   PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Grpc
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Grpc)
 
 target_link_libraries(grpc-qml

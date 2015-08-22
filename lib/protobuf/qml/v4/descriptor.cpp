@@ -9,12 +9,15 @@
 #include <private/qv4variantobject_p.h>
 
 using namespace QV4;
-using namespace ::google::protobuf;
+// using namespace ::google::protobuf;
+using ::google::protobuf::FieldDescriptor;
+using ::google::protobuf::Message;
+using ::google::protobuf::Reflection;
 
 namespace protobuf {
 namespace qml {
 
-typedef uint32_t OneofIndex;
+typedef int32_t OneofIndex;
 
 void Descriptor::serialize(QQmlV4Function* args) {
   if (!descriptor_) {
@@ -189,8 +192,7 @@ bool Descriptor::jsValueToMessage(ExecutionEngine* v4,
   }
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
-  size_t field_count = descriptor->field_count();
-  for (size_t i = 0; i < field_count && i < field_values->getLength(); ++i) {
+  for (int i = 0; i < descriptor->field_count() && i < static_cast<int>(field_values->getLength()); ++i) {
     auto field = descriptor->field(i);
     auto oneof = field->containing_oneof();
     if (oneof) {
@@ -555,7 +557,7 @@ void Descriptor::setFieldValue(ExecutionEngine* v4,
     } else {
       auto var = v4->toVariant(v, 0, false);
       Q_ASSERT(var.isValid());
-      ref.SetInt64(&msg, field, static_cast<int64>(var.value<qint64>()));
+      ref.SetInt64(&msg, field, static_cast<int64_t>(var.value<qint64>()));
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_UINT32) {
     ref.SetUInt32(&msg, field, v->toUInt32());
@@ -565,7 +567,7 @@ void Descriptor::setFieldValue(ExecutionEngine* v4,
     } else {
       auto var = v4->toVariant(v, 0, false);
       Q_ASSERT(var.isValid());
-      ref.SetUInt64(&msg, field, static_cast<uint64>(var.value<quint64>()));
+      ref.SetUInt64(&msg, field, static_cast<uint64_t>(var.value<quint64>()));
     }
   } else if (field->cpp_type() == FieldDescriptor::CPPTYPE_DOUBLE) {
     ref.SetDouble(&msg, field, v->toNumber());
@@ -626,7 +628,7 @@ bool setRepeatedNumber(ExecutionEngine* v4,
   if (list) {
     auto size = list->getLength();
     ScopedValue v(scope);
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < static_cast<int>(size); i++) {
       v = list->getIndexed(i);
       if (!v->isNullOrUndefined()) {
         if (T::canConvert(*v)) {
@@ -655,7 +657,7 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
     auto size = list->getLength();
     ScopedValue v(scope);
     Scoped<ArrayBuffer> array(scope);
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < static_cast<int>(size); i++) {
       array = list->getIndexed(i);
       if (array) {
         ref.AddString(&msg, field, array->asByteArray().toStdString());
@@ -672,7 +674,7 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
     if (!list) return;
     auto size = list->getLength();
     ScopedString v(scope);
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < static_cast<int>(size); i++) {
       v = list->getIndexed(i);
       if (!v->isNullOrUndefined())
         ref.AddString(&msg, field, v->toQString().toStdString());
@@ -682,7 +684,7 @@ void Descriptor::setRepeatedFieldValue(ExecutionEngine* v4,
     if (!list) return;
     auto size = list->getLength();
     ScopedArrayObject v(scope);
-    for (size_t i = 0; i < size; i++) {
+    for (int i = 0; i < static_cast<int>(size); i++) {
       v = list->getIndexed(i);
       if (!v->isNullOrUndefined())
         jsValueToMessage(v4, *v, *ref.AddMessage(&msg, field));

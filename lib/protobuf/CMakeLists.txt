@@ -15,6 +15,7 @@ set(protobuf-qml-core_SOURCES
 add_library(protobuf-qml-core SHARED ${protobuf-qml-core_SOURCES})
 protobuf_qml_target(protobuf-qml-core)
 
+target_compile_definitions(protobuf-qml-core PRIVATE PROTOBUF_QML_EXPORT)
 set_target_properties(
   protobuf-qml-core
   PROPERTIES
@@ -36,9 +37,8 @@ protobuf_qml_target(protobuf-qml)
 set_target_properties(
   protobuf-qml
   PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Protobuf)
-
-target_compile_definitions(protobuf-qml PRIVATE -DPROTOBUF_QML_EXPORT)
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/Protobuf
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/Protobuf)
 
 target_link_libraries(protobuf-qml
   protobuf-qml-core

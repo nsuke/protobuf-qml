@@ -3,13 +3,22 @@ project(grpc)
 
 find_package(Protobuf REQUIRED)
 
-include_directories(. include ${'${PROTOBUF_INCLUDE_DIRS}'} ../${boringssl_dir}/include)
+find_path(OPENSSL_INCLUDE_DIR NAMES openssl/ssl.h)
+mark_as_advanced(OPENSSL_INCLUDE_DIR)
+
+find_library(OPENSSL_SSL_LIBRARY NAMES ssl)
+mark_as_advanced(OPENSSL_SSL_LIBRARY)
+
+find_library(OPENSSL_CRYPTO_LIBRARY NAMES crypto)
+mark_as_advanced(OPENSSL_CRYPTO_LIBRARY)
+
+include_directories(. include ${'$'}{PROTOBUF_INCLUDE_DIRS} ${'$'}{OPENSSL_INCLUDE_DIR})
 
 <%!
 def get_deps(target):
   deps = []
   if target.secure:
-    deps.extend(['ssl', 'crypto'])
+    deps.extend(['${OPENSSL_SSL_LIBRARY}', '${OPENSSL_CRYPTO_LIBRARY}'])
   if target.build == 'protoc':
     deps.append('${PROTOBUF_PROTOC_LIBRARIES}')
     deps.append('${PROTOBUF_LIBRARIES}')
@@ -32,7 +41,6 @@ ${cc_binary(tgt)}
 if(${"${CMAKE_C_COMPILER_ID}"} STREQUAL "Clang")
   set(CMAKE_C_FLAGS "${'${CMAKE_C_FLAGS}'} -Wno-tautological-compare -Wno-unused-value")
 endif()
-add_subdirectory(../${boringssl_dir} openssl)
 
 <%def name='cc_library(lib)'>
 add_library(${lib.name}
