@@ -187,7 +187,7 @@ def build_protobuf3(wd, installdir, conf):
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
-    # (conf.make + ['clean'], {'cwd': repodir}),
+    (conf.make + ['clean'], {'cwd': repodir}),
     (conf.make, {'cwd': repodir}),
   ]
   if execute_tasks(workflow):
@@ -254,7 +254,7 @@ def build_boringssl(wd, installdir, conf):
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
-    # (conf.make + ['clean'], {'cwd': repodir}),
+    (conf.make + ['clean'], {'cwd': repodir}),
     (conf.make, {'cwd': repodir}),
   ]
   if execute_tasks(workflow):
@@ -330,7 +330,7 @@ def build_grpc(wd, installdir, conf):
 
   workflow = [
     (cmake_cmd, {'cwd': repodir}),
-    # (conf.make + ['clean'], {'cwd': repodir}),
+    (conf.make + ['clean'], {'cwd': repodir}),
     (conf.make, {'cwd': repodir}),
   ]
   if execute_tasks(workflow):
@@ -355,25 +355,9 @@ def build_grpc(wd, installdir, conf):
     return True
 
 
-def main(argv):
-  p = argparse.ArgumentParser()
-  p.add_argument('--debug', action='store_true', help='build with debug symbols')
-  p.add_argument('--shared', action='store_true', help='build shared libraries')
-  p.add_argument('--clean', action='store_true', help='cleanup intermediate directory')
-  p.add_argument('--jobs', '-j', type=int, default=concurrency(), help='number of concurrent compilation jobs (no effect on Windows)')
-  p.add_argument('--clang', action='store_true', help='use clang')
-  p.add_argument('--cc', help='C compiler')
-  p.add_argument('--cxx', help='C++ compiler')
-  p.add_argument('--out', '-o', default=buildenv.DEFAULT_DEPS,
-                 help='installation root path for dependencies')
-  args = p.parse_args(argv)
-
-  cc = args.cc or (args.clang and 'clang')
-  cxx = args.cxx or (args.clang and 'clang++')
-  conf = BuildConf(cc, cxx, args.shared, args.debug, args.jobs)
-
-  buildenv.setup_env(args.out)
-  installdir = args.out
+def build(conf, installdir, clean):
+  buildenv.setup_env(installdir)
+  installdir = installdir
   if not os.path.exists(installdir):
     os.makedirs(installdir)
     os.makedirs(os.path.join(installdir, 'bin'))
@@ -384,13 +368,13 @@ def main(argv):
     if not os.path.exists(wd):
       os.makedirs(wd)
 
-    if args.clean:
+    if clean:
       for e in os.listdir(wd):
         p = os.path.join(wd, e)
         if os.path.isdir(p):
           print('Removing temporary directory: ' + p)
           shutil.rmtree(p)
-      return
+      return 0
 
     prepend_common_envpaths(installdir)
     if conf.win and not build_zlib(wd, installdir, conf):
@@ -405,6 +389,29 @@ def main(argv):
   except:
     print('ERROR')
     raise
+
+
+def main(argv):
+  p = argparse.ArgumentParser()
+  p.add_argument('--shared', action='store_true', help='build shared libraries')
+  p.add_argument('--clean', action='store_true', help='cleanup intermediate directory')
+  p.add_argument('--jobs', '-j', type=int, default=concurrency(), help='number of concurrent compilation jobs (no effect on Windows)')
+  p.add_argument('--clang', action='store_true', help='use clang')
+  p.add_argument('--cc', help='C compiler')
+  p.add_argument('--cxx', help='C++ compiler')
+  p.add_argument('--out', '-o', default=buildenv.DEFAULT_DEPS,
+                 help='installation root path for dependencies')
+  args = p.parse_args(argv)
+
+  cc = args.cc or (args.clang and 'clang')
+  cxx = args.cxx or (args.clang and 'clang++')
+  conf = BuildConf(cc, cxx, args.shared, False, args.jobs)
+  res = build(conf, os.path.join(args.out, 'Release'), args.clean)
+  if res != 0:
+    return res
+  conf.debug = True
+  return build(conf, os.path.join(args.out, 'Debug'), args.clean)
+
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[1:]))

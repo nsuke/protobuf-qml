@@ -34,10 +34,10 @@ For example, if you are on Ubuntu 14.04, installation looks like following:
 
 ## Build
 ```
-$ source ./tools/setup_env.sh
 $ ./tools/build_dependencies.py --shared
 $ ./tools/bootstrap.py
-$ ninja -C out
+$ source ./tools/setup_env.sh
+$ ninja -C out/Release
 ```
 ## Install
 
@@ -51,7 +51,7 @@ Put *build/deps/bin/protoc* to a directory included to *PATH* environment variab
 
 #### Runtime libraries
 
-Tell OS where to find libraries. One way to do it is:
+Tell OS where to find libraries. One way to do this is:
 
 ```
 $ export LD_LIBRARY_PATH=$(pwd)/build/deps/lib
@@ -59,11 +59,11 @@ $ export LD_LIBRARY_PATH=$(pwd)/build/deps/lib
 
 ### Compiler plugin
 
-Put *out/bin/protoc-gen-qml* file to a directory included to *PATH* environment variable.
+Put *out/Release/bin/protoc-gen-qml* file to a directory included to *PATH* environment variable.
 
 ### QML module
 
-Put *out/bin/Protobuf* and *out/bin/Grpc* directory to the directory where your QML app executable resides (directly without "out/bin" parent directories).
+Put *out/Release/bin/Protobuf* and *out/Release/bin/Grpc* directory to the directory where your QML app executable resides (directly without "out/Release/bin" parent directories).
 
 ```
 --- my_qml_app

@@ -3,11 +3,17 @@
 # source this to setup envvars needed to build and run artifacts
 #
 
-DEPS_DIR=$1
+CONFIGURATION=$1
+DEPS_DIR=$2
+
+if [ -z $CONFIGURATION ] ; then
+  CUR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+  CONFIGURATION=Release
+fi
 
 if [ -z $DEPS_DIR ] ; then
   CUR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-  DEPS_DIR=$CUR/../build/deps
+  DEPS_DIR=$CUR/../build/deps/$CONFIGURATION
 fi
 
 export PATH=$DEPS_DIR/bin:$PATH

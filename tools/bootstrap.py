@@ -9,28 +9,17 @@ import sys
 import buildenv
 
 
-def main(argv):
-  win = platform.system() == 'Windows'
-  p = argparse.ArgumentParser()
-  p.add_argument('--generator', '-G', default='NMake Makefiles' if win else 'Ninja', help='CMake generator')
-  p.add_argument('--configuration', '-C', default='Debug', help='CMake build type')
-  p.add_argument('--qt5dir', '-Q', help='directory that has Qt5<module>/Qt5<module>Config.cmake files')
-  p.add_argument('--clang', action='store_true', help='use clang')
-  p.add_argument('--cc', help='C compiler')
-  p.add_argument('--cxx', help='C++ compiler')
-  p.add_argument('--out', '-o', default=buildenv.DEFAULT_OUT, help='build directory path')
-  args, other_args = p.parse_known_args(argv)
-  deps_dir = buildenv.DEFAULT_DEPS
+def build(configuration, out, args, cmake_args):
+  deps_dir = os.path.join(buildenv.DEFAULT_DEPS, configuration)
   buildenv.setup_env(deps_dir)
-
-  if not os.path.exists(args.out):
-    os.makedirs(args.out)
+  if not os.path.exists(out):
+    os.makedirs(out)
 
   cmd = [
     'cmake',
     '-G%s' % args.generator,
-    '-DCMAKE_BUILD_TYPE=%s' % args.configuration,
-    '-DCMAKE_BUILD_TYPE=%s' % args.configuration,
+    '-DCMAKE_BUILD_TYPE=%s' % configuration,
+    '-DCMAKE_BUILD_TYPE=%s' % configuration,
     '-DCMAKE_PREFIX_PATH=%s' % deps_dir,
     # '-DPROTOBUF_PROTOC_LIBRARY=%s/lib/libprotoc.so' % deps_dir,
     # '-DPROTOBUF_PROTOC_LIBRARY_DEBUG=%s/lib/libprotoc.so' % deps_dir,
@@ -56,10 +45,27 @@ def main(argv):
   if cxx:
     cmd.append('-DCMAKE_CXX_COMPILER=' + cxx)
 
-  cmd.extend(other_args)
+  cmd.extend(cmake_args)
   cmd.append(buildenv.ROOT_DIR)
 
-  return subprocess.call(cmd, cwd=args.out)
+  print('Invoking cmake command: %s' % ' '.join(cmd))
+  return subprocess.call(cmd, cwd=out)
+
+
+def main(argv):
+  win = platform.system() == 'Windows'
+  p = argparse.ArgumentParser()
+  p.add_argument('--generator', '-G', default='NMake Makefiles' if win else 'Ninja', help='CMake generator')
+  p.add_argument('--qt5dir', '-Q', help='directory that has Qt5<module>/Qt5<module>Config.cmake files')
+  p.add_argument('--clang', action='store_true', help='use clang')
+  p.add_argument('--cc', help='C compiler')
+  p.add_argument('--cxx', help='C++ compiler')
+  p.add_argument('--out', '-o', default=buildenv.DEFAULT_OUT, help='build directory path')
+  args, cmake_args = p.parse_known_args(argv)
+
+  build('Debug', os.path.join(args.out, 'Debug'), args, cmake_args)
+  build('Release', os.path.join(args.out, 'Release'), args, cmake_args)
+
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[1:]))
