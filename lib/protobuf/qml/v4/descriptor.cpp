@@ -198,7 +198,7 @@ bool Descriptor::jsValueToMessage(ExecutionEngine* v4,
     if (oneof) {
       OneofIndex oneof_case;
       if (!typed_get_indexed(oneof_cases, oneof->index(), &oneof_case) ||
-          oneof_case != static_cast<size_t>(field->number())) {
+          oneof_case != field->number()) {
         continue;
       }
     }
