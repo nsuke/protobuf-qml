@@ -6,7 +6,7 @@ TBD: Windows
 ## Install dependencies
 #### Libraries
 * Qt 5.5.0 or later
-* Protocol Buffers 3.0 alpha-3.1 or later (Automatically built)
+* Protocol Buffers 3.0 beta-1 or later (Automatically built)
 * gRPC (Automatically built)
 * zlib
 

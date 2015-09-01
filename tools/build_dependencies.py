@@ -172,9 +172,10 @@ def build_protobuf3(wd, installdir, conf):
   # # archive for protobuf tag does not have 'v' prefix
   # download_from_github(wd, 'google', 'protobuf', version, 'protobuf-3.0.0-alpha-3')
 
-  version = '43dcbbfec7e906ede3d383a0139a05ff8a03481f'
-  repodir = os.path.join(wd, 'protobuf-%s' % version)
-  download_from_github(wd, 'google', 'protobuf', version)
+  path = '3.0.0-beta-1'
+  version = 'v' + path
+  repodir = os.path.join(wd, 'protobuf-%s' % path)
+  download_from_github(wd, 'google', 'protobuf', version, path)
 
   if conf.win:
     cxxflags = '-DCMAKE_CXX_FLAGS=-DLANG_CXX11 -EHsc'
