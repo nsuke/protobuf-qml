@@ -55,19 +55,23 @@ function(copy TAG DEST)
   endforeach()
 endfunction()
 
-function(protobuf_generate_qml QML_OUT)
+function(protobuf_generate_lang PB_LANG PB_OUT)
   foreach(FIL ${ARGN})
     get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
     get_filename_component(FIL_WE ${FIL} NAME_WE)
     get_filename_component(FIL_DIR ${FIL} DIRECTORY)
 
-    add_custom_target("protobuf_generate_qml_${FIL_WE}" ALL
+    add_custom_target("protobuf_generate_${PB_LANG}_${FIL_WE}" ALL
       DEPENDS ${ABS_FIL} protoc-gen-qml
       COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
       --plugin=protoc-gen-qml=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/protoc-gen-qml${CMAKE_EXECUTABLE_SUFFIX}
       -I ${FIL_DIR}
-      --qml_out  ${QML_OUT} ${ABS_FIL})
+      --${PB_LANG}_out  ${PB_OUT} ${ABS_FIL})
   endforeach()
+endfunction()
+
+function(protobuf_generate_qml)
+  protobuf_generate_lang(qml ${ARGV})
 endfunction()
 
 if(NOT MSVC)

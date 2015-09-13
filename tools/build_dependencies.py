@@ -170,13 +170,10 @@ def download_from_github(cwd, user, proj, commit, check_path=None):
 
 
 def build_protobuf3(wd, installdir, conf):
-  # version = 'v3.0.0-alpha-3'
-  # repodir = os.path.join(wd, 'protobuf-%s' % version)
-  # # archive for protobuf tag does not have 'v' prefix
-  # download_from_github(wd, 'google', 'protobuf', version, 'protobuf-3.0.0-alpha-3')
-
-  path = '3.0.0-beta-1'
-  version = 'v' + path
+  path = 'e61ff47ac30f7ce7b06d789f18439d5142ac8c97'
+  # Need to prefix 'v' when downloading from tags
+  # version = 'v' + path
+  version = path
   repodir = os.path.join(wd, 'protobuf-%s' % path)
   download_from_github(wd, 'google', 'protobuf', version, path)
 
@@ -193,6 +190,10 @@ def build_protobuf3(wd, installdir, conf):
     (cmake_cmd, {'cwd': repodir}),
     (conf.make + ['clean'], {'cwd': repodir}),
     (conf.make, {'cwd': repodir}),
+    ([sys.executable, 'setup.py', 'build'], {
+      'cwd': os.path.join(repodir, 'python'),
+      'env': {'PROTOC': os.path.join(repodir, 'protoc')},
+    }),
   ]
   if execute_tasks(workflow):
     shutil.copy(os.path.join(repodir, 'LICENSE'), os.path.join(installdir, 'LICENSE-protobuf'))
@@ -200,7 +201,15 @@ def build_protobuf3(wd, installdir, conf):
     dst_include_dir = os.path.join(installdir, 'include', 'google')
     if os.path.exists(dst_include_dir):
       shutil.rmtree(dst_include_dir)
+    dst_pylib = os.path.join(installdir, 'pylib', 'google')
+    if os.path.exists(dst_pylib):
+      shutil.rmtree(dst_pylib)
+    pylib = os.path.join(repodir, 'python', 'build', 'lib', 'google')
+    if not os.path.exists(pylib):
+      # workaround for ubuntu
+      pylib = os.path.join(repodir, 'python', 'build', 'lib.linux-x86_64-2.7', 'google')
     shutil.copytree(src_include_dir, dst_include_dir)
+    shutil.copytree(pylib, dst_pylib)
     shutil.copy(os.path.join(repodir, 'protoc%s' % conf.execext), os.path.join(installdir, 'bin'))
     shutil.copy(os.path.join(repodir, 'libprotoc%s' % conf.libext), os.path.join(installdir, 'lib'))
     shutil.copy(os.path.join(repodir, 'libprotobuf%s' % conf.libext), os.path.join(installdir, 'lib'))
