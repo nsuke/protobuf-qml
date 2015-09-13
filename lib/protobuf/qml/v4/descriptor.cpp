@@ -9,7 +9,6 @@
 #include <private/qv4variantobject_p.h>
 
 using namespace QV4;
-// using namespace ::google::protobuf;
 using ::google::protobuf::FieldDescriptor;
 using ::google::protobuf::Message;
 using ::google::protobuf::Reflection;
@@ -78,32 +77,28 @@ void Descriptor::parse(QQmlV4Function* args) {
 
   if (arg_cb->isNullOrUndefined()) {
     // No callback, do it synchronously
-    const char* data = nullptr;
-    int size = 0;
+    QByteArray ba;
     if (arg_buf) {
-      data = arg_buf->data();
-      size = arg_buf->byteLength();
+      ba = arg_buf->asByteArray();
       // qmlInfo(this) << __func__ << " Got ArrayBuffer " << size << " : "
       // << reinterpret_cast<intptr_t>(data);
     } else {
       ScopedValue o2(scope, (*args)[0]);
       auto var = v4->toVariant(o2, 0, false);
       if (static_cast<QMetaType::Type>(var.type()) == QMetaType::QByteArray) {
-        auto ba = var.value<QByteArray>();
-        qmlInfo(this) << __func__ << " Got QByteArray";
-        data = ba.data();
-        size = ba.size();
+        ba = var.value<QByteArray>();
+        // qmlInfo(this) << __func__ << " Got QByteArray";
       } else {
         qmlInfo(this) << __func__ << " Not a serializable type";
       }
     }
-    if (size <= 0 || !data) {
+    if (ba.isEmpty()) {
       qmlInfo(this) << __func__ << " Nothing to parse";
       return;
     }
     auto msg = defaultMessage();
     Q_ASSERT(msg);
-    if (!msg->ParseFromArray(data, size)) {
+    if (!msg->ParseFromArray(ba.data(), ba.size())) {
       qDebug() << "Failed to parse";
       qmlInfo(this) << __func__ << " Failed to parse";
       return;

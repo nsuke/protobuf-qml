@@ -7,11 +7,19 @@ using namespace QV4;
 namespace protobuf {
 namespace qml {
 
+QQmlContextData* callingQmlContext(ExecutionEngine* v4) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+  return v4->callingQmlContext();
+#else
+  return v4->v8Engine->callingContext();
+#endif
+}
+
 ReturnedValue packCallbackObject(ExecutionEngine* v4, const Value& callback) {
   Scope scope(v4);
   ScopedObject o(scope, v4->newObject());
   ScopedValue ctx(scope, QmlContextWrapper::qmlScope(
-                             scope.engine, v4->v8Engine->callingContext(), 0));
+                             scope.engine, callingQmlContext(v4), 0));
   o->put(ScopedString(scope, v4->newString(QStringLiteral("CallingContext"))),
          ctx);
   ScopedFunctionObject cb(scope, callback);
@@ -41,7 +49,8 @@ std::pair<ReturnedValue, ReturnedValue> unpackCallbackObject(
     qDebug() << "No callback";
     return UNPACK_EMPTY_RESULT;
   }
-  auto contextData = QmlContextWrapper::getContext(ctx);
+  Scoped<QmlContextWrapper> c(scope, *ctx);
+  auto contextData = c->getContext();
   if (!contextData) {
     qDebug() << "Calling context is no longer available";
     return UNPACK_EMPTY_RESULT;
