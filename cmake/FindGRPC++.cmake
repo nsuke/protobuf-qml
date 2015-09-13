@@ -46,17 +46,17 @@ find_library(GRPCXX_LIBRARY
   PATHS ${GRPC_ROOT}/lib)
 mark_as_advanced(GRPCXX_LIBRARY)
 
+find_library(SSL_LIBRARY
+  NAMES ssl
+  PATHS ${GRPC_ROOT}/lib)
+mark_as_advanced(SSL_LIBRARY)
+
+find_library(CRYPTO_LIBRARY
+  NAMES crypto
+  PATHS ${GRPC_ROOT}/lib)
+mark_as_advanced(CRYPTO_LIBRARY)
+
 if(MSVC)
-  find_library(SSL_LIBRARY
-    NAMES ssl
-    PATHS ${GRPC_ROOT}/lib)
-  mark_as_advanced(SSL_LIBRARY)
-
-  find_library(CRYPTO_LIBRARY
-    NAMES crypto
-    PATHS ${GRPC_ROOT}/lib)
-  mark_as_advanced(CRYPTO_LIBRARY)
-
   find_library(Z_LIBRARY
     NAMES zlib
     PATHS ${GRPC_ROOT}/lib)
@@ -77,6 +77,6 @@ if(GRPC++_FOUND)
   if(MSVC)
     set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY} ${SSL_LIBRARY} ${CRYPTO_LIBRARY} ${Z_LIBRARY} ws2_32)
   else()
-    set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY})
+    set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY} ${SSL_LIBRARY} ${CRYPTO_LIBRARY})
   endif()
 endif()

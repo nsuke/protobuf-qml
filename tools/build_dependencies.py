@@ -2,7 +2,6 @@
 
 import argparse
 import glob
-import json
 import mako.template
 import multiprocessing
 import os
@@ -11,8 +10,12 @@ import shutil
 import subprocess
 import sys
 import tarfile
-import urllib2
+import yaml
 from itertools import chain
+try:
+  from urllib.request import urlopen
+except:
+  from urllib2 import urlopen
 
 import buildenv
 
@@ -139,7 +142,7 @@ def download_source_archive(url, arc, path, check_path=None):
   else:
     print('Downloading source archive from [%s].' % url)
     try:
-      rsp = urllib2.urlopen(url)
+      rsp = urlopen(url)
     except:
       print('Failed to download source archive.')
       raise
@@ -302,14 +305,13 @@ def build_grpc(wd, installdir, conf):
     for dep in deps:
       collect_grpc_targets(acc, dic, dep)
 
-  version = '5c575dd6e4b01cd68cca5d1917b58023dcf4ca0f'
+  version = 'release-0_11_0'
   repodir = os.path.join(wd, 'grpc-%s' % version)
   download_from_github(wd, 'grpc', 'grpc', version)
 
-  buildjson = os.path.join(repodir, 'build.json')
-
-  with open(buildjson, 'r') as fp:
-    dic = json.load(fp)
+  buildyaml = os.path.join(repodir, 'build.yaml')
+  with open(buildyaml, 'r') as fp:
+    dic = yaml.load(fp)
   acc = {
     'targets': {},
     'libs': {},

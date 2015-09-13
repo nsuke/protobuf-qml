@@ -7,7 +7,7 @@ namespace qml {
 
 UnaryCallData::UnaryCallData(int tag,
                              UnaryMethod* method,
-                             grpc::ChannelInterface* channel,
+                             grpc::Channel* channel,
                              ::grpc::CompletionQueue* cq,
                              ::protobuf::qml::DescriptorWrapper* read,
                              std::unique_ptr<google::protobuf::Message> request,
@@ -53,7 +53,7 @@ void UnaryCallData::process(bool ok) {
 UnaryMethod::UnaryMethod(const std::string& name,
                          ::protobuf::qml::DescriptorWrapper* read,
                          ::protobuf::qml::DescriptorWrapper* write,
-                         std::shared_ptr<grpc::ChannelInterface> channel,
+                         std::shared_ptr<grpc::Channel> channel,
                          grpc::CompletionQueue* cq,
                          QObject* p)
     : ::protobuf::qml::UnaryMethod(p),
@@ -63,7 +63,7 @@ UnaryMethod::UnaryMethod(const std::string& name,
       channel_(std::move(channel)),
       raw_(name.c_str(),
            grpc::RpcMethod::NORMAL_RPC,
-           channel_->RegisterMethod(name.c_str())) {
+           channel_) {
 }
 
 UnaryMethod::~UnaryMethod() {

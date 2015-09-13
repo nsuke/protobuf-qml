@@ -2,7 +2,7 @@
 #define GRPC_QML_SERVER_CREDENTIALS_H
 
 #include <QObject>
-#include <grpc++/server_credentials.h>
+#include <grpc++/security/server_credentials.h>
 
 namespace grpc {
 namespace qml {

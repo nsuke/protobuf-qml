@@ -4,7 +4,7 @@
 #include "grpc/qml/server_calldata.h"
 #include "grpc/qml/base.h"
 #include "protobuf/qml/method.h"
-#include <grpc++/async_unary_call.h>
+#include <grpc++/support/async_unary_call.h>
 #include <grpc++/impl/proto_utils.h>
 #include <mutex>
 #include <unordered_map>
@@ -18,7 +18,7 @@ class UnaryCallData : public CallData {
 public:
   UnaryCallData(int tag,
                 UnaryMethod* method,
-                grpc::ChannelInterface* channel,
+                grpc::Channel* channel,
                 ::grpc::CompletionQueue* cq,
                 ::protobuf::qml::DescriptorWrapper* read,
                 std::unique_ptr<google::protobuf::Message> request,
@@ -39,7 +39,7 @@ private:
   ::grpc::ClientContext context_;
   int tag_;
   UnaryMethod* method_;
-  grpc::ChannelInterface* channel_;
+  grpc::Channel* channel_;
   ::protobuf::qml::DescriptorWrapper* read_;
   std::unique_ptr<google::protobuf::Message> request_;
   std::shared_ptr<google::protobuf::Message> response_;
@@ -56,7 +56,7 @@ public:
   UnaryMethod(const std::string& name,
               ::protobuf::qml::DescriptorWrapper* read,
               ::protobuf::qml::DescriptorWrapper* write,
-              std::shared_ptr<grpc::ChannelInterface> channel,
+              std::shared_ptr<grpc::Channel> channel,
               grpc::CompletionQueue* cq,
               QObject* p = nullptr);
 
@@ -74,7 +74,7 @@ private:
   std::string name_;
   ::protobuf::qml::DescriptorWrapper* read_;
   grpc::CompletionQueue* cq_;
-  std::shared_ptr<grpc::ChannelInterface> channel_;
+  std::shared_ptr<grpc::Channel> channel_;
   grpc::RpcMethod raw_;
   std::mutex calls_mutex_;
 };

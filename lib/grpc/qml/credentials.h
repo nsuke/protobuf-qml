@@ -2,7 +2,7 @@
 #define GRPC_QML_CREDENTIALS_H
 
 #include "protobuf/qml/common.h"
-#include <grpc++/credentials.h>
+#include <grpc++/security/credentials.h>
 #include <QObject>
 
 namespace grpc {

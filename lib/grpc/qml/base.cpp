@@ -52,7 +52,7 @@ bool Channel::ensureInit() {
   if (!raw_) {
     grpc::ChannelArguments null_args;
     auto before = raw_.get();
-    raw_ = grpc::CreateChannel(target_.toStdString(),
+    raw_ = grpc::CreateCustomChannel(target_.toStdString(),
                                creds_ ? creds_->raw() : nullptr, null_args);
     if (before != raw_.get()) {
       discardMethods();

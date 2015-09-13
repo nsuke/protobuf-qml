@@ -3,9 +3,9 @@
 
 #include "grpc/qml/credentials.h"
 #include "protobuf/qml/method.h"
-#include <grpc++/config.h>
-#include <grpc++/stream.h>
-#include <grpc++/channel_arguments.h>
+#include <grpc++/support/config.h>
+#include <grpc++/support/async_stream.h>
+#include <grpc++/support/channel_arguments.h>
 #include <grpc++/create_channel.h>
 #include <grpc++/impl/rpc_method.h>
 #include <QObject>
@@ -72,7 +72,7 @@ private:
   void shutdown();
 
   std::unique_ptr<grpc::CompletionQueue> cq_;
-  std::shared_ptr<grpc::ChannelInterface> raw_;
+  std::shared_ptr<grpc::Channel> raw_;
 
   QString target_;
   Credentials* creds_ = nullptr;

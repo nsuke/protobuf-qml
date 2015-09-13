@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y \
       g++ \
       clang \
       git \
-      python-simplejson \
+      python-yaml \
       python-mako \
       golang \
       cmake \

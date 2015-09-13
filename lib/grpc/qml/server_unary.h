@@ -5,7 +5,7 @@
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/server_method.h"
 
-#include <grpc++/async_unary_call.h>
+#include <grpc++/support/async_unary_call.h>
 #include <grpc++/server_context.h>
 #include <grpc++/impl/proto_utils.h>
 #include <google/protobuf/message.h>

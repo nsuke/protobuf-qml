@@ -15,7 +15,7 @@ class ReaderMethod;
 class ReaderCallData : public CallData {
 public:
   ReaderCallData(int tag,
-                 grpc::ChannelInterface* channel,
+                 grpc::Channel* channel,
                  ::grpc::CompletionQueue* cq,
                  ReaderMethod* method,
                  ::protobuf::qml::DescriptorWrapper* read,
@@ -38,7 +38,7 @@ private:
   Status status_ = Status::WRITE;
   grpc::ClientContext context_;
   grpc::CompletionQueue* cq_;
-  grpc::ChannelInterface* channel_;
+  grpc::Channel* channel_;
   ::protobuf::qml::DescriptorWrapper* read_;
   ReaderMethod* method_;
   int tag_;
@@ -56,7 +56,7 @@ public:
   ReaderMethod(const std::string& name,
                ::protobuf::qml::DescriptorWrapper* read,
                ::protobuf::qml::DescriptorWrapper* write,
-               std::shared_ptr<grpc::ChannelInterface> channel,
+               std::shared_ptr<grpc::Channel> channel,
                grpc::CompletionQueue* cq,
                QObject* p = nullptr)
       : ::protobuf::qml::ReaderMethod(p),
@@ -66,7 +66,7 @@ public:
         channel_(std::move(channel)),
         raw_(name.c_str(),
              grpc::RpcMethod::SERVER_STREAMING,
-             channel_->RegisterMethod(name.c_str())) {}
+             channel_) {}
 
   bool write(int tag,
              std::unique_ptr<google::protobuf::Message> data,
@@ -78,7 +78,7 @@ private:
   std::string name_;
   ::protobuf::qml::DescriptorWrapper* read_;
   grpc::CompletionQueue* cq_;
-  std::shared_ptr<grpc::ChannelInterface> channel_;
+  std::shared_ptr<grpc::Channel> channel_;
   grpc::RpcMethod raw_;
 };
 }

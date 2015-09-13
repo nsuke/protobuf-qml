@@ -5,7 +5,7 @@
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/server_method.h"
 
-#include <grpc++/stream.h>
+#include <grpc++/support/async_stream.h>
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <grpc++/server_context.h>

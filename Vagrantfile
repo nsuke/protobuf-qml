@@ -24,6 +24,7 @@ Vagrant.configure(2) do |config|
       qt55declarative \
       ninja-build \
       cmake \
+      python-yaml \
       python-mako \
       cmake \
       ninja-build \

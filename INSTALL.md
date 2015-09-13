@@ -7,13 +7,14 @@ TBD: Windows
 #### Libraries
 * Qt 5.5.0 or later
 * Protocol Buffers 3.0 beta-1 or later (Automatically built)
-* gRPC (Automatically built)
+* gRPC 0.11.0 or later (Automatically built)
 * zlib
 
 #### Build dependencies
 * cmake
 * ninja
 * python
+* PyYAML (Python module)
 * mako (Python module)
 * perl
 * go
@@ -22,13 +23,14 @@ For example, if you are on Ubuntu 14.04, installation looks like following:
 ```
 # add-apt-repository ppa:beineri/opt-qt55-trusty
 # apt-get update
-# apt-get install
-      zlib1g-dev
-      cmake
-      ninja-build
-      python-mako
-      perl
-      golang
+# apt-get install \
+      zlib1g-dev \
+      cmake \
+      ninja-build \
+      python-yaml \
+      python-mako \
+      perl \
+      golang \
       qt55declarative
 ```
 

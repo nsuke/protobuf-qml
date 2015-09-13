@@ -1,6 +1,6 @@
 #include "grpc/qml/server_unary.h"
 #include "grpc/qml/server.h"
-#include <grpc++/status_code_enum.h>
+#include <grpc++/support/status_code_enum.h>
 
 namespace grpc {
 namespace qml {

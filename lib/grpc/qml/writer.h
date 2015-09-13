@@ -18,7 +18,7 @@ class WriterMethod;
 class WriterCallData : public CallData {
 public:
   WriterCallData(int tag,
-                 grpc::ChannelInterface* channel,
+                 grpc::Channel* channel,
                  ::grpc::CompletionQueue* cq,
                  WriterMethod* method,
                  ::protobuf::qml::DescriptorWrapper* read);
@@ -47,7 +47,7 @@ private:
   Status status_ = Status::INIT;
   ::grpc::CompletionQueue* cq_;
   ::grpc::ClientContext context_;
-  grpc::ChannelInterface* channel_;
+  grpc::Channel* channel_;
   ::protobuf::qml::DescriptorWrapper* read_;
   WriterMethod* method_;
   int tag_;
@@ -65,7 +65,7 @@ public:
   WriterMethod(const std::string& name,
                ::protobuf::qml::DescriptorWrapper* read,
                ::protobuf::qml::DescriptorWrapper* write,
-               std::shared_ptr<grpc::ChannelInterface> channel,
+               std::shared_ptr<grpc::Channel> channel,
                grpc::CompletionQueue* cq,
                QObject* p = nullptr)
       : ::protobuf::qml::WriterMethod(p),
@@ -76,7 +76,7 @@ public:
         channel_(std::move(channel)),
         raw_(name.c_str(),
              grpc::RpcMethod::CLIENT_STREAMING,
-             channel_->RegisterMethod(name.c_str())) {}
+             channel_) {}
 
   bool write(int tag, std::unique_ptr<google::protobuf::Message> data) final;
 
@@ -96,7 +96,7 @@ private:
   ::protobuf::qml::DescriptorWrapper* read_;
   ::protobuf::qml::DescriptorWrapper* write_;
   grpc::CompletionQueue* cq_;
-  std::shared_ptr<grpc::ChannelInterface> channel_;
+  std::shared_ptr<grpc::Channel> channel_;
   grpc::RpcMethod raw_;
   mutable std::mutex calls_mutex_;
   std::unordered_map<int, WriterCallData*> calls_;

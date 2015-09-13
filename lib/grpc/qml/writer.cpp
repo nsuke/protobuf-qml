@@ -6,7 +6,7 @@ namespace grpc {
 namespace qml {
 
 WriterCallData::WriterCallData(int tag,
-                               grpc::ChannelInterface* channel,
+                               grpc::Channel* channel,
                                ::grpc::CompletionQueue* cq,
                                WriterMethod* method,
                                ::protobuf::qml::DescriptorWrapper* read)

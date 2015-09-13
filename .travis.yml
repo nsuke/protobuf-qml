@@ -17,6 +17,7 @@ before_install:
       qt55declarative
       zlib1g-dev
       python-mako
+      python-yaml
       cmake
       ninja-build
       gcc-4.8

@@ -5,7 +5,7 @@ namespace qml {
 
 ReaderWriterCallData::ReaderWriterCallData(
     int tag,
-    grpc::ChannelInterface* channel,
+    grpc::Channel* channel,
     grpc::CompletionQueue* cq,
     ReaderWriterMethod* method,
     ::protobuf::qml::DescriptorWrapper* read)
