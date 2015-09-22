@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+message MessageWithMap {
+  map<string, string> string_map = 3;
+}
