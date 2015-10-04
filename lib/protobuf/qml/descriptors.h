@@ -18,24 +18,17 @@
 namespace protobuf {
 namespace qml {
 
-class QPBDescriptor {
-public:
-};
-
 class PROTOBUF_QML_DLLEXPORT DescriptorWrapper : public QObject {
   Q_OBJECT
 
 public:
   explicit DescriptorWrapper(const google::protobuf::Descriptor* descriptor,
-                             QObject* p = nullptr);
-
-  ~DescriptorWrapper();
+                             QObject* p = nullptr)
+      : QObject(p), v4_(new Descriptor(descriptor, this)) {}
 
   Q_INVOKABLE protobuf::qml::Descriptor* v4() { return v4_; }
 
-  google::protobuf::Message* newMessage() {
-    return v4()->newMessage();
-  }
+  google::protobuf::Message* newMessage() { return v4()->newMessage(); }
 
 private:
   Descriptor* v4_;

@@ -38,3 +38,5 @@ target_compile_definitions(test-protobuf-qml PRIVATE
 target_link_libraries(test-protobuf-qml Qt5::QuickTest)
 add_test(NAME test-protobuf-qml COMMAND
   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/test-protobuf-qml)
+
+add_subdirectory(cpp)

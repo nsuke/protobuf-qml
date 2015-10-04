@@ -14,6 +14,7 @@ before_install:
   - sudo apt-get purge cmake
   - sudo apt-get install -y
       libgl1-mesa-dev
+      qt55base
       qt55declarative
       zlib1g-dev
       python-mako
@@ -26,6 +27,7 @@ before_install:
 script:
   - if [ $CC == gcc ]; then export CC=gcc-4.8; export CXX=g++-4.8; fi
   - tools/build_dependencies.py -j4 --shared --cc=$CC --cxx=$CXX
+  - . /opt/qt55/bin/qt55-env.sh
   - tools/bootstrap.py --cc=$CC --cxx=$CXX --qt5dir=/opt/qt55/lib/cmake
   - . tools/setup_env.sh Debug
   - ninja -j4 -C out/Debug

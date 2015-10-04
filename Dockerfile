@@ -8,6 +8,7 @@ RUN apt-get update && apt-get install -y \
 RUN add-apt-repository -y ppa:beineri/opt-qt55-trusty
 RUN apt-get update && apt-get install -y \
       libgl1-mesa-dev \
+      qt55base \
       qt55declarative \
       ninja-build \
       cmake \
@@ -16,6 +17,7 @@ RUN apt-get update && apt-get install -y \
       g++ \
       clang \
       git \
+      python-setuptools \
       python-yaml \
       python-mako \
       golang \
@@ -36,7 +38,12 @@ ENV PATH=$DEPS_DIR/bin:$PATH \
 
 RUN tools/build_dependencies.py --shared
 
-RUN tools/bootstrap.py --qt5dir /opt/qt55/lib/cmake -C Release
-RUN ninja -C out
+# Enable source by replacing sh with bash
+RUN ln -snf /bin/bash /bin/sh
+RUN . /opt/qt55/bin/qt55-env.sh
+RUN . tools/setup_env.sh
+RUN tools/bootstrap.py --qt5dir /opt/qt55/lib/cmake
+RUN ninja -C out/Debug
+RUN ninja -C out/Release
 
 CMD /bin/bash

@@ -12,15 +12,6 @@ namespace qml {
 
 using namespace google::protobuf;
 
-DescriptorWrapper::DescriptorWrapper(
-    const google::protobuf::Descriptor* descriptor, QObject* p)
-    : QObject(p),
-      v4_(new Descriptor(descriptor, this)) {
-}
-
-DescriptorWrapper::~DescriptorWrapper() {
-}
-
 FileDescriptorWrapper* DescriptorPoolWrapper::addFileDescriptor(
     QVariant encoded) {
   if (!encoded.canConvert<QByteArray>()) {

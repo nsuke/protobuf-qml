@@ -8,6 +8,7 @@ set(protobuf-qml-core_SOURCES
   qml/buffer.cpp
   qml/method.cpp
   qml/server_method.cpp
+  qml/conversions.cpp
   qml/v4/descriptor.cpp
   qml/v4/v4util.cpp
   )

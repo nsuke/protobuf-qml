@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+message Message1 {
+  sint32 int_field1 = 9;
+}
+
+message Message2 {
+  string text_field2 = 30001;
+}
