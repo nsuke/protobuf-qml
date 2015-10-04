@@ -121,3 +121,5 @@ if(BUILD_TESTING OR BUILD_GRPC_TEST_SERVER)
   enable_testing()
   add_subdirectory(test)
 endif()
+
+add_subdirectory(examples/cpp)
