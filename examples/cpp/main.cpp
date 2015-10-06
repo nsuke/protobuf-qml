@@ -11,7 +11,7 @@ class ExampleCppObject : public QObject {
 public:
   Q_INVOKABLE QJSValue doSomeNativeStuff(QJSValue arg1) {
     // Prepare converter that uses QML engine associated with this QJSValue.
-    auto convert = protobuf::qml::JSValueConverter::For(arg1);
+    auto convert = protobuf::qml::JSValueConverter::fromQJSValue(arg1);
     if (!convert) {
       qWarning() << "Failed to initialize JS value converter.";
       return QJSValue();

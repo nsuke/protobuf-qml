@@ -8,7 +8,7 @@ using namespace QV4;
 namespace protobuf {
 namespace qml {
 
-std::unique_ptr<JSValueConverter> JSValueConverter::On(const QObject* o) {
+std::unique_ptr<JSValueConverter> JSValueConverter::fromQObject(const QObject* o) {
   auto engine = QQmlEnginePrivate::getV4Engine(qmlEngine(o));
   if (!engine) {
     qWarning() << "Failed to retrieve QML engine from QObject. Make sure it is "
@@ -18,7 +18,7 @@ std::unique_ptr<JSValueConverter> JSValueConverter::On(const QObject* o) {
   return std::unique_ptr<JSValueConverter>(new JSValueConverter(engine));
 }
 
-std::unique_ptr<JSValueConverter> JSValueConverter::For(const QJSValue& o) {
+std::unique_ptr<JSValueConverter> JSValueConverter::fromQJSValue(const QJSValue& o) {
   auto engine = QJSValuePrivate::engine(&o);
   if (!engine) {
     qWarning() << "Failed to retrieve QML engine from QJSValue.";

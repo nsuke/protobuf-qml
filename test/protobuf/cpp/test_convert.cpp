@@ -14,7 +14,7 @@ class SomeQmlType : public QObject {
 
 public:
   Q_INVOKABLE QJSValue useOn(QJSValue value) {
-    auto convert = JSValueConverter::On(this);
+    auto convert = JSValueConverter::fromQObject(this);
 
     msg1.reset(new Message1);
     convert->fromJSValue(*msg1, value);
@@ -27,7 +27,7 @@ public:
   }
 
   Q_INVOKABLE QJSValue useFor(QJSValue value) {
-    auto convert = JSValueConverter::For(value);
+    auto convert = JSValueConverter::fromQJSValue(value);
 
     msg1.reset(new Message1);
     convert->fromJSValue(*msg1, value);
