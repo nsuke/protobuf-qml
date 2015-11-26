@@ -123,3 +123,6 @@ if(BUILD_TESTING OR BUILD_GRPC_TEST_SERVER)
 endif()
 
 add_subdirectory(examples/cpp)
+if(BUILD_FUTURE_EXAMPLES)
+  add_subdirectory(examples/XMLHttpRequest)
+endif()
