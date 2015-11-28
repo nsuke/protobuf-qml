@@ -1,16 +1,26 @@
 Install
-===
+================================================================================
 
-TBD: Windows
+Note for Windows
+--------------------------------------------------------------------------------
 
-## Install dependencies
+This library uses C++11 features only available for Visual C++ 2015 or later.
+
+So basically unless you build Qt yourself, you'll need to wait for Qt 5.6.0.
+
+
+Install dependencies
+--------------------------------------------------------------------------------
+
 #### Libraries
+
 * Qt 5.5.0 or later
 * Protocol Buffers 3.0 beta-1 or later (Automatically built)
 * gRPC 0.11.0 or later (Automatically built)
 * zlib
 
 #### Build dependencies
+
 * cmake
 * ninja
 * python
@@ -20,6 +30,7 @@ TBD: Windows
 * go
 
 For example, if you are on Ubuntu 14.04, installation looks like following:
+
 ```
 # add-apt-repository ppa:beineri/opt-qt55-trusty
 # apt-get update
@@ -34,14 +45,20 @@ For example, if you are on Ubuntu 14.04, installation looks like following:
       qt55declarative
 ```
 
-## Build
+
+Build
+--------------------------------------------------------------------------------
+
 ```
 $ ./tools/build_dependencies.py --shared
 $ ./tools/bootstrap.py
 $ source ./tools/setup_env.sh
 $ ninja -C out/Release
 ```
-## Install
+
+
+Install
+--------------------------------------------------------------------------------
 
 ### Dependencies
 
@@ -65,7 +82,8 @@ Put *out/Release/bin/protoc-gen-qml* file to a directory included to *PATH* envi
 
 ### QML module
 
-Put *out/Release/bin/Protobuf* and *out/Release/bin/Grpc* directory to the directory where your QML app executable resides (directly without "out/Release/bin" parent directories).
+Put *out/Release/bin/Protobuf* and *out/Release/bin/Grpc* directory to the directory
+where your QML app executable resides (directly without "out/Release/bin" parent directories).
 
 ```
 --- my_qml_app
