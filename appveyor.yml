@@ -1,0 +1,19 @@
+shallow_clone: true
+clone_depth: 20
+
+os:
+  - Visual Studio 2015
+
+install:
+  - '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64'
+  - set path=C:\Python35-x64\scripts;C:\Python35-x64;%path%
+  - pip install -r tools\requirements.txt
+
+build_script:
+  - python tools\build_dependencies.py
+  - python tools\bootstrap.py --qt5dir=C:\Qt\5.5\msvc2013_64\lib\cmake
+  - cd out\Debug && nmake
+  - cd ..\..\out\Release && nmake
+
+# TODO: Run tests when Qt msvc2015 binary is out
+test: off
