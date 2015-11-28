@@ -15,19 +15,21 @@ def build(configuration, out, args, cmake_args):
   if not os.path.exists(out):
     os.makedirs(out)
 
+  libext = '.lib' if platform.system() == 'Windows' else '.so'
+  exeext = '.exe' if platform.system() == 'Windows' else ''
+
   cmd = [
     'cmake',
     '-G%s' % args.generator,
     '-DCMAKE_BUILD_TYPE=%s' % configuration,
-    '-DCMAKE_BUILD_TYPE=%s' % configuration,
     '-DCMAKE_PREFIX_PATH=%s' % deps_dir,
-    # '-DPROTOBUF_PROTOC_LIBRARY=%s/lib/libprotoc.so' % deps_dir,
-    # '-DPROTOBUF_PROTOC_LIBRARY_DEBUG=%s/lib/libprotoc.so' % deps_dir,
-    # '-DPROTOBUF_LIBRARY=%s/lib/libprotobuf.so' % deps_dir,
-    # '-DPROTOBUF_LIBRARY_DEBUG=%s/lib/libprotobuf.so' % deps_dir,
-    # '-DPROTOBUF_INCLUDE_DIR=%s/include' % deps_dir,
-    # '-DPROTOBUF_PROTOC_EXECUTABLE=%s/bin/protoc' % deps_dir,
-    # '-DGRPC_ROOT=%s' % deps_dir,
+    '-DPROTOBUF_PROTOC_LIBRARY=%s/lib/libprotoc%s' % (deps_dir, libext),
+    '-DPROTOBUF_PROTOC_LIBRARY_DEBUG=%s/lib/libprotoc%s' % (deps_dir, libext),
+    '-DPROTOBUF_LIBRARY=%s/lib/libprotobuf%s' % (deps_dir, libext),
+    '-DPROTOBUF_LIBRARY_DEBUG=%s/lib/libprotobuf%s' % (deps_dir, libext),
+    '-DPROTOBUF_INCLUDE_DIR=%s/include' % deps_dir,
+    '-DPROTOBUF_PROTOC_EXECUTABLE=%s/bin/protoc%s' % (deps_dir, exeext),
+    '-DGRPC_ROOT=%s' % deps_dir,
   ]
 
   if args.qt5dir:
@@ -35,6 +37,7 @@ def build(configuration, out, args, cmake_args):
       '-DQt5Core_DIR=%s/Qt5Core' % args.qt5dir,
       '-DQt5Qml_DIR=%s/Qt5Qml' % args.qt5dir,
       '-DQt5Quick_DIR=%s/Qt5Quick' % args.qt5dir,
+      '-DQt5Test_DIR=%s/Qt5Test' % args.qt5dir,
       '-DQt5QuickTest_DIR=%s/Qt5QuickTest' % args.qt5dir,
     ])
 
