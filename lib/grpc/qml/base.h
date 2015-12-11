@@ -9,7 +9,7 @@
 #include <grpc++/create_channel.h>
 #include <grpc++/impl/rpc_method.h>
 #include <QObject>
-#include <thread>
+#include <future>
 
 namespace grpc {
 namespace qml {
@@ -77,7 +77,7 @@ private:
   QString target_;
   Credentials* creds_ = nullptr;
 
-  std::unique_ptr<std::thread> thread_;
+  std::future<void> work_;
 };
 }
 }

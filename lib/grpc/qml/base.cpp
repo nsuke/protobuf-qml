@@ -23,15 +23,13 @@ void Channel::shutdown() {
   if (cq_) {
     cq_->Shutdown();
   }
-  if (thread_ && thread_->joinable()) {
-    thread_->join();
-  }
-  thread_.reset();
+  work_.wait();
 }
 
 void Channel::startThread() {
   cq_.reset(new grpc::CompletionQueue);
-  thread_.reset(new std::thread([this] {
+
+  work_ = std::async(std::launch::async, [this] {
     void* tag = nullptr;
     bool ok = false;
     for (;;) {
@@ -45,7 +43,7 @@ void Channel::startThread() {
         cdata->process(ok);
       }
     }
-  }));
+  });
 }
 
 bool Channel::ensureInit() {
@@ -59,7 +57,7 @@ bool Channel::ensureInit() {
     }
   }
 
-  if (raw_ && !thread_) {
+  if (raw_ && !work_.valid()) {
     if (raw_) {
       startThread();
       Q_ASSERT(cq_);
