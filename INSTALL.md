@@ -6,7 +6,7 @@ Note for Windows
 
 This library uses C++11 features only available for Visual C++ 2015 or later.
 
-So basically unless you build Qt yourself, you'll need to wait for Qt 5.6.0.
+Since there's no Qt binary release for Visual C++ 2015 yet, you'll need to either wait for Qt 5.6.0 or build Qt yourself.
 
 
 Install dependencies
@@ -17,7 +17,7 @@ Install dependencies
 * Qt 5.5.0 or later
 * Protocol Buffers 3.0 beta-1 or later (Automatically built)
 * gRPC 0.11.0 or later (Automatically built)
-* zlib
+* zlib (For Windows, automatically built)
 
 #### Build dependencies
 
@@ -31,66 +31,90 @@ Install dependencies
 
 For example, if you are on Ubuntu 14.04, installation looks like following:
 
-```
-# add-apt-repository ppa:beineri/opt-qt55-trusty
-# apt-get update
-# apt-get install \
-      zlib1g-dev \
-      cmake \
-      ninja-build \
-      python-yaml \
-      python-mako \
-      perl \
-      golang \
-      qt55declarative
-```
+    # add-apt-repository ppa:beineri/opt-qt55-trusty
+    # apt-get update
+    # apt-get install \
+          zlib1g-dev \
+          cmake \
+          ninja-build \
+          python-yaml \
+          python-mako \
+          perl \
+          golang \
+          qt55declarative
 
 
 Build
 --------------------------------------------------------------------------------
 
-```
-$ ./tools/build_dependencies.py --shared
-$ ./tools/bootstrap.py
-$ source ./tools/setup_env.sh
-$ ninja -C out/Release
-```
+    $ ./tools/build_dependencies.py --shared
+    $ ./tools/bootstrap.py
+    $ source ./tools/setup_env.sh
+    $ ninja -C out/Release
 
+or for Windows
 
-Install
+    % python tools\build_dependencies.py
+    % python tools\bootstrap.py --qt5dir=C:\path\to\Qt\lib\cmake
+    % tools\setup_env.bat
+    % cd out\Release
+    % nmake
+
+Please refer [.travis.yml](.travis.yml) for Linux and [appveyor.yml](appveyor.yml) for Windows too.
+
+Use
 --------------------------------------------------------------------------------
+
+Basically there are two components: compiler and library.
 
 ### Dependencies
 
-Built dependencies are in *build/deps/lib* and *build/deps/bin*.
+You need to make dependencies available to use any of the components.
 
-#### Protocol Buffers compiler
+There's convenience script that setups environment variables for your current shell session.
 
-Put *build/deps/bin/protoc* to a directory included to *PATH* environment variable.
+    $ source ./tools/setup_env.sh
 
-#### Runtime libraries
+or for Windows
 
-Tell OS where to find libraries. One way to do this is:
+    % tools\setup_env.bat    
 
-```
-$ export LD_LIBRARY_PATH=$(pwd)/build/deps/lib
-```
+### Compiler
 
-### Compiler plugin
+Using protobuf-qml compiler plugin with protobuf compiler, you can generate QML/JS files from your `.proto` files.
 
-Put *out/Release/bin/protoc-gen-qml* file to a directory included to *PATH* environment variable.
+    $ protoc --plugin=protoc-gen-qml=out/Release/bin/protoc-gen-qml --qml_out <some_dir> <your_idl>.proto
 
-### QML module
+For Windows, put `.exe` where appropriate:
 
-Put *out/Release/bin/Protobuf* and *out/Release/bin/Grpc* directory to the directory
-where your QML app executable resides (directly without "out/Release/bin" parent directories).
+    % protoc.exe --plugin=protoc-gen-qml=out/Release/bin/protoc-gen-qml.exe --qml_out <some_dir> <your_idl>.proto
 
-```
---- my_qml_app
- |
- -- Protobuf
- |
- -- Grpc
-```
+Note that `protoc` is supposed to be made available by setup_env.sh(.bat) from previous section.
 
-TBD: Load from qmlscene apps
+### Library
+
+Using protobuf-qml library, you can use generated code from previous section in your application.
+
+Just put `out/Release/bin/Protobuf` and `out/Release/bin/Grpc` directories to the same directory
+as your executable.
+
+    --- your_qml_app_exe
+     |
+     -- Protobuf/
+     |
+     -- Grpc/
+
+It is also good idea to put any `.so` (`.dll` for Windows) files from following directories  there, so that your app can without needing to adjust environment variable every time.
+
+* out/Release/*.so
+* build/deps/lib/*.so
+
+or for Windows
+
+* out\Release\*.dll
+* build\deps\lib\*.dll
+* build\deps\bin\*.dll
+
+On Unix you may still need to add an environment variable:
+
+    LD_LIBRARY_PATH=<your_qml_app's dir>
