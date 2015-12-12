@@ -17,7 +17,7 @@ For Protocol Buffers itself, see upstream official site:
 https://developers.google.com/protocol-buffers/
 
 #### Code generation
-Suppose you write following .proto file, say *my_foo.proto*:
+Suppose you write following .proto file, say `my_foo.proto`:
 
 ```
 message Foo {
@@ -32,18 +32,18 @@ you can generate QML/Javascript message type using compiler plugin:
 $ protoc --qml_out gen my_foo.proto
 ```
 
-This will yield *gen/my_foo.pb.js* file. Let's import this file from any QML using relative path.
+This will yield `gen/my_foo.pb.js` file. Let's import this file from any QML using relative path.
 
 #### Serialization
 
 ``` javascript
-import 'gen/my_foo.pb.js' as MyFoo
+import 'gen/my_foo.pb.js' as Types
 ```
 
 then you can use the message type inside signal handlers, property bindings or functions:
 
 ``` javascript
-var foo = new MyFoo.Foo({
+var foo = new Types.Foo({
   text: 'hello world',
   nums: [ 3, 4, 5 ],
 });
@@ -51,7 +51,7 @@ var foo = new MyFoo.Foo({
 var buf = foo.serialize();
 ```
 
-here, the *buf* variable is an **ArrayBuffer** object.
+here, the `buf` variable is an `ArrayBuffer` object.
 
 <!--
 You can for example send it to a server using **[XmlHttpRequest](http://doc.qt.io/qt-5/qtqml-javascript-qmlglobalobject.html#xmlhttprequest)** (not yet, wait for Qt 5.7) or pass it to C++ layer. If your use case is remote procedure call, **gRPC** section below might be intersting.
@@ -62,7 +62,7 @@ You can for example send it to a server using **[XmlHttpRequest](http://doc.qt.i
 Deserialization is quite simple too:
 
 ``` javascript
-var foo2 = MyFoo.Foo.parse(buf);
+var foo2 = Types.Foo.parse(buf);
 
 console.log(foo2.text)
 // output: hello world
@@ -80,7 +80,7 @@ gRPC binding is still experimental.
 
 #### Code generation
 
-Suppose you add service definition to the *my_foo.proto* above:
+Suppose you add service definition to the `my_foo.proto` above:
 
 ```
 service MyService {
@@ -88,7 +88,7 @@ service MyService {
 }
 ```
 
-compiler plugin will additionally yield *MyService.qml* and *MyServiceClient.qml* files besides *my_foo.pb.js* file.
+compiler plugin will additionally yield `MyService.qml` and `MyServiceClient.qml` files besides `my_foo.pb.js` file.
 Let's import the directory containing those QML files:
 
 ```javascript
@@ -179,4 +179,79 @@ MyService {
 }
 ```
 
-TBD: Link to full sample code
+### Future examples
+
+In the future, it might become possible to send ArrayBuffer using XMLHttpRequest or WebSockets.
+
+I've submitted patches for [WebSockets](https://codereview.qt-project.org/#/c/125712/) and [XMLHttpRequest](https://codereview.qt-project.org/#/c/143732/) to Qt project.
+After these patches are incorporated, following usages will be possible.
+
+Those future examples are also available under [examples](examples) directory.
+Feel free to try with these patches yourself.
+
+#### Sending serialized message with QtWebSockets
+
+``` javascript
+import QtWebSockets 1.1
+```
+
+``` javascript
+WebSocket {
+  id: socket
+  url: 'ws://your.remote.server.host'
+  active: true
+}
+```
+
+``` javascript
+// Inside function or handler
+var msg = new Types.Foo({
+  text: 'hello world',
+  nums: [ 3, 4, 5 ],
+});
+var buf = msg.serialize();
+socket.sendBinaryMessage(buf);
+```
+
+#### Receiving serialized message with QtWebSockets
+
+``` javascript
+WebSocket {
+  id: socket
+  url: 'ws://your.remote.server'
+  active: true
+
+  onBinaryMessageReceived: {
+    var msg = Types.Foo.parse(message);
+    console.log(msg.text);
+    console.log(msg.nums(0));
+    console.log(msg.nums(1));
+    // ... Do whatever with the data
+  }
+}
+```
+
+### Send and receive serialized message with XMLHttpRequest
+
+
+``` javascript
+// Inside function or handler
+var xhr = new XMLHttpRequest();
+xhr.open('POST', 'http://your.remote.server/');
+xhr.onreadystatechange = function() {
+  if (xhr.readyState === 4 && xhr.status === 200) {
+    var response = Types.Foo.parse(xhr.response);
+    // ... Do whatever with the data
+  }
+};
+xhr.responseType = 'arraybuffer';
+
+var msg = new Types.Foo({
+  text: 'hello world',
+  // ...,
+});
+
+var buf = msg.serialize();
+
+xhr.send(new DataView(buf));
+```

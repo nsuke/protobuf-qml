@@ -6,7 +6,8 @@ Note for Windows
 
 This library uses C++11 features only available for Visual C++ 2015 or later.
 
-Since there's no Qt binary release for Visual C++ 2015 yet, you'll need to either wait for Qt 5.6.0 or build Qt yourself.
+Since there's no Qt binary release for Visual C++ 2015 yet, you'll need to either
+wait for Qt 5.6.0 or build Qt yourself. Also, MinGW build might work.
 
 
 Install dependencies
