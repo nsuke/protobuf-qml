@@ -126,7 +126,7 @@ void FieldGenerator::generateMerge(io::Printer& p, const std::string& arg) {
     p.Print(v,
             "$i$field = $arg$[0][$index$];\n"
             "$i$if (field instanceof Array) {\n"
-            "$i$  for (var i in field) {\n"
+            "$i$  for (var i = 0; i < field.length; ++i) {\n"
             "$i$    if (typeof this._$name$[i] == 'undefined') {\n"
             "$i$      var msg = new $message_scope$$message_type$();\n"
             "$i$      this._$name$[i] = msg;\n"
@@ -290,7 +290,7 @@ void FieldGenerator::generateRepeatedProperty(
       p.Print(variables_,
               "$i$  this._fields[$index$].length = values.length;\n"
               "$i$   this._$name$.length = values.length;\n"
-              "$i$   for (var i in values) {\n"
+              "$i$   for (var i = 0; i < values.length; ++i) {\n"
               "$i$     var msg = new "
               "$message_scope$$message_type$(values[i]);\n"
               "$i$     this._$name$[i] = msg;\n"
