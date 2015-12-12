@@ -22,7 +22,6 @@ namespace qml {
 
 using namespace ::google::protobuf;
 
-
 bool FileChannel::exists() {
   if (!path_.isEmpty()) {
     return false;
@@ -41,14 +40,16 @@ io::ZeroCopyInputStream* FileChannel::openInput(int tag) {
   if (path_.isEmpty()) {
     // TODO: restore error reporting
     // parseError(tag, "Path is empty");
+    qWarning() << "Path is empty";
     return nullptr;
   }
   file_ = open(cPath(), O_BINARY | O_RDONLY);
   if (file_ <= 0) {
     file_ = 0;
-    std::ostringstream ss;
-    ss <<  "Failed to open file to read : " << strerror(errno);
+    // std::ostringstream ss;
+    // ss <<  "Failed to open file to read : " << strerror(errno);
     // parseError(tag, QString::fromStdString(ss.str()));
+    qWarning() << "Failed to open file to read : " << strerror(errno);
     return nullptr;
   }
   return new io::FileInputStream(file_);
@@ -70,6 +71,7 @@ void FileChannel::closeInput(int tag, io::ZeroCopyInputStream* stream) {
 io::ZeroCopyOutputStream* FileChannel::openOutput(int tag, int hint) {
   if (path_.isEmpty()) {
     // serializeError(tag, "Path is empty");
+    qWarning() << "Path is empty";
     return nullptr;
   }
 #ifdef _MSC_VER
@@ -80,9 +82,10 @@ io::ZeroCopyOutputStream* FileChannel::openOutput(int tag, int hint) {
   file_ = open(cPath(), O_BINARY | O_WRONLY | O_CREAT | O_TRUNC, mode);
   if (file_ <= 0) {
     file_ = 0;
-    std::ostringstream ss;
-    ss << "Failed to open file to write : " << strerror(errno);
+    // std::ostringstream ss;
+    // ss << "Failed to open file to write : " << strerror(errno);
     // serializeError(tag, QString::fromStdString(ss.str()));
+    qWarning() << "Failed to open file ( " << path_ << ") to write : " << strerror(errno);
     return nullptr;
   }
   return new io::FileOutputStream(file_);

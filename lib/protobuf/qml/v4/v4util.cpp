@@ -7,6 +7,15 @@ using namespace QV4;
 namespace protobuf {
 namespace qml {
 
+QV4::Heap::ArrayBuffer* allocate_array_buffer(QV4::ExecutionEngine* v4,
+                                              size_t size) {
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
+  return v4->newArrayBuffer(QByteArray(size, 0));
+#else
+  return v4->memoryManager->alloc<ArrayBuffer>(v4, size);
+#endif
+}
+
 QQmlContextData* callingQmlContext(ExecutionEngine* v4) {
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   return v4->callingQmlContext();
@@ -18,8 +27,8 @@ QQmlContextData* callingQmlContext(ExecutionEngine* v4) {
 ReturnedValue packCallbackObject(ExecutionEngine* v4, const Value& callback) {
   Scope scope(v4);
   ScopedObject o(scope, v4->newObject());
-  ScopedValue ctx(scope, QmlContextWrapper::qmlScope(
-                             scope.engine, callingQmlContext(v4), 0));
+  ScopedValue ctx(scope, QmlContextWrapper::qmlScope(scope.engine,
+                                                     callingQmlContext(v4), 0));
   o->put(ScopedString(scope, v4->newString(QStringLiteral("CallingContext"))),
          ctx);
   ScopedFunctionObject cb(scope, callback);

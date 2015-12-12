@@ -39,8 +39,7 @@ void Descriptor::serialize(QQmlV4Function* args) {
   ScopedValue arg_cb(scope, (*args)[1]);
   if (arg_cb->isNullOrUndefined()) {
     auto size = msg->ByteSize();
-    Scoped<ArrayBuffer> buf(scope,
-                            v4->memoryManager->alloc<ArrayBuffer>(v4, size));
+    Scoped<ArrayBuffer> buf(scope, allocate_array_buffer(v4, size));
     Q_ASSERT(buf);
     if (size <= 0) {
       qmlInfo(this) << __func__ << " Nothing to serialize";
@@ -187,7 +186,9 @@ bool Descriptor::jsValueToMessage(ExecutionEngine* v4,
   }
   auto reflection = msg.GetReflection();
   auto descriptor = msg.GetDescriptor();
-  for (int i = 0; i < descriptor->field_count() && i < static_cast<int>(field_values->getLength()); ++i) {
+  for (int i = 0; i < descriptor->field_count() &&
+                  i < static_cast<int>(field_values->getLength());
+       ++i) {
     auto field = descriptor->field(i);
     auto oneof = field->containing_oneof();
     if (oneof) {
@@ -224,14 +225,14 @@ ReturnedValue Descriptor::messageToJsValue(ExecutionEngine* v4,
   //                                v4->memoryManager->alloc<TypedArray>(
   //                                    v4, QV4::Heap::TypedArray::Int32Array));
   // Scoped<ArrayBuffer> buffer(
-  //     scope, v4->memoryManager->alloc<ArrayBuffer>(
+  //     scope, allocate_array_buffer(
   //                v4, message->oneof_decl_count() * sizeof(OneofIndex)));
   // oneof_cases->d()->buffer = buffer->d();
   // oneof_cases->d()->byteLength = buffer->byteLength();
   // oneof_cases->d()->byteOffset = 0;
 
   Scoped<ArrayBuffer> oneof_cases(
-      scope, v4->memoryManager->alloc<ArrayBuffer>(
+      scope, allocate_array_buffer(
                  v4, message->oneof_decl_count() * sizeof(OneofIndex)));
 
   bool parsed = false;
@@ -431,7 +432,7 @@ ReturnedValue getRepeatedNumber(ExecutionEngine* v4,
   //   return Encode::null();
   // }
   // Scoped<ArrayBuffer> buffer(
-  //     scope, v4->memoryManager->alloc<ArrayBuffer>(
+  //     scope, allocate_array_buffer(
   //                v4, ((size - 1) / 8 + 1) * 8 * sizeof(int32_t)));
   // if (!buffer) {
   //   return Encode::null();
@@ -442,8 +443,8 @@ ReturnedValue getRepeatedNumber(ExecutionEngine* v4,
 
   // We set buffer.byteLength to what is exactly needed so that JS side code
   // knows actual typed array length to construct.
-  Scoped<ArrayBuffer> vs(scope, v4->memoryManager->alloc<ArrayBuffer>(
-                                    v4, size * sizeof(ValueType)));
+  Scoped<ArrayBuffer> vs(scope,
+                         allocate_array_buffer(v4, size * sizeof(ValueType)));
   if (!vs) {
     qWarning() << "Failed to allocate ArrayBuffer";
     return Encode::null();

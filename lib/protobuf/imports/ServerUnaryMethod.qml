@@ -19,11 +19,12 @@ PB.ServerUnaryMethodHolder {
     var msg = data instanceof root.readType ? data : new root.readType(data);
     handler(msg, function(err, response) {
       if (err) {
-        if (err instanceof Error) {
-          root.abort(tag, err.code || PB.StatusCode.UNKNOWN, err.message);
-        } else if (typeof err === 'string') {
+        if (typeof err === 'string') {
           root.abort(tag, PB.StatusCode.UNKNOWN, err);
+        } else {
+          root.abort(tag, err.code || PB.StatusCode.UNKNOWN, err.message);
         }
+
       } else {
         var msg = response instanceof root.writeType ? response : new root.writeType(response);
         root.respond(tag, msg._raw);

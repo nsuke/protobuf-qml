@@ -41,7 +41,13 @@ public:
                    google::protobuf::io::ZeroCopyOutputStream* stream) override;
 
 private:
+#ifdef _MSC_VER
+  // For some reason, linking to toLatin1 fails with VC++
   const char* cPath() const { return path_.toStdString().c_str(); }
+#else
+  // toStdString does not work for Qt dev branch (5.7), at least on Linux
+  const char* cPath() const { return path_.toLatin1().data(); }
+#endif
 
   QString path_;
   int file_;
