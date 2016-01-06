@@ -5,7 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
       software-properties-common \
       python-software-properties
-RUN add-apt-repository -y ppa:beineri/opt-qt55-trusty
+RUN add-apt-repository -y ppa:beineri/opt-qt551-trusty
 RUN apt-get update && apt-get install -y \
       libgl1-mesa-dev \
       qt55base \
