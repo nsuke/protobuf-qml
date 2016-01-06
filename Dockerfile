@@ -25,6 +25,15 @@ RUN apt-get update && apt-get install -y \
       ninja-build \
       zlib1g-dev
 
-ENV PROJECT_DIR=/opt/protobuf-qml
-CMD mkdir -p $PROJECT_DIR
-WORKDIR $PROJECT_DIR
+ENV PROTOBUF_QML_DIR=/usr/src/protobuf-qml
+ADD . $PROTOBUF_QML_DIR
+
+RUN ${PROTOBUF_QML_DIR}/tools/build_dependencies.py -j4 --shared && \
+    ${PROTOBUF_QML_DIR}/tools/bootstrap.py --qt5dir=/opt/qt55/lib/cmake \
+    cp ${PROTOBUF_QML_DIR}/build/deps/Release/bin/* /usr/bin/ && \
+    cp ${PROTOBUF_QML_DIR}/build/deps/Release/lib/* /usr/lib/ && \
+    cp -r ${PROTOBUF_QML_DIR}/build/deps/Release/bin/* /usr/bin/ && \
+    ninja -C ${PROTOBUF_QML_DIR}/out/Release && \
+    cp ${PROTOBUF_QML_DIR}/out/Release/bin/protoc-gen-qml /usr/bin/
+
+ENTRYPOINT ["protoc"]
