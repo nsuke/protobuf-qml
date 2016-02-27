@@ -11,6 +11,8 @@ install:
 
 build_script:
   - python tools\build_dependencies.py
+  - python tools\build_dependencies.py --clean
+  - python tools\build_dependencies.py --debug
   - python tools\bootstrap.py --qt5dir=C:\Qt\5.5\msvc2013_64\lib\cmake
   - cd out\Debug && nmake
   - cd ..\..\out\Release && nmake

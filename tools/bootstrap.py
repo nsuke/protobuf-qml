@@ -64,6 +64,7 @@ def main(argv):
   p.add_argument('--cc', help='C compiler')
   p.add_argument('--cxx', help='C++ compiler')
   p.add_argument('--out', '-o', default=buildenv.DEFAULT_OUT, help='build directory path')
+  p.add_argument('--dependency-root', '-D')
   args, cmake_args = p.parse_known_args(argv)
 
   build('Debug', os.path.join(args.out, 'Debug'), args, cmake_args)

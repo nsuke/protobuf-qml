@@ -26,6 +26,8 @@ before_install:
 
 script:
   - tools/build_dependencies.py -j4 --shared --cc=$CC --cxx=$CXX
+  - tools/build_dependencies.py --clean
+  - tools/build_dependencies.py -j4 --shared --debug --cc=$CC --cxx=$CXX
   - . /opt/qt55/bin/qt55-env.sh
   - ${TRAVIS_BUILD_DIR}/tools/bootstrap.py --cc=$CC --cxx=$CXX --qt5dir=/opt/qt55/lib/cmake
   - . ${TRAVIS_BUILD_DIR}/tools/setup_env.sh Debug
