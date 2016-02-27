@@ -247,7 +247,7 @@ def build_zlib(wd, conf):
 
 
 def prepare_boringssl(wd, conf):
-    version = '2490'
+    version = '2623'
     repodir = os.path.join(wd, version)
     archive = repodir + '.tar.gz'
     url = 'https://boringssl.googlesource.com/boringssl/+archive/%s.tar.gz' % version
