@@ -10,7 +10,7 @@ import buildenv
 
 
 def build(configuration, out, args, cmake_args):
-  deps_dir = os.path.join(buildenv.DEFAULT_DEPS, configuration)
+  deps_dir = args.dependency_root or os.path.join(buildenv.DEFAULT_DEPS, configuration)
   buildenv.setup_env(deps_dir)
   if not os.path.exists(out):
     os.makedirs(out)
