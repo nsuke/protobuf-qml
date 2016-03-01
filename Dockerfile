@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python-software-properties
 RUN add-apt-repository -y ppa:beineri/opt-qt551-trusty
 
-ENV PROTOBUF_QML_DIR=/usr/src/protobuf-qml
+ENV PROTOBUF_QML_DIR=/opt/protobuf-qml
 ADD . $PROTOBUF_QML_DIR
 
 RUN buildDeps=" \
@@ -33,6 +33,7 @@ RUN buildDeps=" \
     ninja -C ${PROTOBUF_QML_DIR}/out/Release && \
     mv ${PROTOBUF_QML_DIR}/out/Release/bin/protoc-gen-qml /usr/bin/ && \
     apt-get purge -y --auto-remove $buildDeps && \
-    rm -rf ${PROTOBUF_QML_DIR} /var/lib/apt/lists/* /var/tmp/*
+    rm -rf ${PROTOBUF_QML_DIR}/* /var/lib/apt/lists/* /var/tmp/* /tmp/*
 
+WORKDIR ${PROTOBUF_QML_DIR}
 ENTRYPOINT ["protoc"]
