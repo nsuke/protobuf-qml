@@ -20,19 +20,28 @@ https://developers.google.com/protocol-buffers/
 Suppose you write following .proto file, say `my_foo.proto`:
 
 ```
-message Foo {
-  string text = 1;
-  repeated uint32 nums = 2;
-}
+    message Foo {
+      string text = 1;
+      repeated uint32 nums = 2;
+    }
 ```
 
 you can generate QML/Javascript message type using compiler plugin:
 
-```
-$ protoc --qml_out gen my_foo.proto
-```
+    $ protoc --qml_out gen my_foo.proto
 
 This will yield `gen/my_foo.pb.js` file. Let's import this file from any QML using relative path.
+
+##### Docker image
+
+If you want to try it out without building protobuf-qml, a docker image for code generator is available.
+
+    # docker pull nsuke/protobuf-qml
+    # docker run -it -v $(pwd):/opt/protobuf-qml nsuke/protobuf-qml -I. \
+        --qml_out=<relative path to output dir> \
+        <relative path to your .proto file>
+
+Note that the relative paths cannot contain parent or sibling directories, i.e., they need to be within current or sub directories.
 
 #### Serialization
 
