@@ -9,7 +9,7 @@ namespace qml {
 
 QV4::Heap::ArrayBuffer* allocate_array_buffer(QV4::ExecutionEngine* v4,
                                               size_t size) {
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
   return v4->newArrayBuffer(QByteArray(size, 0));
 #else
   return v4->memoryManager->alloc<ArrayBuffer>(v4, size);
