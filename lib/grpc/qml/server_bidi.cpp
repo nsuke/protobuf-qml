@@ -9,8 +9,7 @@ ServerBidiMethod::ServerBidiMethod(GrpcService* service,
                                    ::grpc::ServerCompletionQueue* cq,
                                    ::protobuf::qml::DescriptorWrapper* read,
                                    ::protobuf::qml::DescriptorWrapper* write)
-    : read_(read), write_(write), cq_(cq), index_(index), service_(service) {
-}
+    : read_(read), write_(write), cq_(cq), index_(index), service_(service) {}
 
 void ServerBidiMethod::startProcessing() {
   new ServerBidiCallData(this, service_, index_, cq_, read_, write_);
@@ -96,8 +95,8 @@ void ServerBidiCallData::decrementRef(unique_lock<std::mutex>& lock,
 void ServerBidiCallData::process(bool ok) {
   std::unique_lock<std::mutex> lock(mutex_);
   if (status_ == Status::INIT) {
-    service_->raw()->RequestClientStreaming(index_, &context_, &stream_, cq_,
-                                            cq_, this);
+    service_->raw()->RequestAsyncClientStreaming(index_, &context_, &stream_,
+                                                 cq_, cq_, this);
     status_ = Status::REQUEST;
   } else if (status_ == Status::REQUEST && !ok) {
     // init called after shutdown ?

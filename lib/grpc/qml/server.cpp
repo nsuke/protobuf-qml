@@ -34,6 +34,7 @@ bool GrpcServer::doStart() {
   cq_ = build.AddCompletionQueue();
   for (auto& srv : services_) {
     for (auto m : srv.service()->methods()) {
+      auto type = ::grpc::RpcMethod::NORMAL_RPC;
       if (auto unary =
               qobject_cast<::protobuf::qml::ServerUnaryMethodHolder*>(m)) {
         unary->inject(new ServerUnaryMethod(&srv, m->index(), cq_.get(),
@@ -45,22 +46,26 @@ bool GrpcServer::doStart() {
         reader->inject(new ServerReaderMethod(&srv, m->index(), cq_.get(),
                                               m->read_descriptor(),
                                               m->write_descriptor()));
+        type = ::grpc::RpcMethod::CLIENT_STREAMING;
       } else if (auto writer =
                      qobject_cast<::protobuf::qml::ServerWriterMethodHolder*>(
                          m)) {
         writer->inject(new ServerWriterMethod(&srv, m->index(), cq_.get(),
                                               m->read_descriptor(),
                                               m->write_descriptor()));
+        type = ::grpc::RpcMethod::SERVER_STREAMING;
       } else if (auto bidi = qobject_cast<
                      ::protobuf::qml::ServerReaderWriterMethodHolder*>(m)) {
         bidi->inject(new ServerBidiMethod(&srv, m->index(), cq_.get(),
                                           m->read_descriptor(),
                                           m->write_descriptor()));
+        type = ::grpc::RpcMethod::BIDI_STREAMING;
       } else {
         qWarning() << "Failed to register service method: Unknown method type.";
       }
+      srv.addMethod(m->method_name(), type);
     }
-    build.RegisterAsyncService(srv.raw());
+    build.RegisterService(srv.raw());
   }
   server_ = build.BuildAndStart();
   if (!server_) {

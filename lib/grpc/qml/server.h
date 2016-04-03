@@ -11,6 +11,7 @@
 #include <grpc++/server_context.h>
 #include <grpc++/impl/service_type.h>
 #include <grpc++/impl/proto_utils.h>
+#include <grpc++/completion_queue.h>
 #include <google/protobuf/message.h>
 
 #include <QDebug>
@@ -24,10 +25,11 @@
 namespace grpc {
 namespace qml {
 
-class RawGrpcService : public ::grpc::AsynchronousService {
+class RawGrpcService : public ::grpc::Service {
 public:
-  RawGrpcService(const char** names, int count)
-      : ::grpc::AsynchronousService(names, count) {}
+  void addMethod(const char* name, ::grpc::RpcMethod::RpcType type) {
+    AddMethod(new RpcServiceMethod(name, type, nullptr));
+  }
 
 private:
   friend class ServerUnaryCallData;
@@ -39,19 +41,15 @@ private:
 class GrpcService {
 public:
   explicit GrpcService(::protobuf::qml::RpcService* service)
-      : service_(service) {
-    auto& methods = service->methods();
-    raw_method_names_.reserve(methods.size());
-    raw_method_names_cstr_.reserve(methods.size());
-    for (auto& method : methods) {
-      raw_method_names_.push_back(method->method_name().toStdString());
-      raw_method_names_cstr_.push_back(raw_method_names_.back().c_str());
-    }
-    raw_.reset(new RawGrpcService(raw_method_names_cstr_.data(),
-                                  raw_method_names_cstr_.size()));
+      : service_(service) {}
+
+  void addMethod(const QString& name, ::grpc::RpcMethod::RpcType type) {
+    raw_method_names_.push_back(name.toStdString());
+    raw_method_names_cstr_.push_back(raw_method_names_.back().c_str());
+    raw_.addMethod(raw_method_names_cstr_.back(), type);
   }
 
-  RawGrpcService* raw() { return raw_.get(); }
+  RawGrpcService* raw() { return &raw_; }
 
   ::protobuf::qml::RpcService* service() { return service_; }
 
@@ -59,13 +57,13 @@ private:
   ::protobuf::qml::RpcService* service_;
   std::vector<std::string> raw_method_names_;
   std::vector<const char*> raw_method_names_cstr_;
-  std::unique_ptr<RawGrpcService> raw_;
+  RawGrpcService raw_;
 };
 
 class GrpcServer : public ::protobuf::qml::RpcServer {
   Q_OBJECT
-  Q_PROPERTY(QString address READ address WRITE set_address NOTIFY
-                 addressChanged)
+  Q_PROPERTY(
+      QString address READ address WRITE set_address NOTIFY addressChanged)
   Q_PROPERTY(grpc::qml::ServerCredentials* credentials READ credentials WRITE
                  set_credentials NOTIFY credentialsChanged)
 

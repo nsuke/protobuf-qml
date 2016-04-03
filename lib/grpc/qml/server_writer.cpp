@@ -10,8 +10,7 @@ ServerWriterMethod::ServerWriterMethod(
     ::grpc::ServerCompletionQueue* cq,
     ::protobuf::qml::DescriptorWrapper* read,
     ::protobuf::qml::DescriptorWrapper* write)
-    : read_(read), write_(write), cq_(cq), index_(index), service_(service) {
-}
+    : read_(read), write_(write), cq_(cq), index_(index), service_(service) {}
 
 void ServerWriterMethod::startProcessing() {
   new ServerWriterCallData(this, service_, index_, cq_, read_, write_);
@@ -77,8 +76,8 @@ void ServerWriterCallData::process(bool ok) {
   std::unique_lock<std::mutex> lock(mutex_);
   if (status_ == Status::INIT) {
     request_.reset(read_->newMessage());
-    service_->raw()->RequestServerStreaming(index_, &context_, request_.get(),
-                                            &writer_, cq_, cq_, this);
+    service_->raw()->RequestAsyncServerStreaming(
+        index_, &context_, request_.get(), &writer_, cq_, cq_, this);
     status_ = Status::READ;
   } else if (status_ == Status::READ) {
     if (!ok) {

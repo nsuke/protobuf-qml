@@ -5,6 +5,8 @@
 #include "grpc/qml/reader.h"
 #include "grpc/qml/reader_writer.h"
 
+#include <grpc++/completion_queue.h>
+
 namespace grpc {
 namespace qml {
 

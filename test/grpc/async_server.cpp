@@ -274,7 +274,7 @@ int main(int, char**) {
   std::unique_ptr<grpc::ServerCompletionQueue> cq(builder.AddCompletionQueue());
 
   Hello::AsyncService service;
-  builder.RegisterAsyncService(&service);
+  builder.RegisterService(&service);
 
   std::unique_ptr<grpc::Server> server(builder.BuildAndStart());
   new SayHelloCallData(&service, cq.get());

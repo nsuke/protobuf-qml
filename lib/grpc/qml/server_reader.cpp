@@ -10,8 +10,7 @@ ServerReaderMethod::ServerReaderMethod(
     ::grpc::ServerCompletionQueue* cq,
     ::protobuf::qml::DescriptorWrapper* read,
     ::protobuf::qml::DescriptorWrapper* write)
-    : read_(read), write_(write), cq_(cq), index_(index), service_(service) {
-}
+    : read_(read), write_(write), cq_(cq), index_(index), service_(service) {}
 
 void ServerReaderMethod::startProcessing() {
   new ServerReaderCallData(this, service_, index_, cq_, read_, write_);
@@ -76,8 +75,8 @@ ServerReaderCallData::ServerReaderCallData(
 void ServerReaderCallData::process(bool ok) {
   if (status_ == Status::INIT) {
     request_.reset(read_->newMessage());
-    service_->raw()->RequestClientStreaming(index_, &context_, &reader_, cq_,
-                                            cq_, this);
+    service_->raw()->RequestAsyncClientStreaming(index_, &context_, &reader_,
+                                                 cq_, cq_, this);
     status_ = Status::FIRST_READ;
   } else if (status_ == Status::FIRST_READ && ok) {
     reader_.Read(request_.get(), this);

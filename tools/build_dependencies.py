@@ -156,7 +156,7 @@ def download_from_github(cwd, user, proj, commit, check_path=None):
 
 
 def build_protobuf3(wd, conf):
-    path = 'e61ff47ac30f7ce7b06d789f18439d5142ac8c97'
+    path = '452e2b2c5c607ab5d63cd813793f1aa960f19d1c'
     # Need to prefix 'v' when downloading from tags
     # version = 'v' + path
     version = path
@@ -169,6 +169,8 @@ def build_protobuf3(wd, conf):
         cxxflags = '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11 -DLANG_CXX11'
     cmake_cmd = conf.cmake_cmd([
         '-DBUILD_TESTING=OFF',
+        '-Dprotobuf_BUILD_TESTS=OFF',
+        '-Dprotobuf_DEBUG_POSTFIX=',
         cxxflags,
     ], 'cmake')
 
@@ -295,6 +297,20 @@ class GrpcTarget(object):
         self.secure = secure
 
 
+def get_nanopb(wd):
+    destdir = os.path.join(wd, 'nanopb')
+    if os.path.isdir(destdir):
+        return
+    version = '0.3.5'
+    extdir = os.path.join(wd, 'nanopb-%s' % version)
+    archive = os.path.join(wd, 'nanopb-%s.tar.gz' % version)
+    if not os.path.isfile(archive):
+        url = 'https://github.com/nanopb/nanopb/archive/nanopb-%s.tar.gz' % version
+        download_source_archive(url, archive, extdir)
+    srcdir = os.path.join(extdir, 'nanopb-nanopb-%s' % version)
+    os.rename(srcdir, destdir)
+
+
 def build_grpc(wd, conf):
     def find_in_json(arr, name):
         for elem in arr:
@@ -308,39 +324,45 @@ def build_grpc(wd, conf):
         target = find_in_json(dic[key], name)
         if not target:
             print('Not found "%s" in %s' % (name, key), file=sys.stderr)
-        src = target['src']
+        src = target.get('src', [])
         for fg in target.get('filegroups', []):
-            src.extend(find_in_json(dic['filegroups'], fg)['src'])
+            ex = find_in_json(dic['filegroups'], fg).get('src', [])
+            if ex:
+                src.extend(ex)
         deps = target.get('deps', [])
         acc[key][name] = GrpcTarget(
             name, src, deps, target['build'], target['secure'] == 'yes')
         for dep in deps:
             collect_grpc_targets(acc, dic, dep)
 
-    version = 'release-0_11_1'
+    version = 'release-0_13_1'
     repodir = os.path.join(wd, 'grpc-%s' % version)
     download_from_github(wd, 'grpc', 'grpc', version)
 
-    buildyaml = os.path.join(repodir, 'build.yaml')
-    with open(buildyaml, 'r') as fp:
-        dic = yaml.load(fp)
-    acc = {
-        'targets': {},
-        'libs': {},
-    }
-    collect_grpc_targets(acc, dic, 'grpc++')
-    collect_grpc_targets(acc, dic, 'grpc_cpp_plugin', True)
-
-    cmake_template = os.path.join(buildenv.ROOT_DIR, 'tools', 'CMakeLists.txt.grpc.template')
     cmake_out = os.path.join(repodir, 'CMakeLists.txt')
-    with open(cmake_out, 'w+') as fp:
-        fp.write(mako.template.Template(filename=cmake_template).render(**acc))
+    if not os.path.isfile(cmake_out):
+        buildyaml = os.path.join(repodir, 'build.yaml')
+        with open(buildyaml, 'r') as fp:
+            dic = yaml.load(fp)
+        acc = {
+            'targets': {},
+            'libs': {},
+        }
+        collect_grpc_targets(acc, dic, 'grpc++')
+        collect_grpc_targets(acc, dic, 'grpc_cpp_plugin', True)
+
+        cmake_template = os.path.join(buildenv.ROOT_DIR, 'tools', 'CMakeLists.txt.grpc.template')
+        with open(cmake_out, 'w+') as fp:
+            fp.write(mako.template.Template(filename=cmake_template).render(**acc))
+
+    get_nanopb(os.path.join(repodir, 'third_party'))
 
     cmake_args = [
         '-DCMAKE_PREFIX_PATH=%s' % conf.installdir,
     ]
     if not conf.win:
         cmake_args.append('-DCMAKE_CXX_FLAGS=-fPIC -std=c++11')
+        cmake_args.append('-DCMAKE_C_FLAGS=-std=c99')
     cmake_cmd = conf.cmake_cmd(cmake_args)
 
     workflow = [
