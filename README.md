@@ -2,7 +2,7 @@ protobuf-qml
 ============
 
 [![Build Status](https://travis-ci.org/nsuke/protobuf-qml.svg?branch=master)](https://travis-ci.org/nsuke/protobuf-qml)
-[![Build status](https://ci.appveyor.com/api/projects/status/3gaaq96kndvdwvno?svg=true)](https://ci.appveyor.com/project/nsuke/protobuf-qml)
+[![Build status](https://ci.appveyor.com/api/projects/status/3gaaq96kndvdwvno/branch/master?svg=true)](https://ci.appveyor.com/project/nsuke/protobuf-qml)
 
 Efficient schematized serialization and RPC for QtQuick2 applications through Protocol Buffers and gRPC bindings.
 
