@@ -25,6 +25,7 @@ Install dependencies
 * cmake
 * ninja
 * python
+* setuptools (Python module)
 * PyYAML (Python module)
 * mako (Python module)
 * perl
@@ -32,7 +33,7 @@ Install dependencies
 
 For example, if you are on Ubuntu 14.04, installation looks like following:
 
-    # add-apt-repository ppa:beineri/opt-qt55-trusty
+    # add-apt-repository ppa:beineri/opt-qt551-trusty
     # apt-get update
     # apt-get install \
           zlib1g-dev \
@@ -40,6 +41,7 @@ For example, if you are on Ubuntu 14.04, installation looks like following:
           ninja-build \
           python-yaml \
           python-mako \
+          python-setuptools \
           perl \
           golang \
           qt55declarative
