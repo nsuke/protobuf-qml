@@ -94,8 +94,19 @@ public:
 
   Q_INVOKABLE void shutdown() {
     if (server_) {
-      server_.reset();
+      server_->Shutdown();
+    }
+    if (cq_) {
       cq_->Shutdown();
+    }
+    if (thread_ && thread_->joinable()) {
+      thread_->join();
+    }
+    if (server_) {
+      server_.reset();
+    }
+    if (cq_) {
+      cq_.reset();
     }
   }
 

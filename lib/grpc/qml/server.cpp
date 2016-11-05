@@ -9,9 +9,6 @@ namespace qml {
 
 GrpcServer::~GrpcServer() {
   shutdown();
-  if (thread_ && thread_->joinable()) {
-    thread_->join();
-  }
 }
 
 bool GrpcServer::registerService(::protobuf::qml::RpcService* service) {
@@ -27,36 +24,37 @@ bool GrpcServer::registerService(::protobuf::qml::RpcService* service) {
 
 bool GrpcServer::doStart() {
   if (address_.isEmpty() || !credentials_ || !credentials_->raw()) {
+    qWarning() << "Need address and credentials to start";
     return false;
   }
   ::grpc::ServerBuilder build;
   build.AddListeningPort(address_.toStdString(), credentials_->raw());
-  cq_ = build.AddCompletionQueue();
+  auto cq = build.AddCompletionQueue();
   for (auto& srv : services_) {
     for (auto m : srv.service()->methods()) {
       auto type = ::grpc::RpcMethod::NORMAL_RPC;
       if (auto unary =
               qobject_cast<::protobuf::qml::ServerUnaryMethodHolder*>(m)) {
-        unary->inject(new ServerUnaryMethod(&srv, m->index(), cq_.get(),
+        unary->inject(new ServerUnaryMethod(&srv, m->index(), cq.get(),
                                             m->read_descriptor(),
                                             m->write_descriptor()));
       } else if (auto reader =
                      qobject_cast<::protobuf::qml::ServerReaderMethodHolder*>(
                          m)) {
-        reader->inject(new ServerReaderMethod(&srv, m->index(), cq_.get(),
+        reader->inject(new ServerReaderMethod(&srv, m->index(), cq.get(),
                                               m->read_descriptor(),
                                               m->write_descriptor()));
         type = ::grpc::RpcMethod::CLIENT_STREAMING;
       } else if (auto writer =
                      qobject_cast<::protobuf::qml::ServerWriterMethodHolder*>(
                          m)) {
-        writer->inject(new ServerWriterMethod(&srv, m->index(), cq_.get(),
+        writer->inject(new ServerWriterMethod(&srv, m->index(), cq.get(),
                                               m->read_descriptor(),
                                               m->write_descriptor()));
         type = ::grpc::RpcMethod::SERVER_STREAMING;
       } else if (auto bidi = qobject_cast<
                      ::protobuf::qml::ServerReaderWriterMethodHolder*>(m)) {
-        bidi->inject(new ServerBidiMethod(&srv, m->index(), cq_.get(),
+        bidi->inject(new ServerBidiMethod(&srv, m->index(), cq.get(),
                                           m->read_descriptor(),
                                           m->write_descriptor()));
         type = ::grpc::RpcMethod::BIDI_STREAMING;
@@ -71,11 +69,13 @@ bool GrpcServer::doStart() {
   if (!server_) {
     qWarning() << "Failed to initialize gRPC server";
     services_.clear();
+    return false;
   } else {
+    cq_.swap(cq);
     Q_ASSERT(!thread_);
     thread_.reset(new std::thread([this] { handle(); }));
+    return true;
   }
-  return server_ != nullptr;
 }
 
 void GrpcServer::handle() {
