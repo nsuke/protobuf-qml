@@ -249,7 +249,7 @@ def build_zlib(wd, conf):
 
 
 def prepare_boringssl(wd, conf):
-    version = '2661'
+    version = 'version_for_cocoapods_7.0'
     repodir = os.path.join(wd, version)
     archive = repodir + '.tar.gz'
     url = 'https://boringssl.googlesource.com/boringssl/+archive/%s.tar.gz' % version
