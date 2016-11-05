@@ -45,4 +45,4 @@ env:
       QT_PPA=ppa:beineri/opt-qt551-trusty
 
     - QT=qt56
-      QT_PPA=ppa:beineri/opt-qt56-trusty
+      QT_PPA=ppa:beineri/opt-qt561-trusty
