@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure(2) do |config|
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "ubuntu/xenial64"
   config.vm.provider :virtualbox do |v|
     v.gui = true
     v.memory = 4096
@@ -18,10 +18,10 @@ Vagrant.configure(2) do |config|
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
       software-properties-common \
       python-software-properties
-    add-apt-repository -y ppa:beineri/opt-qt55
+    add-apt-repository -y ppa:beineri/opt-qt562
     apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
       libgl1-mesa-dev \
-      qt55declarative \
+      qt56declarative \
       ninja-build \
       cmake \
       python-yaml \
