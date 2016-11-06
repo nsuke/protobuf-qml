@@ -68,6 +68,7 @@ find_program(GRPCXX_PLUGIN_EXECUTABLE
   PATHS ${GRPC_ROOT}/bin)
 mark_as_advanced(GRPCXX_PLUGIN_EXECUTABLE)
 
+include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(GRPC++ DEFAULT_MSG
   GRPC_INCLUDE_DIR GPR_LIBRARY GRPC_LIBRARY GRPCXX_LIBRARY GRPCXX_PLUGIN_EXECUTABLE)
 
