@@ -2,17 +2,17 @@
 #define PROTOBUF_QML_V4_DESCRIPTOR_H
 
 #include "protobuf/qml/common.h"
+
 #include <google/protobuf/descriptor.h>
-#include <google/protobuf/message.h>
 #include <google/protobuf/dynamic_message.h>
+#include <google/protobuf/message.h>
+
 #include <QObject>
 #include <QRunnable>
+#include <private/qv4persistent_p.h>
 #include <private/qv8engine_p.h>
-#include <memory>
 
-// #if (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
-#include "private/qv4persistent_p.h"
-// #endif
+#include <memory>
 
 namespace protobuf {
 namespace qml {
