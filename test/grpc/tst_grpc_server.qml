@@ -129,10 +129,10 @@ Item {
 
     // same tests as client side test
     property var data: ({ client: helloClient, })
-    // function test_unary() { Common.test_unary(test, test.data); }
-    // function test_client_streaming() { Common.test_client_streaming(test, test.data); }
-    // function test_server_streaming() { Common.test_server_streaming(test, test.data); }
-    // function test_bidi_streaming() { Common.test_bidi_streaming(test, test.data); }
+    function test_unary() { Common.test_unary(test, test.data); }
+    function test_client_streaming() { Common.test_client_streaming(test, test.data); }
+    function test_server_streaming() { Common.test_server_streaming(test, test.data); }
+    function test_bidi_streaming() { Common.test_bidi_streaming(test, test.data); }
 
     // error handling tests
     function test_unary_error() {
