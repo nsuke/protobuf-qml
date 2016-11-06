@@ -16,9 +16,9 @@ Install dependencies
 #### Libraries
 
 * Qt 5.5.0 or later
-* Protocol Buffers 3.0 beta-1 or later (Automatically built)
-* gRPC 0.11.0 or later (Automatically built)
-* zlib (For Windows, automatically built)
+* Protocol Buffers 3.x (Automatically built)
+* gRPC 1.x (Automatically built)
+* zlib (Automatically built)
 
 #### Build dependencies
 
@@ -33,7 +33,7 @@ Install dependencies
 
 For example, if you are on Ubuntu 14.04, installation looks like following:
 
-    # add-apt-repository ppa:beineri/opt-qt551-trusty
+    # add-apt-repository ppa:beineri/opt-qt562-trusty
     # apt-get update
     # apt-get install \
           zlib1g-dev \
@@ -44,7 +44,7 @@ For example, if you are on Ubuntu 14.04, installation looks like following:
           python-setuptools \
           perl \
           golang \
-          qt55declarative
+          qt56declarative
 
 
 Build
