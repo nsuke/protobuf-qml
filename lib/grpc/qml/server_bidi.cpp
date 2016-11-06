@@ -81,7 +81,7 @@ ServerBidiCallData::ServerBidiCallData(
   process(true);
 }
 
-void ServerBidiCallData::decrementRef(unique_lock<std::mutex>& lock,
+void ServerBidiCallData::decrementRef(std::unique_lock<std::mutex>& lock,
                                       bool terminate) {
   if (!--ref_count_) {
     if (!terminate)

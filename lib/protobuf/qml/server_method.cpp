@@ -1,5 +1,8 @@
 #include "protobuf/qml/server_method.h"
 
+#include <private/qv4arrayobject_p.h>
+#include <private/qv4scopedvalue_p.h>
+
 using namespace QV4;
 
 namespace protobuf {

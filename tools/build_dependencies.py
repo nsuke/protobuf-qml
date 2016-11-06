@@ -33,7 +33,7 @@ def concurrency():
 
 
 class BuildConf(object):
-    def __init__(self, cc, cxx, shared, debug, jobs, installdir):
+    def __init__(self, cc, cxx, shared, debug, jobs, installdir, thread_sanitizer, grpc):
         self.env = copy.deepcopy(os.environ)
         self.installdir = installdir
         buildenv.setup_env(self.installdir, self.env)
@@ -43,6 +43,17 @@ class BuildConf(object):
         self.cxx = cxx
         self.shared = shared
         self.debug = debug
+        self.grpc = grpc
+        self.thread_sanitizer = thread_sanitizer
+        if self.thread_sanitizer:
+            self.sanitizer_cflag = '-fsanitize=thread -O1'
+            # self.sanitizer_cflag = ''
+            self.sanitizer_cxxflag = '-fsanitize=thread -O1'
+            self.sanitizer_ldflag = '-fsanitize=thread'
+        else:
+            self.sanitizer_cflag = ''
+            self.sanitizer_cxxflag = ''
+            self.sanitizer_ldflag = ''
         if self.win:
             logger.info('Platform is Windows')
             self.libprefix = ''
@@ -61,9 +72,13 @@ class BuildConf(object):
     def build_type(self):
         return 'Debug' if self.debug else 'Release'
 
-    def cmake_cmd(self, extra_args, cmake_dir='.'):
+    def cmake_cmd(self, extra_args=[], cmake_dir='.', cflags=None, cxxflags=None, skip_sanitizer=False):
+        if not cmake_dir:
+            raise ValueError('invalid cmake_dir')
         cmd = [
             'cmake',
+            '-DCMAKE_PREFIX_PATH=' + self.installdir,
+            '-DCMAKE_INSTALL_PREFIX=' + self.installdir,
             '-DBUILD_SHARED_LIBS=' + self.shared_on,
             '-DCMAKE_BUILD_TYPE=' + self.build_type,
         ] + extra_args
@@ -73,7 +88,20 @@ class BuildConf(object):
             cmd.append('-DCMAKE_C_COMPILER=' + self.cc)
         if self.cxx:
             cmd.append('-DCMAKE_CXX_COMPILER=' + self.cxx)
-        cmd.append(cmake_dir)
+        cflags = cflags or ''
+        cflags = ' '.join([cflags, self.sanitizer_cflag]).strip()
+        if cflags:
+            cmd.append('-DCMAKE_C_FLAGS=' + cflags)
+        cxxflags = cxxflags or ''
+        cxxflags = ' '.join([cxxflags, self.sanitizer_cxxflag]).strip()
+        if cxxflags:
+            cmd.append('-DCMAKE_CXX_FLAGS=' + cxxflags)
+        if not skip_sanitizer:
+            cmd.append('-DCMAKE_EXE_LINKER_FLAGS=' + self.sanitizer_ldflag)
+            cmd.append('-DCMAKE_MODULE_LINKER_FLAGS=' + self.sanitizer_ldflag)
+            cmd.append('-DCMAKE_SHARED_LINKER_FLAGS=' + self.sanitizer_ldflag)
+            cmd.append('-DCMAKE_STATIC_LINKER_FLAGS=' + self.sanitizer_ldflag)
+            cmd.append(cmake_dir)
         return cmd
 
     def _execute(self, cmd, **kwargs):
@@ -156,35 +184,40 @@ def download_from_github(cwd, user, proj, commit, check_path=None):
 
 
 def build_protobuf3(wd, conf):
-    path = '452e2b2c5c607ab5d63cd813793f1aa960f19d1c'
+    path = '3.1.0'
+    # path = '994722a0170d4f9a7f92435ce052755796af5967'
+    # download_from_github(wd, 'KindDragon', 'protobuf', version, repodir)
+    # version = path
+
     # Need to prefix 'v' when downloading from tags
-    # version = 'v' + path
-    version = path
+    version = 'v' + path
     repodir = os.path.join(wd, 'protobuf-%s' % path)
     download_from_github(wd, 'google', 'protobuf', version, repodir)
 
     if conf.win:
-        cxxflags = '-DCMAKE_CXX_FLAGS=-DLANG_CXX11 -EHsc'
+        cflags = ''
+        cxxflags = '-DLANG_CXX11 -EHsc'
     else:
-        cxxflags = '-DCMAKE_CXX_FLAGS=-fPIC -std=c++11 -DLANG_CXX11'
+        cflags = '-fPIC -std=c11'
+        cxxflags = '-fPIC -std=c++11 -DLANG_CXX11'
     cmake_cmd = conf.cmake_cmd([
-        '-DBUILD_TESTING=OFF',
         '-Dprotobuf_BUILD_TESTS=OFF',
+        '-Dprotobuf_BUILD_EXAMPLES=OFF',
         '-Dprotobuf_DEBUG_POSTFIX=',
-        cxxflags,
-    ], 'cmake')
+        '-Dprotobuf_MSVC_STATIC_RUNTIME=OFF',
+    ], 'cmake', cflags=cflags, cxxflags=cxxflags)
 
     conf.env['PROTOC'] = os.path.join(repodir, 'protoc' + conf.execext)
     workflow = [
-        (['sed', '-i', 's!"/MD" "/MT"!"/MD" "/MD"!g',
-            os.path.join(repodir, 'cmake', 'CMakeLists.txt')], {}),
         (cmake_cmd, {'cwd': repodir}),
         (conf.make + ['clean'], {'cwd': repodir}),
         (conf.make, {'cwd': repodir}),
         ([sys.executable, 'setup.py', 'build'], {
             'cwd': os.path.join(repodir, 'python'),
         }),
+        (conf.make + ['install'], {'cwd': repodir}),
     ]
+    # return True
     if conf.execute_tasks(workflow):
         shutil.copy(os.path.join(repodir, 'LICENSE'),
                     os.path.join(conf.installdir, 'LICENSE-protobuf'))
@@ -220,7 +253,7 @@ def build_zlib(wd, conf):
 
     repodir = os.path.join(extract_dir, 'zlib-' + version)
     workflow = [
-        (conf.cmake_cmd([]), {'cwd': repodir}),
+        (conf.cmake_cmd(skip_sanitizer=True), {'cwd': repodir}),
         (conf.make + ['clean'], {'cwd': repodir}),
         (conf.make, {'cwd': repodir}),
     ]
@@ -234,6 +267,7 @@ def build_zlib(wd, conf):
         elif not is_debug and not conf.debug:
             return lib
 
+    # return True
     if conf.execute_tasks(workflow):
         for f in glob.iglob(os.path.join(repodir, '*.h')):
             shutil.copy(f, os.path.join(conf.installdir, 'include'))
@@ -264,17 +298,14 @@ def prepare_boringssl(wd, conf):
 def build_boringssl(wd, conf):
     version = prepare_boringssl(wd, conf)
     repodir = os.path.join(wd, str(version))
-    if conf.win:
-        cmake_args = []
-    else:
-        cmake_args = ['-DCMAKE_C_FLAGS=-fPIC']
-    cmake_cmd = conf.cmake_cmd(cmake_args)
+    cmake_cmd = conf.cmake_cmd(cflags=conf.win and '-fPIC')
 
     workflow = [
         (cmake_cmd, {'cwd': repodir}),
         (conf.make + ['clean'], {'cwd': repodir}),
         (conf.make, {'cwd': repodir}),
     ]
+    # return True
     if conf.execute_tasks(workflow):
         src_include_dir = os.path.join(repodir, 'include', 'openssl')
         dst_include_dir = os.path.join(conf.installdir, 'include', 'openssl')
@@ -317,6 +348,14 @@ def build_grpc(wd, conf):
             if elem['name'] == name:
                 return elem
 
+    def collect_grpc_filegroups(acc, dic, name):
+        fg = find_in_json(dic['filegroups'], name)
+        ex = fg.get('src', [])
+        if ex:
+            acc.extend(ex)
+        for sub in fg.get('uses', []):
+            collect_grpc_filegroups(acc, dic, sub)
+
     def collect_grpc_targets(acc, dic, name, executable=False):
         key = 'libs' if not executable else 'targets'
         if name in acc[key]:
@@ -326,21 +365,25 @@ def build_grpc(wd, conf):
             print('Not found "%s" in %s' % (name, key), file=sys.stderr)
         src = target.get('src', [])
         for fg in target.get('filegroups', []):
-            ex = find_in_json(dic['filegroups'], fg).get('src', [])
-            if ex:
-                src.extend(ex)
+            collect_grpc_filegroups(src, dic, fg)
         deps = target.get('deps', [])
+
+        if target.get('generate_plugin_registry') is True:
+            deps.append('gpr')
+            src.append('src/core/plugin_registry/grpc_plugin_registry.c')
         acc[key][name] = GrpcTarget(
-            name, src, deps, target['build'], target['secure'] == 'yes')
+            name, src, deps, target['build'], target.get('secure') is True)
         for dep in deps:
             collect_grpc_targets(acc, dic, dep)
 
-    version = 'release-0_13_1'
-    repodir = os.path.join(wd, 'grpc-%s' % version)
+    version = 'v1.0.1'
+    repodir = os.path.join(wd, 'grpc-1.0.1')
     download_from_github(wd, 'grpc', 'grpc', version)
 
     cmake_out = os.path.join(repodir, 'CMakeLists.txt')
-    if not os.path.isfile(cmake_out):
+
+    # Upstream CMakeFile.txt is not stable yet and does not work for our use case.
+    if True or not os.path.isfile(cmake_out):
         buildyaml = os.path.join(repodir, 'build.yaml')
         with open(buildyaml, 'r') as fp:
             dic = yaml.load(fp)
@@ -357,13 +400,29 @@ def build_grpc(wd, conf):
 
     get_nanopb(os.path.join(repodir, 'third_party'))
 
+    # path = '3.0.0'
+    # # Need to prefix 'v' when downloading from tags
+    # version = 'v' + path
+    # protobuf_dir = os.path.join(wd, 'protobuf-%s' % path)
+    # download_from_github(wd, 'google', 'protobuf', version, protobuf_dir)
+
+    # version = '1.2.8'
+    # extract_dir = os.path.join(wd, 'v' + version)
+    # zlib_dir = os.path.join(extract_dir, 'zlib-' + version)
+
+    # version = '2661'
+    # boringssl_dir = os.path.join(wd, version)
+
     cmake_args = [
-        '-DCMAKE_PREFIX_PATH=%s' % conf.installdir,
+        # '-DBORINGSSL_ROOT_DIR=%s' % boringssl_dir,
+        # '-DPROTOBUF_ROOT_DIR=%s' % protobuf_dir,
+        '-DProtobuf_DIR=%s' % os.path.join(conf.installdir, 'lib64', 'cmake'),
+        # '-DZLIB_ROOT_DIR=%s' % zlib_dir,
     ]
-    if not conf.win:
-        cmake_args.append('-DCMAKE_CXX_FLAGS=-fPIC -std=c++11')
-        cmake_args.append('-DCMAKE_C_FLAGS=-std=c99')
-    cmake_cmd = conf.cmake_cmd(cmake_args)
+    cmake_cmd = conf.cmake_cmd(
+        cmake_args,
+        cflags=not conf.win and '-fPIC -std=c11',
+        cxxflags=not conf.win and '-fPIC -std=c++11')
 
     workflow = [
         (cmake_cmd, {'cwd': repodir}),
@@ -424,19 +483,21 @@ def build(conf):
     if not os.path.exists(wd):
         os.makedirs(wd)
 
-    if conf.win and not build_zlib(wd, conf):
+    if not build_zlib(wd, conf):
         return -1
     if not build_protobuf3(wd, conf):
         return -1
-    if not build_boringssl(wd, conf):
+    if conf.grpc and not build_boringssl(wd, conf):
         return -1
-    if not build_grpc(wd, conf):
+    if conf.grpc and not build_grpc(wd, conf):
         return -1
     return 0
 
 
 def main(argv):
     p = argparse.ArgumentParser()
+    p.add_argument('--no-grpc', action='store_true', help='skip gRPC build')
+    p.add_argument('--tsan', action='store_true', help='enable thread sanitizer')
     p.add_argument('--shared', action='store_true',
                    help='build shared libraries')
     p.add_argument('--debug', '-D', action='store_true',
@@ -461,7 +522,7 @@ def main(argv):
     cxx = args.cxx or (args.clang and 'clang++')
 
     prefix = args.prefix or os.path.join(args.out, 'Debug' if args.debug else 'Release')
-    conf = BuildConf(cc, cxx, args.shared, args.debug, args.jobs, prefix)
+    conf = BuildConf(cc, cxx, args.shared, args.debug, args.jobs, prefix, args.tsan, not args.no_grpc)
     if args.clean:
         clean(conf)
     else:

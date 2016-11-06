@@ -1,5 +1,14 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(protobuf-qml)
+# Force link with full path
+if(POLICY CMP0060)
+  cmake_policy(SET CMP0060 NEW)
+endif()
+if(POLICY CMP0054)
+  cmake_policy(SET CMP0054 NEW)
+endif()
+
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
@@ -13,9 +22,15 @@ if(HAS_W_INCOSISTENT_MISSING_OVERRIDE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-inconsistent-missing-override")
 endif()
 
+check_cxx_compiler_flag(-fdiagnostics-color HAS_DIAGNOSTICS_COLOR)
+if(HAS_DIAGNOSTICS_COLOR)
+  # Generated code for Q_OBJECT fires too many of this
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color")
+endif()
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-find_package(Protobuf REQUIRED)
+find_package(Protobuf 3.0 REQUIRED CONFIG)
 find_package(GRPC++)
 
 include(CMakeDependentOption)
@@ -69,7 +84,7 @@ function(protobuf_generate_lang PB_LANG PB_OUT)
 
     add_custom_target("protobuf_generate_${PB_LANG}_${FIL_WE}" ALL
       DEPENDS ${ABS_FIL} protoc-gen-qml
-      COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
+      COMMAND  protobuf::protoc
       --plugin=protoc-gen-qml=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/protoc-gen-qml${CMAKE_EXECUTABLE_SUFFIX}
       ${INCDIR}
       --${PB_LANG}_out  ${PB_OUT} ${ABS_FIL})
@@ -79,6 +94,34 @@ endfunction()
 function(protobuf_generate_qml)
   protobuf_generate_lang(qml ${ARGV})
 endfunction()
+
+macro(protobuf_generate_cxx PB_VAR)
+  foreach(FIL ${ARGN})
+    get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
+    get_filename_component(FIL_WE ${FIL} NAME_WE)
+    get_filename_component(FIL_DIR ${ABS_FIL} DIRECTORY)
+
+    if(FIL_DIR)
+      set(INCDIR "-I${FIL_DIR}")
+    else()
+      set(INCDIR "")
+    endif()
+
+    set(_OUTPUT ${FIL_WE}.pb.cc ${FIL_WE}.pb.h)
+    list(APPEND ${PB_VAR} ${_OUTPUT})
+
+    add_custom_command(
+      OUTPUT ${_OUTPUT}
+      DEPENDS ${ABS_FIL}
+      COMMAND  protobuf::protoc ${INCDIR}
+      --cpp_out "." ${ABS_FIL}
+      OUTPUT
+      )
+    add_custom_target(
+      "protobuf_generate_cxx_${FIL_WE}" ALL
+      DEPENDS ${_OUTPUT})
+  endforeach()
+endmacro()
 
 if(NOT MSVC)
   if(CMAKE_VERSION VERSION_LESS 3.1.0)

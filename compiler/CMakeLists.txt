@@ -16,10 +16,10 @@ if(NOT PROTOBUF_COMPILER_HAS_QT)
 endif()
 add_library(protoc-gen-qml-core
   ${protoc-gen-qml-core_SOURCES})
-target_link_libraries(protoc-gen-qml-core
+target_link_libraries(protoc-gen-qml-core PUBLIC
   protobuf-qml
-  ${PROTOBUF_PROTOC_LIBRARIES}
-  ${PROTOBUF_LIBRARIES}
+  protobuf::libprotoc
+  protobuf::libprotobuf
   Qt5::Core)
 
 set(protoc-gen-qml_SOURCES
@@ -36,8 +36,6 @@ endif()
 target_link_libraries(protoc-gen-qml
   protoc-gen-qml-core
   protobuf-qml
-  ${PROTOBUF_PROTOC_LIBRARIES}
-  ${PROTOBUF_LIBRARIES}
   Qt5::Core)
 if(BUILD_GRPC)
   target_link_libraries(protoc-gen-qml ${GRPC++_LIBRARIES})

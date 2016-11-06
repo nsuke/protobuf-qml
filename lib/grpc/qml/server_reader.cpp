@@ -51,6 +51,7 @@ bool ServerReaderMethod::abort(int tag, int code, const QString& message) {
     qWarning() << "Unknown tag to abort: " << tag;
     return false;
   }
+  qDebug() << " $$$ Aborting !!!";
   cdata->abort(code, message);
   return true;
 }
@@ -95,6 +96,7 @@ void ServerReaderCallData::process(bool ok) {
   } else if (status_ == Status::DONE) {
     new ServerReaderCallData(method_, service_, index_, cq_, read_, write_);
     if (!ok) {
+      qWarning() << "Error in handler for DONE";
       // notify
     }
     method_->closed(tag_);
@@ -119,6 +121,7 @@ void ServerReaderCallData::resume(
 }
 
 void ServerReaderCallData::abort(int code, const QString& message) {
+  qDebug() << " $$$ CDATA::Aborting" << message << code;
   if (status_ != Status::FROZEN) {
     qWarning() << "Abort called for non-frozen call data.";
     return;
@@ -126,6 +129,7 @@ void ServerReaderCallData::abort(int code, const QString& message) {
   status_ = Status::DONE;
   grpc::Status grpc_status(static_cast<grpc::StatusCode>(code),
                            message.toStdString());
+  qDebug() << " $$$ FinishWithError: " << message;
   reader_.FinishWithError(grpc_status, this);
 }
 }

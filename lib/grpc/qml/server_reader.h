@@ -5,18 +5,18 @@
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/server_method.h"
 
-#include <grpc++/support/async_stream.h>
-#include <grpc++/server_context.h>
-#include <grpc++/impl/proto_utils.h>
 #include <google/protobuf/message.h>
+#include <grpc++/impl/codegen/proto_utils.h>
+#include <grpc++/server_context.h>
+#include <grpc++/support/async_stream.h>
 
 namespace grpc {
 namespace qml {
 
 class GrpcService;
 class ServerReaderCallData;
-class ServerReaderMethod : public ::protobuf::qml::ServerReaderMethod,
-                           private CallDataStore<ServerReaderCallData> {
+class ServerReaderMethod final : public ::protobuf::qml::ServerReaderMethod,
+                                 private CallDataStore<ServerReaderCallData> {
   Q_OBJECT
 
 public:
@@ -30,10 +30,10 @@ public:
   void onData(ServerReaderCallData* cdata);
   void onDataEnd(ServerReaderCallData* cdata);
 
-  void startProcessing() final;
+  void startProcessing() override final;
   bool respond(int tag,
-               std::unique_ptr<google::protobuf::Message>) final;
-  bool abort(int tag, int code, const QString& message) final;
+               std::unique_ptr<google::protobuf::Message>) override final;
+  bool abort(int tag, int code, const QString& message) override final;
 
 private:
   ::protobuf::qml::DescriptorWrapper* read_;
@@ -52,7 +52,7 @@ public:
                        ::protobuf::qml::DescriptorWrapper* read,
                        ::protobuf::qml::DescriptorWrapper* write);
 
-  void process(bool ok) final;
+  void process(bool ok) override final;
   void resume(std::unique_ptr<google::protobuf::Message>);
   void abort(int code, const QString& message);
   const std::shared_ptr<google::protobuf::Message>& data() const {
@@ -78,7 +78,8 @@ private:
   std::unique_ptr<google::protobuf::Message> response_;
   ServerReaderMethod* method_;
   ::grpc::ServerAsyncReader<google::protobuf::Message,
-                            google::protobuf::Message> reader_;
+                            google::protobuf::Message>
+      reader_;
   ::grpc::ServerCompletionQueue* cq_;
   int index_;
   int tag_;

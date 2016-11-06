@@ -52,15 +52,22 @@ Item {
       var msg = 'Hello';
       var err = null;
       call.on('data', function(data) {
+        print(' ### data ### ');
         if (data.name === 'GIVE_ME_ERROR') {
+          print(' ### error ! ### ');
           err = new PB.RpcErrors.Aborted(clientStreamingErrorMessage);
           return;
         }
+          print(' ### data ! ### ');
         msg += ' ' + data.name;
       });
       call.on('end', function() {
+        print(' ### end ### ');
         if (err) {
+          print(' ### err_back');
+          print(' ### callback: ' + String(callback));
           callback(err);
+          print(' ### err_backed');
           return;
         }
         callback(null, {
@@ -122,13 +129,14 @@ Item {
 
     // same tests as client side test
     property var data: ({ client: helloClient, })
-    function test_unary() { Common.test_unary(test, test.data); }
-    function test_client_streaming() { Common.test_client_streaming(test, test.data); }
-    function test_server_streaming() { Common.test_server_streaming(test, test.data); }
-    function test_bidi_streaming() { Common.test_bidi_streaming(test, test.data); }
+    // function test_unary() { Common.test_unary(test, test.data); }
+    // function test_client_streaming() { Common.test_client_streaming(test, test.data); }
+    // function test_server_streaming() { Common.test_server_streaming(test, test.data); }
+    // function test_bidi_streaming() { Common.test_bidi_streaming(test, test.data); }
 
     // error handling tests
     function test_unary_error() {
+      skip();
       var called = {};
       helloClient.sayHello({
         name: 'GIVE_ME_ERROR',
@@ -146,6 +154,7 @@ Item {
     function test_client_streaming_error() {
       var called = {};
       var call = helloClient.batchHello(function(err, rsp) {
+        print(' ##### callback #### ');
         verify(err);
         compare(err.message, service.clientStreamingErrorMessage);
         compare(err.code, PB.StatusCode.ABORTED);
@@ -156,6 +165,7 @@ Item {
 
       call.timeout = 1000;
 
+        print(' ##### calling #### ');
       var ok = call.write({name: 'GIVE_ME_ERROR'});
       test.verify(ok);
 
@@ -166,6 +176,7 @@ Item {
     }
 
     function test_server_streaming_error() {
+      skip();
       var called = {};
       var ok = helloClient.subscribeHello({
         requests: [{
@@ -187,6 +198,7 @@ Item {
     }
 
     function test_bidi_streaming_error() {
+      skip();
       var called = {};
       var call = helloClient.bidiHello(function(err, rsp, fin) {
         if (!fin) {

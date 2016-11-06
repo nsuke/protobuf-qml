@@ -28,16 +28,16 @@ endif()
 #
 # C++ test server
 #
-grpc_generate_cxx(hello.proto)
+grpc_generate_cxx(hello_GEN hello.proto)
 
 set(test-hello-server_SOURCES
   server.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/hello.pb.cc
-  ${CMAKE_CURRENT_BINARY_DIR}/hello.grpc.pb.cc)
+  ${hello_GEN}
+  )
 
 add_executable(test-hello-server ${test-hello-server_SOURCES})
 
-target_link_libraries(test-hello-server ${GRPC++_LIBRARIES} ${PROTOBUF_LIBRARIES})
+target_link_libraries(test-hello-server ${GRPC++_LIBRARIES} protobuf::libprotobuf)
 if(UNIX)
   target_link_libraries(test-hello-server rt)
 endif()
@@ -54,8 +54,11 @@ set(test-hello-async-server_SOURCES
 
 add_executable(test-hello-async-server ${test-hello-async-server_SOURCES})
 
-target_link_libraries(test-hello-async-server ${GRPC++_LIBRARIES} ${PROTOBUF_LIBRARIES})
+message(STATUS "GRPC_LIBS : ${GRPC++_LIBRARIES}")
+target_link_libraries(test-hello-async-server PUBLIC
+    # protobuf::libprotobuf
+    ${GRPC++_LIBRARIES})
 if(UNIX)
-  target_link_libraries(test-hello-async-server rt)
+    target_link_libraries(test-hello-async-server PUBLIC rt)
 endif()
 protobuf_qml_target(test-hello-async-server)

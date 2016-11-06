@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(grpc)
 
-find_package(Protobuf REQUIRED)
+# Force link with full path
+if(POLICY CMP0060)
+  cmake_policy(SET CMP0060 NEW)
+endif()
+
+find_package(Protobuf REQUIRED CONFIG)
 
 find_path(OPENSSL_INCLUDE_DIR NAMES openssl/ssl.h)
 mark_as_advanced(OPENSSL_INCLUDE_DIR)
@@ -12,7 +17,7 @@ mark_as_advanced(OPENSSL_SSL_LIBRARY)
 find_library(OPENSSL_CRYPTO_LIBRARY NAMES crypto)
 mark_as_advanced(OPENSSL_CRYPTO_LIBRARY)
 
-include_directories(. include ${'$'}{PROTOBUF_INCLUDE_DIRS} ${'$'}{OPENSSL_INCLUDE_DIR})
+include_directories(. include ${'$'}{OPENSSL_INCLUDE_DIR})
 
 <%!
 def get_deps(target):
@@ -20,10 +25,10 @@ def get_deps(target):
   if target.secure:
     deps.extend(['${OPENSSL_SSL_LIBRARY}', '${OPENSSL_CRYPTO_LIBRARY}'])
   if target.build == 'protoc':
-    deps.append('${PROTOBUF_PROTOC_LIBRARIES}')
-    deps.append('${PROTOBUF_LIBRARIES}')
+    deps.append('protobuf::libprotoc')
+    deps.append('protobuf::libprotobuf')
   if target.name == 'grpc++':
-    deps.append('${PROTOBUF_LIBRARIES}')
+    deps.append('protobuf::libprotobuf')
   for d in target.deps:
     deps.append(d)
   return deps
@@ -48,7 +53,7 @@ add_library(${lib.name}
   ${src}
 % endfor
 )
-target_link_libraries(${lib.name}
+target_link_libraries(${lib.name} PUBLIC
 % for dep in get_deps(lib):
   ${dep}
 % endfor
@@ -61,7 +66,7 @@ add_executable(${tgt.name}
   ${src}
 % endfor
 )
-target_link_libraries(${tgt.name}
+target_link_libraries(${tgt.name} PUBLIC
 % for dep in get_deps(tgt):
   ${dep}
 % endfor

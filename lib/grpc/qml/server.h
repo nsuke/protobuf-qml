@@ -5,14 +5,14 @@
 #include "protobuf/qml/descriptors.h"
 #include "protobuf/qml/server_method.h"
 
-#include <grpc++/support/async_stream.h>
+#include <google/protobuf/message.h>
+#include <grpc++/completion_queue.h>
+#include <grpc++/impl/codegen/proto_utils.h>
+#include <grpc++/impl/service_type.h>
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <grpc++/server_context.h>
-#include <grpc++/impl/service_type.h>
-#include <grpc++/impl/proto_utils.h>
-#include <grpc++/completion_queue.h>
-#include <google/protobuf/message.h>
+#include <grpc++/support/async_stream.h>
 
 #include <QDebug>
 #include <QString>

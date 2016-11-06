@@ -1,4 +1,6 @@
 #include "protobuf/qml/method.h"
+#include <private/qv4scopedvalue_p.h>
+#include <private/qv4arrayobject_p.h>
 
 using namespace QV4;
 

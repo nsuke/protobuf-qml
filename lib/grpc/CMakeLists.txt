@@ -2,6 +2,7 @@
 # gRPC QML plugin
 #
 set(grpc-qml_SOURCES
+  qml/logging.cpp
   qml/server_unary.cpp
   qml/server_reader.cpp
   qml/server_writer.cpp
@@ -27,7 +28,7 @@ set_target_properties(
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Grpc
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Grpc)
 
-target_link_libraries(grpc-qml
+target_link_libraries(grpc-qml PUBLIC
   protobuf-qml-core
   ${GRPC++_LIBRARIES}
   Qt5::Qml)

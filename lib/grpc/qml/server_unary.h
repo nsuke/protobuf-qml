@@ -7,7 +7,7 @@
 
 #include <grpc++/support/async_unary_call.h>
 #include <grpc++/server_context.h>
-#include <grpc++/impl/proto_utils.h>
+#include <grpc++/impl/codegen/proto_utils.h>
 #include <google/protobuf/message.h>
 
 namespace grpc {

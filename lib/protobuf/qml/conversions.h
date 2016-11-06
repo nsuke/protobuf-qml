@@ -9,7 +9,7 @@
 #include <stdexcept>
 
 namespace QV4 {
-class ExecutionEngine;
+struct ExecutionEngine;
 }
 
 namespace protobuf {

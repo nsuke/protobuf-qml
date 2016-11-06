@@ -23,26 +23,34 @@ before_install:
   - virtualenv venv
   - . venv/bin/activate
   - pip install -r tools/requirements.txt
+  - . /opt/${QT}/bin/${QT}-env.sh
 
 script:
-  - tools/build_dependencies.py -j4 --shared --cc=$CC --cxx=$CXX
+  - if [[ -n "$NO_GRPC" ]]; then DEPS_ARGS=--no-grpc ; fi
+  - tools/build_dependencies.py -j4 --shared --cc=$CC --cxx=$CXX $DEPS_ARGS
   - tools/build_dependencies.py --clean
-  - tools/build_dependencies.py -j4 --shared --debug --cc=$CC --cxx=$CXX
-  - . /opt/${QT}/bin/${QT}-env.sh
+  - tools/build_dependencies.py -j4 --shared --debug --cc=$CC --cxx=$CXX $DEPS_ARGS
   - ${TRAVIS_BUILD_DIR}/tools/bootstrap.py --cc=$CC --cxx=$CXX --qt5dir=/opt/${QT}/lib/cmake
   - . ${TRAVIS_BUILD_DIR}/tools/setup_env.sh Debug
   - ninja -j4 -C ${TRAVIS_BUILD_DIR}/out/Debug
   - cd ${TRAVIS_BUILD_DIR}/out/Debug && ctest -VV
-  - cd ${TRAVIS_BUILD_DIR} && tools/run_test.py -C Debug
+  - if [[ -z "$NO_GRPC" ]]; then cd ${TRAVIS_BUILD_DIR} && tools/run_test.py -C Debug ; fi
   - . ${TRAVIS_BUILD_DIR}/tools/setup_env.sh Release
   - ninja -j4 -C ${TRAVIS_BUILD_DIR}/out/Release
   - cd ${TRAVIS_BUILD_DIR}/out/Release && ctest -VV
-  - cd ${TRAVIS_BUILD_DIR} && tools/run_test.py -C Release
+  - if [[ -z "$NO_GRPC" ]]; then cd ${TRAVIS_BUILD_DIR} && tools/run_test.py -C Release ; fi
 
 env:
   matrix:
-    - QT=qt55
-      QT_PPA=ppa:beineri/opt-qt551-trusty
+    - QT=qt56
+      QT_PPA=ppa:beineri/opt-qt562-trusty
 
     - QT=qt56
-      QT_PPA=ppa:beineri/opt-qt561-trusty
+      QT_PPA=ppa:beineri/opt-qt562-trusty
+      NO_GRPC=1
+
+    - QT=qt57
+      QT_PPA=ppa:beineri/opt-qt57-trusty
+
+    - QT=qt55
+      QT_PPA=ppa:beineri/opt-qt551-trusty

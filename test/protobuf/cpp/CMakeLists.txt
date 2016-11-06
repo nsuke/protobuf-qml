@@ -1,11 +1,11 @@
 find_package(Qt5Test COMPONENTS Private REQUIRED)
 
-protobuf_generate_cpp(TestConvert_GEN TestConvert_GEN_H
-  test_convert.proto)
+protobuf_generate_cxx(test_convert_GEN test_convert.proto)
 
 add_executable(TestConvert
   test_convert.cpp
-  ${TestConvert_GEN})
+  ${test_convert_GEN}
+  )
 
 target_link_libraries(TestConvert
   Qt5::Quick

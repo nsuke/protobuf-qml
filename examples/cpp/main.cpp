@@ -33,7 +33,7 @@ public:
       qWarning() << "Failed to convert to QML Protobuf message.";
     }
 
-    return std::move(jsValue);
+    return jsValue;
   }
 
 private:
@@ -52,7 +52,7 @@ private:
     // Needless serialization for demonstration again.
     bar.SerializeToString(&str);
     std::cout << "Serialized Bar is " << str << std::endl;
-    return std::move(bar);
+    return bar;
   }
 };
 

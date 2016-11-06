@@ -1,17 +1,16 @@
-#include "grpc/qml/server_calldata.h"
 #include "grpc/qml/base.h"
-#include "grpc/qml/unary.h"
-#include "grpc/qml/writer.h"
 #include "grpc/qml/reader.h"
 #include "grpc/qml/reader_writer.h"
+#include "grpc/qml/server_calldata.h"
+#include "grpc/qml/unary.h"
+#include "grpc/qml/writer.h"
 
 #include <grpc++/completion_queue.h>
 
 namespace grpc {
 namespace qml {
 
-Channel::Channel(QObject* p) : ::protobuf::qml::Channel2(p) {
-}
+Channel::Channel(QObject* p) : ::protobuf::qml::Channel2(p) {}
 
 Channel::~Channel() {
   shutdown();
@@ -25,7 +24,9 @@ void Channel::shutdown() {
   if (cq_) {
     cq_->Shutdown();
   }
-  work_.wait();
+  if (work_.valid()) {
+    work_.wait();
+  }
 }
 
 void Channel::startThread() {
@@ -36,6 +37,7 @@ void Channel::startThread() {
     bool ok = false;
     for (;;) {
       if (!cq_->Next(&tag, &ok)) {
+        qInfo() << "completed processing";
         cq_.reset();
         return;
       }
@@ -43,6 +45,8 @@ void Channel::startThread() {
       tag = nullptr;
       if (cdata) {
         cdata->process(ok);
+      } else {
+        qWarning() << "no calldata";
       }
     }
   });
@@ -52,18 +56,16 @@ bool Channel::ensureInit() {
   if (!raw_) {
     grpc::ChannelArguments null_args;
     auto before = raw_.get();
-    raw_ = grpc::CreateCustomChannel(target_.toStdString(),
-                               creds_ ? creds_->raw() : nullptr, null_args);
+    raw_ = grpc::CreateCustomChannel(
+        target_.toStdString(), creds_ ? creds_->raw() : nullptr, null_args);
     if (before != raw_.get()) {
       discardMethods();
     }
   }
 
   if (raw_ && !work_.valid()) {
-    if (raw_) {
-      startThread();
-      Q_ASSERT(cq_);
-    }
+    startThread();
+    Q_ASSERT(cq_);
   }
 
   return raw_ != nullptr;

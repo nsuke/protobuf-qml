@@ -68,11 +68,13 @@ QtObject {
 
     function handleClosed(tag) {
       'use strict';
+      console.log(' ### handleClosed');
       removeCallback(tag);
     }
 
     function handleData(tag, data) {
       'use strict';
+      console.log(' ### handleDataEnd');
       var call = callbackStorage[tag];
       if (!call) {
         console.warn('Received data for unknown tag: ' + tag);
@@ -83,6 +85,7 @@ QtObject {
 
     function handleDataEnd(tag) {
       'use strict';
+      console.log(' ### handleDataEnd');
       var call = callbackStorage[tag];
       if (!call) {
         console.warn('Received data for unknown tag: ' + tag);
@@ -92,6 +95,7 @@ QtObject {
     }
 
     function handleError(tag, code, message) {
+      console.log(' ### handleError');
       'use strict';
       if (!code) {
         code = PB.StatusCode.UNKNOWN;

@@ -1,9 +1,44 @@
 #include "grpc/qml/unary.h"
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 namespace grpc {
 namespace qml {
+
+class UnaryCallData : public CallData {
+public:
+  UnaryCallData(int tag,
+                UnaryMethod* method,
+                grpc::Channel* channel,
+                ::grpc::CompletionQueue* cq,
+                ::protobuf::qml::DescriptorWrapper* read,
+                std::unique_ptr<google::protobuf::Message> request,
+                int timeout);
+
+  ~UnaryCallData();
+
+  void process(bool ok) final;
+
+private:
+  enum class Status {
+    READ,
+    DONE,
+  };
+
+  Status status_ = Status::READ;
+  ::grpc::CompletionQueue* cq_;
+  ::grpc::ClientContext context_;
+  int tag_;
+  UnaryMethod* method_;
+  grpc::Channel* channel_;
+  ::protobuf::qml::DescriptorWrapper* read_;
+  std::unique_ptr<google::protobuf::Message> request_;
+  std::shared_ptr<google::protobuf::Message> response_;
+  grpc::Status grpc_status_;
+  std::unique_ptr<grpc::ClientAsyncResponseReader<google::protobuf::Message>>
+      reader_;
+  std::mutex mutex_;
+};
 
 UnaryCallData::UnaryCallData(int tag,
                              UnaryMethod* method,
@@ -28,8 +63,7 @@ UnaryCallData::UnaryCallData(int tag,
   process(true);
 }
 
-UnaryCallData::~UnaryCallData() {
-}
+UnaryCallData::~UnaryCallData() {}
 
 void UnaryCallData::process(bool ok) {
   if (status_ == Status::READ) {
@@ -61,13 +95,9 @@ UnaryMethod::UnaryMethod(const std::string& name,
       read_(read),
       cq_(cq),
       channel_(std::move(channel)),
-      raw_(name.c_str(),
-           grpc::RpcMethod::NORMAL_RPC,
-           channel_) {
-}
+      raw_(name.c_str(), grpc::RpcMethod::NORMAL_RPC, channel_) {}
 
-UnaryMethod::~UnaryMethod() {
-}
+UnaryMethod::~UnaryMethod() {}
 
 bool UnaryMethod::write(int tag,
                         std::unique_ptr<google::protobuf::Message> request,

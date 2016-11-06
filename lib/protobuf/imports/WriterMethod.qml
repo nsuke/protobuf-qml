@@ -36,6 +36,7 @@ ClientMethod {
         timeout = -1;
       }
       var call = _storage.getCallback(tag);
+      console.log(' ### call : ' + String(call));
       if (!call) {
         console.warn('Call object not found for tag: ' + tag);
         return false;

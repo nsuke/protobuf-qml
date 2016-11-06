@@ -1,16 +1,67 @@
 #include "grpc/qml/writer.h"
+#include "grpc/qml/client_calldata.h"
+#include "grpc/qml/logging.h"
 
-#include <iostream>
+#include <grpc++/impl/codegen/proto_utils.h>
+
+#include <queue>
 
 namespace grpc {
 namespace qml {
+
+class WriterCallData final : public ClientCallData<WriterCallData> {
+public:
+  WriterCallData(int tag,
+                 grpc::Channel* channel,
+                 ::grpc::CompletionQueue* cq,
+                 WriterMethod* method,
+                 ::protobuf::qml::DescriptorWrapper* read);
+
+  ~WriterCallData();
+
+  int tag() const { return tag_; }
+  WriterMethod* method() { return method_; }
+
+  void process(bool ok) override;
+
+  bool write(std::unique_ptr<google::protobuf::Message> request);
+  bool writesDone();
+  int timeout() const { return timeout_; }
+  void set_timeout(int timeout);
+
+private:
+  enum class Status {
+    INIT,
+    FROZEN,
+    WRITE,
+    DONE,
+    FINISH,
+  };
+  void handleQueuedRequests();
+
+  int timeout_ = -1;
+  std::mutex mutex_;
+  Status status_ = Status::INIT;
+  ::grpc::CompletionQueue* cq_;
+  ::grpc::ClientContext context_;
+  grpc::Channel* channel_;
+  ::protobuf::qml::DescriptorWrapper* read_;
+  WriterMethod* method_;
+  int tag_;
+  std::queue<std::unique_ptr<google::protobuf::Message>> requests_;
+  std::unique_ptr<google::protobuf::Message> request_;
+  std::shared_ptr<google::protobuf::Message> response_;
+  grpc::Status grpc_status_;
+  grpc::ClientAsyncWriter<google::protobuf::Message> writer_;
+};
 
 WriterCallData::WriterCallData(int tag,
                                grpc::Channel* channel,
                                ::grpc::CompletionQueue* cq,
                                WriterMethod* method,
                                ::protobuf::qml::DescriptorWrapper* read)
-    : cq_(cq),
+    : ClientCallData<WriterCallData>(this),
+      cq_(cq),
       channel_(channel),
       read_(read),
       method_(method),
@@ -19,41 +70,46 @@ WriterCallData::WriterCallData(int tag,
       writer_(channel_, cq_, method_->raw(), &context_, response_.get(), this) {
 }
 
-WriterCallData::~WriterCallData() {
-}
+WriterCallData::~WriterCallData() {}
 
 void WriterCallData::process(bool ok) {
   std::unique_lock<std::mutex> lock(mutex_);
   if (status_ == Status::INIT) {
-    Q_ASSERT(ok);
-    handleQueuedRequests();
-  } else if (status_ == Status::WRITE) {
+    MSG_DEBUG << "INIT" << ok;
     if (!ok) {
-      qWarning() << QString::fromStdString(grpc_status_.error_message());
-      method_->unknownError(tag_, "Failed to send message.");
-      // TODO: should we abort this call entirely ?
+      status_ = Status::FINISH;
+      writer_.Finish(&grpc_status(), this);
+    } else {
+      handleQueuedRequests();
+    }
+  } else if (status_ == Status::WRITE) {
+    MSG_DEBUG << "WRITE" << ok;
+    if (!ok || !grpc_status().ok()) {
+      reportGrpcError("Failed to send message");
+      // TODO: should we abort current call entirely ?
     }
     handleQueuedRequests();
   } else if (status_ == Status::DONE) {
-    if (!ok) {
-      qWarning() << QString::fromStdString(grpc_status_.error_message());
-      method_->unknownError(tag_, "Failed to send client streaming done.");
+    MSG_DEBUG << "DONE" << ok;
+    if (!ok || !grpc_status().ok()) {
+      reportGrpcError("Failed to send client streaming done.");
     }
     status_ = Status::FINISH;
-    writer_.Finish(&grpc_status_, this);
+    writer_.Finish(&grpc_status(), this);
   } else if (status_ == Status::FINISH) {
-    if (ok) {
+    MSG_DEBUG << "FINISH" << ok;
+    if (!ok || !grpc_status().ok()) {
+      reportGrpcError("Error while finishing.");
+    } else {
       method_->data(tag_, response_);
       response_.reset(read_->newMessage());
-    } else {
-      method_->error(tag_, grpc_status_.error_code(),
-                     QString::fromStdString(grpc_status_.error_message()));
     }
     method_->deleteCall(tag_);
     // Release member mutex before deleting itself.
     lock.unlock();
     delete this;
   } else {
+    MSG_DEBUG << "UNKNOWN" << ok;
     qWarning() << "Unexpected status : " << static_cast<int>(status_);
     Q_ASSERT(false);
   }
@@ -69,6 +125,7 @@ void WriterCallData::handleQueuedRequests() {
       status_ = Status::DONE;
       writer_.WritesDone(this);
     } else {
+      status_ = Status::WRITE;
       writer_.Write(*request_, this);
     }
   }
@@ -121,6 +178,20 @@ void WriterCallData::set_timeout(int timeout) {
   }
 }
 
+WriterMethod::WriterMethod(const std::string& name,
+                           ::protobuf::qml::DescriptorWrapper* read,
+                           ::protobuf::qml::DescriptorWrapper* write,
+                           std::shared_ptr<grpc::Channel> channel,
+                           grpc::CompletionQueue* cq,
+                           QObject* p)
+    : ::protobuf::qml::WriterMethod(p),
+      name_(name),
+      read_(read),
+      write_(write),
+      cq_(cq),
+      channel_(std::move(channel)),
+      raw_(name.c_str(), grpc::RpcMethod::CLIENT_STREAMING, channel_) {}
+
 WriterCallData* WriterMethod::ensureCallData(int tag) {
   WriterCallData* call = nullptr;
   auto it = calls_.find(tag);
@@ -144,47 +215,63 @@ bool WriterMethod::write(int tag,
     unknownError(tag, "Failed to convert to message object.");
     return false;
   }
-  std::lock_guard<std::mutex> lock(calls_mutex_);
-  auto call = ensureCallData(tag);
+  decltype(ensureCallData(tag)) call;
+  {
+    std::lock_guard<std::mutex> lock(calls_mutex_);
+    call = ensureCallData(tag);
+  }
   if (!call) return false;
   return call->write(std::move(request));
 }
 
 bool WriterMethod::writesDone(int tag) {
-  std::lock_guard<std::mutex> lock(calls_mutex_);
-  auto it = calls_.find(tag);
-  if (it == calls_.end()) {
-    qWarning() << "Tag not found for writesDone " << tag;
-    return false;
+  decltype(calls_.find(tag)->second) call;
+  {
+    std::lock_guard<std::mutex> lock(calls_mutex_);
+    auto it = calls_.find(tag);
+    if (it == calls_.end()) {
+      qWarning() << "Tag not found for writesDone " << tag;
+      return false;
+    }
+    call = it->second;
   }
-  return it->second->writesDone();
+  return call->writesDone();
 }
 
 int WriterMethod::timeout(int tag) const {
-  std::lock_guard<std::mutex> lock(calls_mutex_);
-  const auto it = calls_.find(tag);
-  if (it == calls_.end()) {
-    qWarning() << "Tag not found for timeout " << tag;
-    return false;
+  decltype(calls_.find(tag)->second) call;
+  {
+    std::lock_guard<std::mutex> lock(calls_mutex_);
+    const auto it = calls_.find(tag);
+    if (it == calls_.end()) {
+      qWarning() << "Tag not found for timeout " << tag;
+      return false;
+    }
+    call = it->second;
   }
-  return it->second->timeout();
+  return call->timeout();
 }
 
 void WriterMethod::set_timeout(int tag, int milliseconds) {
-  std::lock_guard<std::mutex> lock(calls_mutex_);
-  auto call = ensureCallData(tag);
+  decltype(ensureCallData(tag)) call;
+  {
+    std::lock_guard<std::mutex> lock(calls_mutex_);
+    call = ensureCallData(tag);
+  }
   if (!call) return;
   call->set_timeout(milliseconds);
 }
 
 void WriterMethod::deleteCall(int tag) {
-  std::lock_guard<std::mutex> lock(calls_mutex_);
-  auto it = calls_.find(tag);
-  if (it == calls_.end()) {
-    qWarning() << "Tag not found for deleteCall " << tag;
-    return;
+  {
+    std::lock_guard<std::mutex> lock(calls_mutex_);
+    auto it = calls_.find(tag);
+    if (it == calls_.end()) {
+      qWarning() << "Tag not found for deleteCall " << tag;
+      return;
+    }
+    calls_.erase(it);
   }
-  calls_.erase(it);
   closed(tag);
 }
 }

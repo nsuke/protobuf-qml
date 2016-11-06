@@ -1,8 +1,12 @@
 #ifndef GRPC_QML_SERVER_CALLDATA_H
 #define GRPC_QML_SERVER_CALLDATA_H
 
-#include <unordered_map>
+#include "grpc/qml/logging.h"
+
+#include "grpc++/impl/codegen/status.h"
+
 #include <mutex>
+#include <unordered_map>
 
 namespace grpc {
 namespace qml {
@@ -23,6 +27,8 @@ private:
 template <typename CallData>
 class CallDataStore {
 protected:
+  ~CallDataStore() {}
+
   int store(CallData* cdata) {
     std::lock_guard<std::mutex> lock(cdata_mutex_);
     return doStore(cdata);

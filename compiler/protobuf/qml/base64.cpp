@@ -32,7 +32,7 @@ std::string toBase64(std::vector<unsigned char>& buf) {
     result.push_back(table[((static_cast<int>(buf[i + 1]) << 2) & 0x3c)]);
     result.push_back('=');
   }
-  return std::move(result);
+  return result;
 }
 }
 }

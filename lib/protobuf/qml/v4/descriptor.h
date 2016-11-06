@@ -10,6 +10,10 @@
 #include <private/qv8engine_p.h>
 #include <memory>
 
+// #if (QT_VERSION >= QT_VERSION_CHECK(5, 7, 0))
+#include "private/qv4persistent_p.h"
+// #endif
+
 namespace protobuf {
 namespace qml {
 

@@ -1,8 +1,8 @@
 #include "grpc/qml/server.h"
-#include "grpc/qml/server_unary.h"
-#include "grpc/qml/server_reader.h"
-#include "grpc/qml/server_writer.h"
 #include "grpc/qml/server_bidi.h"
+#include "grpc/qml/server_reader.h"
+#include "grpc/qml/server_unary.h"
+#include "grpc/qml/server_writer.h"
 
 namespace grpc {
 namespace qml {

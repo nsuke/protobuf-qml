@@ -3,28 +3,37 @@
 
 message(STATUS "ROOT : " ${GRPC_ROOT})
 
-function(grpc_generate_cxx)
+find_package(Protobuf CONFIG)
+
+macro(grpc_generate_cxx GEN)
   foreach(FIL ${ARGN})
     get_filename_component(ABS_FIL ${FIL} ABSOLUTE)
     get_filename_component(FIL_WE ${FIL} NAME_WE)
     get_filename_component(FIL_DIR ${FIL} DIRECTORY)
 
+    set(${GEN}
+      "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.grpc.pb.cc"
+      "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.grpc.pb.h"
+      "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.cc"
+      "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.h"
+      )
+
+  message(STATUS "GEN:: ${GEN}")
+  message(STATUS "GEN:: ${${GEN}}")
+
     add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.grpc.pb.cc"
-             "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.grpc.pb.h"
-             "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.cc"
-             "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.h"
-      COMMAND ${PROTOBUF_PROTOC_EXECUTABLE}
+      OUTPUT ${${GEN}}
+      COMMAND protobuf::protoc
       --plugin=protoc-gen-grpc=${GRPCXX_PLUGIN_EXECUTABLE}
       --cpp_out ${CMAKE_CURRENT_BINARY_DIR}
       --grpc_out ${CMAKE_CURRENT_BINARY_DIR}
       -I ${CMAKE_CURRENT_SOURCE_DIR}
       ${ABS_FIL}
-      DEPENDS ${ABS_FIL} ${PROTOBUF_PROTOC_EXECUTABLE} ${GRPCXX_PLUGIN_EXECUTABLE}
+      DEPENDS ${ABS_FIL} protobuf::protoc ${GRPCXX_PLUGIN_EXECUTABLE}
       COMMENT "Running C++ protocol buffer compiler with gRPC++ plugin on ${FIL}"
       VERBATIM)
   endforeach()
-endfunction()
+endmacro()
 
 find_path(GRPC_INCLUDE_DIR
   NAMES grpc/grpc.h
@@ -47,21 +56,23 @@ find_library(GRPCXX_LIBRARY
 mark_as_advanced(GRPCXX_LIBRARY)
 
 find_library(SSL_LIBRARY
-  NAMES ssl
+  NAMES libssl.so ssl
+  NO_DEFAULT_PATH
   PATHS ${GRPC_ROOT}/lib)
 mark_as_advanced(SSL_LIBRARY)
+message(STATUS "SSL : ${SSL_LIBRARY}")
 
 find_library(CRYPTO_LIBRARY
-  NAMES crypto
+  NAMES libcrypto.so crypto
+  NO_DEFAULT_PATH
   PATHS ${GRPC_ROOT}/lib)
 mark_as_advanced(CRYPTO_LIBRARY)
+message(STATUS "CRYPTO : ${CRYPTO_LIBRARY}")
 
-if(MSVC)
   find_library(Z_LIBRARY
-    NAMES zlib
+    NAMES z zlib
     PATHS ${GRPC_ROOT}/lib)
   mark_as_advanced(Z_LIBRARY)
-endif()
 
 find_program(GRPCXX_PLUGIN_EXECUTABLE
   NAMES grpc_cpp_plugin
@@ -76,8 +87,8 @@ if(GRPC++_FOUND)
   set(GRPC++_INCLUDE_DIRS ${GRPC_INCLUDE_DIR})
   set(GRPC++_INCLUDE_DIRS ${GRPC_INCLUDE_DIR})
   if(MSVC)
-    set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY} ${SSL_LIBRARY} ${CRYPTO_LIBRARY} ${Z_LIBRARY} ws2_32)
+    set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY} ${SSL_LIBRARY} ${CRYPTO_LIBRARY} ${Z_LIBRARY} ws2_32 protobuf::libprotobuf)
   else()
-    set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY} ${SSL_LIBRARY} ${CRYPTO_LIBRARY})
+    set(GRPC++_LIBRARIES ${GPR_LIBRARY} ${GRPC_LIBRARY} ${GRPCXX_LIBRARY} ${SSL_LIBRARY} ${CRYPTO_LIBRARY} ${Z_LIBRARY} protobuf::libprotobuf)
   endif()
 endif()

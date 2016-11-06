@@ -1,4 +1,5 @@
 #include "grpc/qml/reader.h"
+#include "grpc/qml/logging.h"
 
 namespace grpc {
 namespace qml {
@@ -44,7 +45,7 @@ void ReaderCallData::process(bool ok) {
     status_ = Status::READ;
     reader_->Read(response_.get(), this);
   } else if (status_ == Status::READ) {
-    if (!ok) {
+    if (!ok || !grpc_status_.ok()) {
       method_->dataEnd(tag_);
       status_ = Status::DONE;
       reader_->Finish(&grpc_status_, this);

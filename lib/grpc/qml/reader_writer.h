@@ -5,7 +5,7 @@
 #include "grpc/qml/server_calldata.h"
 #include "protobuf/qml/method.h"
 
-#include <grpc++/impl/proto_utils.h>
+#include <grpc++/impl/codegen/proto_utils.h>
 #include <queue>
 
 namespace grpc {

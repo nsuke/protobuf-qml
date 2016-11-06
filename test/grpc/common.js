@@ -9,7 +9,7 @@ function test_unary(test, data) {
     // when invoked service
     var ok = data.client.sayHello({name: 'Foo'}, function(err, rsp) {
       // should not receive errror
-      test.verify(!err, err);
+      test.verify(!err, "unexpected error: " + err);
 
       // should receive response processed by server
       test.compare(rsp.greet, 'Hello Foo');
@@ -30,7 +30,7 @@ function test_client_streaming(test, data) {
     // when start calling service
     var call = data.client.batchHello(function(err, rsp) {
       // should not receive errror
-      test.verify(!err, err);
+      test.verify(!err, "unexpected error: " + err);
 
       // should receive response processed with all messages by server
       test.compare(rsp.greet, 'Hello Bar1 Bar2 Bar3');
@@ -74,7 +74,7 @@ function test_server_streaming(test, data) {
         name: 'Baz3',
       }],
     }, function(err, data, finished) {
-      test.verify(!err, err);
+      test.verify(!err, "unexpected error: " + err);
       if (finished) {
         end.called = true;
       } else {
@@ -98,7 +98,7 @@ function test_bidi_streaming(test, data) {
     var received = [];
 
     var call = data.client.bidiHello(function(err, data, finished) {
-      test.verify(!err, err);
+      test.verify(!err, "unexpected error: " + err);
       if (finished) {
         end.called = true;
       } else {

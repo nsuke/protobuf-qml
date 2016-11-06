@@ -22,8 +22,8 @@ set_target_properties(
   PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
-target_link_libraries(protobuf-qml-core
-  ${PROTOBUF_LIBRARIES}
+target_link_libraries(protobuf-qml-core PUBLIC
+  protobuf::libprotobuf
   Qt5::Quick)
 
 #
@@ -41,9 +41,8 @@ set_target_properties(
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/Protobuf
   LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/Protobuf)
 
-target_link_libraries(protobuf-qml
+target_link_libraries(protobuf-qml PUBLIC
   protobuf-qml-core
-  ${PROTOBUF_LIBRARIES}
   Qt5::Qml)
 
 copy(protobuf-qml

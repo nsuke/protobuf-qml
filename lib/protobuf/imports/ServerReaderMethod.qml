@@ -33,6 +33,7 @@ PB.ServerReaderMethodHolder {
         }
       };
       root.handler(call, function(err, response) {
+        print(' ### handler');
         if (err) {
           if (typeof err === 'string') {
             var message = err;
@@ -40,6 +41,7 @@ PB.ServerReaderMethodHolder {
             var message = err.message || 'Unknown error';
           }
           var code = err.code || PB.Errors.UNKNOWN;
+          print(' ### abort');
           root.abort(tag, code, message);
           return;
         }
@@ -73,6 +75,7 @@ PB.ServerReaderMethodHolder {
       return;
     }
     var fn = handler.data;
+    print(' ### handler.data');
     if (typeof fn !== 'function') {
       console.warn('Handler is not registered for data event.');
       return;
@@ -89,6 +92,7 @@ PB.ServerReaderMethodHolder {
       return;
     }
     var fn = handler.error;
+    print(' ### handler.error');
     if (typeof fn !== 'function') {
       console.warn('Handler is not registered for data event.');
       return;

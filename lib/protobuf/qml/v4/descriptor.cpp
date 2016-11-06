@@ -5,6 +5,7 @@
 #include <QQmlInfo>
 #include <QThreadPool>
 #include <private/qv4arraybuffer_p.h>
+#include <private/qv4string_p.h>
 #include <private/qv4typedarray_p.h>
 #include <private/qv4variantobject_p.h>
 
@@ -133,7 +134,7 @@ std::unique_ptr<Message> Descriptor::jsValueToMessage(ExecutionEngine* v4,
   if (!jsValueToMessage(v4, value, *msg)) {
     return nullptr;
   }
-  return std::move(msg);
+  return msg;
 }
 
 template <typename T>

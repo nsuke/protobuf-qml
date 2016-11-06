@@ -41,7 +41,7 @@ std::string capitalizeAll(std::string name) {
     auto c = name[i];
     name[i] = is_small_char(c) ? capitalize(c) : c;
   }
-  return std::move(name);
+  return name;
 }
 }
 }
