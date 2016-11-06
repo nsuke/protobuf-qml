@@ -83,6 +83,7 @@ TBD: Link to full sample code
 
 gRPC binding
 ---
+
 For gRPC itself, see upstream official page: http://www.grpc.io/
 
 gRPC binding is still experimental.
@@ -188,15 +189,9 @@ MyService {
 }
 ```
 
-### Future examples
+### QtWebSockets with Qt 5.8+
 
-In the future, it might become possible to send ArrayBuffer using XMLHttpRequest or WebSockets.
-
-I've submitted patches for [WebSockets](https://codereview.qt-project.org/#/c/125712/) and [XMLHttpRequest](https://codereview.qt-project.org/#/c/143732/) to Qt project.
-After these patches are incorporated, following usages will be possible.
-
-Those future examples are also available under [examples](examples) directory.
-Feel free to try with these patches yourself.
+From Qt 5.8 (QtWebSockets 1.1 QML module) on, we can send array buffers through websockets.
 
 #### Sending serialized message with QtWebSockets
 
@@ -207,7 +202,7 @@ import QtWebSockets 1.1
 ``` javascript
 WebSocket {
   id: socket
-  url: 'ws://your.remote.server.host'
+  url: 'ws://your.remote.server'
   active: true
 }
 ```
@@ -240,8 +235,15 @@ WebSocket {
 }
 ```
 
-### Send and receive serialized message with XMLHttpRequest
+The complete code is available under [examples/WebSockets](examples/WebSockets) directory.
 
+### Future examples
+
+In the future, it might become possible to send ArrayBuffer using XMLHttpRequest too.
+
+I've submitted a patch for [XMLHttpRequest](https://codereview.qt-project.org/#/c/143732/) to Qt project which enables following usage.
+
+### Send and receive serialized message with XMLHttpRequest
 
 ``` javascript
 // Inside function or handler
@@ -264,3 +266,5 @@ var buf = msg.serialize();
 
 xhr.send(new DataView(buf));
 ```
+
+The complete code is available under [examples/XMLHttpRequest](examples/XMLHttpRequest) directory.
